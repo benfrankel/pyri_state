@@ -135,7 +135,7 @@ impl<'w, S: State> StateRef<'w, S> {
     }
 
     pub fn will_stay_in(&self, value: &S) -> bool {
-        self.is_in(value) && self.will_stay()
+        self.is_in(value) && self.will_be_in(value)
     }
 
     pub fn will_change(&self) -> bool {
@@ -143,15 +143,15 @@ impl<'w, S: State> StateRef<'w, S> {
     }
 
     pub fn will_change_from(&self, from: &S) -> bool {
-        self.will_change() && self.is_in(from)
+        self.will_be_present() && self.is_in(from) && !self.will_be_in(from)
     }
 
     pub fn will_change_to(&self, to: &S) -> bool {
-        self.will_change() && self.will_be_in(to)
+        self.is_present() && !self.is_in(to) && self.will_be_in(to)
     }
 
     pub fn will_change_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_change() && self.is_in(from) && self.will_be_in(to)
+        self.is_in(from) && self.will_be_in(to) && from != to
     }
 
     pub fn will_flush(&self) -> bool {
@@ -205,6 +205,7 @@ impl<'w, S: State + Default> StateMut<'w, S> {
         self.insert(S::default())
     }
 
+    // TODO: Not sure about the name for this and `hard_restart`.
     pub fn soft_restart(&mut self) -> &mut S {
         self.change_to(S::default())
     }
@@ -245,6 +246,7 @@ impl<'w, S: State> StateMut<'w, S> {
         self.insert(value)
     }
 
+    // NOTE: This is a no-op if the current state is absent.
     pub fn refresh(&mut self) {
         if self.is_present() {
             self.next.flush = true;
@@ -305,7 +307,7 @@ impl<'w, S: State> StateMut<'w, S> {
     }
 
     pub fn will_stay_in(&self, value: &S) -> bool {
-        self.is_in(value) && self.will_stay()
+        self.is_in(value) && self.will_be_in(value)
     }
 
     pub fn will_change(&self) -> bool {
@@ -313,15 +315,15 @@ impl<'w, S: State> StateMut<'w, S> {
     }
 
     pub fn will_change_from(&self, from: &S) -> bool {
-        self.will_change() && self.is_in(from)
+        self.will_be_present() && self.is_in(from) && !self.will_be_in(from)
     }
 
     pub fn will_change_to(&self, to: &S) -> bool {
-        self.will_change() && self.will_be_in(to)
+        self.is_present() && !self.is_in(to) && self.will_be_in(to)
     }
 
     pub fn will_change_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_change() && self.is_in(from) && self.will_be_in(to)
+        self.is_in(from) && self.will_be_in(to) && from != to
     }
 
     pub fn will_flush(&self) -> bool {
