@@ -2,7 +2,7 @@
 
 # Thoughts
 
-- States are just "double buffers" with a fixed flush point (`OnTrans`) and some change detection and dependency tooling.
+- States are just double buffers with a fixed flush point and some change detection and dependency tooling.
 
 # Questions
 
@@ -10,7 +10,6 @@
 
 # Remaining tasks
 
-- [ ] Implement `StatePlugin`.
 - [ ] Implement per-state settings.
 - [ ] Provide at least one test / example for every listed feature below.
 - [ ] Write documentation.

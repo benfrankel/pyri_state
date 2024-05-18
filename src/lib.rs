@@ -71,10 +71,10 @@ mod tests {
         let mut app = App::new();
 
         app.add_state::<LevelState>().add_systems(
-            OnTrans,
+            StateTransition,
             (
-                tear_down_current_level.in_set(HandleTrans::<LevelState>::Exit),
-                set_up_next_level.in_set(HandleTrans::<LevelState>::Enter),
+                tear_down_current_level.in_set(OnTrans::<LevelState>::Exit),
+                set_up_next_level.in_set(OnTrans::<LevelState>::Enter),
             ),
         );
     }

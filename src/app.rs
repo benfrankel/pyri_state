@@ -1,24 +1,64 @@
-use bevy_app::{App, Plugin};
-use bevy_ecs::{schedule::IntoSystemSetConfigs, world::FromWorld};
+use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
+use bevy_ecs::{
+    schedule::{common_conditions::not, Condition, IntoSystemConfigs, IntoSystemSetConfigs},
+    system::ResMut,
+    world::FromWorld,
+};
 
 use crate::{
-    conditions::{state_is_present, state_will_be_present, state_will_flush},
-    schedule::{HandleTrans, OnTrans},
+    conditions::{
+        state_is_present, state_will_be_present, state_will_change, state_will_flush,
+        state_will_remain_present,
+    },
+    schedule::{OnTrans, PostStateTransition, PreStateTransition, StateTransition},
     state::{CurrentState, NextState, State},
 };
 
-fn configure_system_sets<S: State>(app: &mut App) -> &mut App {
-    app.configure_sets(
-        OnTrans,
+pub struct StatePlugin;
+
+impl Plugin for StatePlugin {
+    fn build(&self, app: &mut App) {
+        app.init_schedule(PreStateTransition)
+            .init_schedule(StateTransition)
+            .init_schedule(PostStateTransition);
+
+        let mut order = app.world.resource_mut::<MainScheduleOrder>();
+        order.insert_after(PreUpdate, PreStateTransition);
+        order.insert_after(PreStateTransition, StateTransition);
+        order.insert_after(StateTransition, PostStateTransition);
+    }
+}
+
+fn flush<S: State>(mut next: ResMut<NextState<S>>) {
+    next.flush = true;
+}
+
+fn apply_flush<S: State>(mut current: ResMut<CurrentState<S>>, mut next: ResMut<NextState<S>>) {
+    current.value = next.value.clone();
+    next.flush = false;
+}
+
+fn set_up_systems<S: State>(app: &mut App) -> &mut App {
+    app.add_systems(
+        PreStateTransition,
+        // TODO: Make this opt-out via settings
+        flush::<S>.run_if(state_will_change::<S>.or_else(not(state_will_remain_present::<S>))),
+    )
+    .configure_sets(
+        StateTransition,
         (
-            HandleTrans::<S>::Any.run_if(state_will_flush::<S>),
+            OnTrans::<S>::Any.run_if(state_will_flush::<S>),
             (
-                HandleTrans::<S>::Exit.run_if(state_is_present::<S>),
-                HandleTrans::<S>::Enter.run_if(state_will_be_present::<S>),
+                OnTrans::<S>::Exit.run_if(state_is_present::<S>),
+                OnTrans::<S>::Enter.run_if(state_will_be_present::<S>),
             )
                 .chain()
-                .in_set(HandleTrans::<S>::Any),
+                .in_set(OnTrans::<S>::Any),
         ),
+    )
+    .add_systems(
+        PostStateTransition,
+        apply_flush::<S>.run_if(state_will_flush::<S>),
     )
 }
 
@@ -37,7 +77,7 @@ impl AppStateExt for App {
             return self;
         }
 
-        configure_system_sets::<S>(self)
+        set_up_systems::<S>(self)
             .init_resource::<CurrentState<S>>()
             .init_resource::<NextState<S>>()
     }
@@ -49,7 +89,7 @@ impl AppStateExt for App {
 
         let value = S::from_world(&mut self.world);
 
-        configure_system_sets::<S>(self)
+        set_up_systems::<S>(self)
             .init_resource::<CurrentState<S>>()
             .insert_resource(NextState::new(value))
     }
@@ -59,18 +99,8 @@ impl AppStateExt for App {
             return self;
         }
 
-        configure_system_sets::<S>(self)
+        set_up_systems::<S>(self)
             .init_resource::<CurrentState<S>>()
             .insert_resource(NextState::new(value))
-    }
-}
-
-pub struct StatePlugin;
-
-impl Plugin for StatePlugin {
-    fn build(&self, _app: &mut App) {
-        // TODO: An opt-out system that checks if state_will_change.or_else(not(state_will_remain_present)), and if so, sets the flush flag.
-        // TODO: A system that (after OnTrans schedule) flushes the next state into the current state, then resets the flush flag.
-        todo!()
     }
 }
