@@ -7,6 +7,7 @@
 # Questions
 
 - How does flushing states once per frame interact with `FixedUpdate`?
+- Should settings be attached to the `State` trait via derive macro? Or is `app.add_state_with_settings(...)` better because it's not as magical?
 
 # Remaining tasks
 

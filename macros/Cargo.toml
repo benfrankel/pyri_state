@@ -1,0 +1,19 @@
+[package]
+name = "pyrious_state_macros"
+version = "0.1.0"
+edition = "2021"
+description = "Derive macros for `pyrious_state`"
+license = "MIT OR Apache-2.0"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = { version = "2.0", default-features = false, features = [
+    "derive",
+    "parsing",
+    "printing",
+    "proc-macro",
+] }

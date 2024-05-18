@@ -17,42 +17,34 @@ pub mod prelude {
 mod tests {
     use bevy_app::App;
     use bevy_ecs::schedule::IntoSystemConfigs;
+    use pyrious_state_macros::State;
 
     use super::prelude::*;
 
-    #[derive(Clone, PartialEq, Eq)]
+    #[derive(State, Clone, PartialEq, Eq)]
     enum GameState {
         MainMenu,
         Playing,
         EndScreen,
     }
 
-    // TODO: Derive macro for State
-    impl State for GameState {}
-
     // TODO: Ad hoc substate of GameState::Playing
-    #[derive(Clone, PartialEq, Eq)]
+    #[derive(State, Clone, PartialEq, Eq)]
     struct PauseState(bool);
 
-    impl State for PauseState {}
-
     // TODO: Ad hoc substate of GameState::Playing
-    #[derive(Clone, PartialEq, Eq)]
+    #[derive(State, Clone, PartialEq, Eq)]
     struct LevelState {
         x: usize,
         y: usize,
     }
 
-    impl State for LevelState {}
-
     // TODO: Ad hoc computed state from LevelState
-    #[derive(Clone, PartialEq, Eq)]
+    #[derive(State, Clone, PartialEq, Eq)]
     enum ColorState {
         Black,
         White,
     }
-
-    impl State for ColorState {}
 
     fn do_stuff(level: &LevelState) {
         let _ = level;
