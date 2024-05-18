@@ -2,6 +2,11 @@
 name = "pyrious_state"
 version = "0.1.0"
 edition = "2021"
+description = "An experimental 3rd-party alternative to `bevy_state`"
+repository = "https://github.com/benfrankel/pyrious_state"
+license = "MIT OR Apache-2.0"
+keywords = ["ecs", "game", "bevy"]
+categories = ["game-engines", "data-structures"]
 
 [features]
 default = ["bevy_app", "bevy_reflect"]
