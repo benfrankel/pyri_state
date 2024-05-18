@@ -3,4 +3,12 @@ name = "pyrious_state"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["bevy_app", "bevy_reflect"]
+bevy_app = ["dep:bevy_app"]
+bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
+
 [dependencies]
+bevy_app = { version = "0.13", default-features = false, optional = true }
+bevy_ecs = { version = "0.13", default-features = false }
+bevy_reflect = { version = "0.13", optional = true }
