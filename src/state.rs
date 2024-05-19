@@ -82,6 +82,13 @@ impl<'w, S: State> StateRef<'w, S> {
         self.next.value.as_ref()
     }
 
+    pub fn unwrap(&self) -> (&S, &S) {
+        (
+            self.current.value.as_ref().unwrap(),
+            self.next.value.as_ref().unwrap(),
+        )
+    }
+
     pub fn is_absent(&self) -> bool {
         self.current.value.is_none()
     }
@@ -177,6 +184,10 @@ impl<'w, S: State> StateRef<'w, S> {
     pub fn will_refresh_in(&self, value: &S) -> bool {
         self.will_flush() && self.will_stay_in(value)
     }
+
+    pub fn will_transition(&self) -> bool {
+        self.will_flush() && self.will_remain_present()
+    }
 }
 
 pub struct StateMut<'w, S: State> {
@@ -226,6 +237,20 @@ impl<'w, S: State> StateMut<'w, S> {
 
     pub fn get_next_mut(&mut self) -> Option<&mut S> {
         self.next.value.as_mut()
+    }
+
+    pub fn unwrap(&self) -> (&S, &S) {
+        (
+            self.current.value.as_ref().unwrap(),
+            self.next.value.as_ref().unwrap(),
+        )
+    }
+
+    pub fn unwrap_mut(&mut self) -> (&S, &mut S) {
+        (
+            self.current.value.as_ref().unwrap(),
+            self.next.value.as_mut().unwrap(),
+        )
     }
 
     pub fn remove(&mut self) {
@@ -340,6 +365,10 @@ impl<'w, S: State> StateMut<'w, S> {
 
     pub fn will_flush_from_to(&self, from: &S, to: &S) -> bool {
         self.will_flush() && self.is_in(from) && self.will_be_in(to)
+    }
+
+    pub fn will_transition(&self) -> bool {
+        self.will_flush() && self.will_remain_present()
     }
 
     pub fn will_refresh(&self) -> bool {
