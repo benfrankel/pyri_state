@@ -2,6 +2,7 @@ use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
 use bevy_ecs::{schedule::Schedules, world::FromWorld};
 
 use crate::{
+    prelude::StateTransitionEvent,
     schedule::{PostStateTransition, PreStateTransition, StateTransition},
     state::{CurrentState, NextState, State},
 };
@@ -22,6 +23,9 @@ impl Plugin for StatePlugin {
 }
 
 fn set_up_schedules<S: State>(app: &mut App) -> &mut App {
+    // TODO: Make this opt-out
+    app.add_event::<StateTransitionEvent<S>>();
+
     let mut schedules = app.world.resource_mut::<Schedules>();
 
     PreStateTransition::register_state::<S>(schedules.get_mut(PreStateTransition).unwrap());

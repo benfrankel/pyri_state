@@ -1,14 +1,15 @@
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
-use bevy_ecs::schedule::{
-    IntoSystemConfigs, IntoSystemSetConfigs, Schedule, ScheduleLabel, SystemSet,
+use bevy_ecs::{
+    event::Event,
+    schedule::{IntoSystemConfigs, IntoSystemSetConfigs, Schedule, ScheduleLabel, SystemSet},
 };
 
 use crate::{
     state::State,
     systems::{
-        apply_flush_state, clear_flush_state, flush_state, state_will_flush, state_will_mutate,
-        state_would_be_entering, state_would_be_exiting,
+        apply_flush_state, clear_flush_state, flush_state, send_transition_event, state_will_flush,
+        state_will_mutate, state_would_be_entering, state_would_be_exiting,
     },
 };
 
@@ -17,7 +18,7 @@ pub struct PreStateTransition;
 
 impl PreStateTransition {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
-        // TODO: Make this opt-out via settings in `S as State`
+        // TODO: Make this opt-out
         schedule.add_systems(flush_state::<S>.run_if(state_will_mutate::<S>));
     }
 }
@@ -26,7 +27,7 @@ impl PreStateTransition {
 pub struct StateTransition;
 
 impl StateTransition {
-    // TODO: Configure state dependencies from settings in `S as State`
+    // TODO: Configure the declared state dependencies
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         schedule.configure_sets((
             OnTrans::<S>::Apply.run_if(state_will_flush::<S>),
@@ -45,8 +46,13 @@ pub struct PostStateTransition;
 
 impl PostStateTransition {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
+        // TODO: Make send_transition_event opt-out
         schedule.add_systems(
-            (apply_flush_state::<S>, clear_flush_state::<S>).run_if(state_will_flush::<S>),
+            ((
+                (send_transition_event::<S>, apply_flush_state::<S>).chain(),
+                clear_flush_state::<S>,
+            ),)
+                .run_if(state_will_flush::<S>),
         );
     }
 }
@@ -75,4 +81,10 @@ impl<S> Debug for OnTrans<S> {
             _ => unreachable!(),
         }
     }
+}
+
+#[derive(Event)]
+pub struct StateTransitionEvent<S: State> {
+    pub before: Option<S>,
+    pub after: Option<S>,
 }
