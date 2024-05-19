@@ -1,4 +1,4 @@
-`pyrious_state` is an experimental 3rd-party alternative to `bevy_state`. In `pyrious_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
+`pyri_state` is an experimental 3rd-party alternative to `bevy_state`. In `pyri_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
 # Features
 
@@ -8,7 +8,7 @@
 4. **Refresh transition:** Trigger a transition from the current state to itself.
 5. **Remove & insert triggers:** Trigger a state to be removed or inserted next frame.
 6. **Per-state settings:** Configure the state transition behavior per state type.
-7. **Ergonomic wins:** See below.
+7. **Ergonomic improvements:** See below.
 
 # Example code
 
@@ -36,7 +36,7 @@ impl ComputedState for ShouldSpawnEasterEggState {
 app.add_systems(OnEnter(ShouldSpawnEasterEggState(true)), spawn_easter_egg);
 ```
 
-Using `pyrious_state`:
+Using `pyri_state`:
 
 ```rust
 #[derive(State, Clone, PartialEq, Eq)]

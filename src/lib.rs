@@ -20,7 +20,7 @@ mod tests {
         schedule::IntoSystemConfigs,
         system::{Res, ResMut},
     };
-    use pyrious_state_macros::State;
+    use pyri_state_macros::State;
 
     use crate::{
         prelude::*,

@@ -1,9 +1,9 @@
 [package]
-name = "pyrious_state"
+name = "pyri_state"
 version = "0.1.0"
 edition = "2021"
 description = "An experimental 3rd-party alternative to `bevy_state`"
-repository = "https://github.com/benfrankel/pyrious_state"
+repository = "https://github.com/benfrankel/pyri_state"
 license = "MIT OR Apache-2.0"
 keywords = ["ecs", "game", "bevy"]
 categories = ["game-engines", "data-structures"]
@@ -17,4 +17,4 @@ bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
 bevy_app = { version = "0.13", default-features = false, optional = true }
 bevy_ecs = { version = "0.13", default-features = false }
 bevy_reflect = { version = "0.13", optional = true }
-pyrious_state_macros = { path = "macros" }
+pyri_state_macros = { path = "macros" }
