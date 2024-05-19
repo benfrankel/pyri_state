@@ -22,7 +22,7 @@ pub(crate) fn apply_flush_state<S: State>(
     mut current: ResMut<CurrentState<S>>,
     next: Res<NextState<S>>,
 ) {
-    current.inner = next.inner.clone();
+    current.inner.clone_from(&next.inner);
 }
 
 pub fn flush_state<S: State>(mut next: ResMut<NextState<S>>) {

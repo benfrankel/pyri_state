@@ -521,7 +521,7 @@ impl<'w, S: State> StateMut<'w, S> {
     }
 
     pub fn refresh(&mut self) {
-        self.next.inner = self.current.inner.clone();
+        self.next.inner.clone_from(&self.current.inner);
     }
 
     // Alias for `would_have_been_absent`.
