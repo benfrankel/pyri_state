@@ -1,18 +1,4 @@
-`pyrious_state` is an experimental 3rd-party alternative to `bevy_state`.
-
-# Thoughts
-
-- States are just double buffers with a fixed flush point and some change detection and dependency tooling.
-
-# Questions
-
-- How does flushing states once per frame interact with `FixedUpdate`?
-
-# Remaining tasks
-
-- [ ] Implement per-state settings via the `State` trait and derive macro.
-- [ ] Provide at least one test / example for every listed feature below.
-- [ ] Write documentation.
+`pyrious_state` is an experimental 3rd-party alternative to `bevy_state`. In `pyrious_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
 # Features
 
@@ -68,3 +54,10 @@ app.add_systems(
     spawn_easter_egg.run_if(should_spawn_easter_egg).in_set(OnTrans::<GameState>::Apply),
 );
 ```
+
+# Remaining tasks
+
+- [ ] Implement per-state settings via the `State` trait and derive macro.
+- [ ] How does flushing states once per frame interact with `FixedUpdate`?
+- [ ] Include a test or example for each mentioned feature.
+- [ ] Write documentation.
