@@ -7,11 +7,10 @@
 # Questions
 
 - How does flushing states once per frame interact with `FixedUpdate`?
-- Should settings be attached to the `State` trait via derive macro? Or is `app.add_state_with_settings(...)` better because it's not as magical?
 
 # Remaining tasks
 
-- [ ] Implement per-state settings.
+- [ ] Implement per-state settings via the `State` trait and derive macro.
 - [ ] Provide at least one test / example for every listed feature below.
 - [ ] Write documentation.
 
@@ -66,6 +65,6 @@ fn should_spawn_easter_egg(game_state: StateRef<GameState>) -> bool {
 
 app.add_systems(
     StateTransition,
-    spawn_easter_egg.run_if(state_will_transition::<GameState>.and_then(should_spawn_easter_egg)),
+    spawn_easter_egg.run_if(should_spawn_easter_egg).in_set(OnTrans::<GameState>::Apply),
 );
 ```
