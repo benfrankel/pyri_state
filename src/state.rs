@@ -190,6 +190,7 @@ impl<'w, S: State> StateRef<'w, S> {
     }
 }
 
+#[derive(SystemParam)]
 pub struct StateMut<'w, S: State> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: ResMut<'w, NextState<S>>,

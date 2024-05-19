@@ -57,7 +57,7 @@ Using `pyrious_state`:
 #[derive(State, Clone, PartialEq, Eq)]
 enum GameState { ... }
 
-fn frobnicate(game_state: StateMut<GameState>) { ... }
+fn frobnicate(mut game_state: StateMut<GameState>) { ... }
 
 fn should_spawn_easter_egg(game_state: StateRef<GameState>) -> bool {
     let (current, next) = game_state.unwrap();
