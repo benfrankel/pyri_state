@@ -24,7 +24,7 @@ mod tests {
 
     use crate::{
         prelude::*,
-        systems::{init_state, remove_state, state_will_enter, state_will_exit},
+        systems::{init_state, remove_state, state_will_enter, state_will_exit, state_will_mutate},
     };
 
     fn do_stuff<T>(x: T) {
@@ -109,10 +109,10 @@ mod tests {
                 (
                     // GameState
                     (
-                        init_state::<LevelState>.run_if(state_will_enter(GameState::Playing)),
-                        remove_state::<LevelState>.run_if(state_will_exit(GameState::Playing)),
-                        init_state::<PauseState>.run_if(state_will_enter(GameState::Playing)),
-                        remove_state::<PauseState>.run_if(state_will_exit(GameState::Playing)),
+                        (init_state::<LevelState>, init_state::<PauseState>)
+                            .run_if(state_will_enter(GameState::Playing)),
+                        (remove_state::<LevelState>, remove_state::<PauseState>)
+                            .run_if(state_will_exit(GameState::Playing)),
                     )
                         .in_set(OnTrans::<GameState>::Apply),
                     // PauseState
@@ -120,7 +120,9 @@ mod tests {
                     // LevelState
                     exit_level.in_set(OnTrans::<LevelState>::Exit),
                     enter_level.in_set(OnTrans::<LevelState>::Enter),
-                    compute_color.in_set(OnTrans::<LevelState>::Apply),
+                    compute_color
+                        .run_if(state_will_mutate::<LevelState>)
+                        .in_set(OnTrans::<LevelState>::Apply),
                     // ColorState
                     exit_color.in_set(OnTrans::<ColorState>::Exit),
                     enter_color.in_set(OnTrans::<ColorState>::Enter),

@@ -5,7 +5,7 @@ use bevy_ecs::reflect::ReflectResource;
 
 pub trait State: 'static + Send + Sync + Clone + PartialEq + Eq {}
 
-// The immutable half of the double buffered state.
+// The immutable half of the double-buffered state.
 // This should not be accessed mutably unless you know what you're doing.
 #[derive(Resource, Debug)]
 #[cfg_attr(
@@ -53,7 +53,7 @@ impl<S: State> CurrentState<S> {
     }
 }
 
-// The mutable half of the double buffered state.
+// The mutable half of the double-buffered state.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -68,6 +68,18 @@ pub struct NextState<S: State> {
 impl<S: State> Default for NextState<S> {
     fn default() -> Self {
         Self::absent()
+    }
+}
+
+impl<S: State + Default> NextState<S> {
+    // Sets the next state to the default state unless there's already a next state.
+    pub fn init(&mut self) -> &mut S {
+        self.inner.get_or_insert_with(|| S::default())
+    }
+
+    // Sets the next state to the default state.
+    pub fn restart(&mut self) -> &mut S {
+        self.insert(S::default())
     }
 }
 
@@ -102,33 +114,56 @@ impl<S: State> NextState<S> {
         self.get_mut().unwrap()
     }
 
-    pub fn is_absent(&self) -> bool {
+    pub fn flush(&mut self) -> &mut Self {
+        self.will_flush = true;
+        self
+    }
+
+    pub fn clear_flush(&mut self) -> &mut Self {
+        self.will_flush = false;
+        self
+    }
+
+    // Sets the next state to the given value and returns a mutable reference to it.
+    pub fn set(&mut self, value: S) -> &mut S {
+        self.inner.insert(value)
+    }
+
+    // Alias for `set`.
+    pub fn insert(&mut self, value: S) -> &mut S {
+        self.set(value)
+    }
+
+    pub fn remove(&mut self) {
+        self.inner = None;
+    }
+
+    pub fn would_be_absent(&self) -> bool {
         self.inner.is_none()
     }
 
-    pub fn is_present(&self) -> bool {
+    pub fn would_be_present(&self) -> bool {
         self.inner.is_some()
     }
 
-    pub fn is_in(&self, value: &S) -> bool {
+    pub fn would_be_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
     }
 
-    // TODO: Not sure about these NextState::will_xyz methods.
     pub fn will_flush(&self) -> bool {
         self.will_flush
     }
 
     pub fn will_be_absent(&self) -> bool {
-        self.will_flush() && self.is_absent()
+        self.will_flush() && self.would_be_absent()
     }
 
     pub fn will_be_present(&self) -> bool {
-        self.will_flush() && self.is_present()
+        self.will_flush() && self.would_be_present()
     }
 
     pub fn will_be_in(&self, value: &S) -> bool {
-        self.will_flush() && self.is_in(value)
+        self.will_flush() && self.would_be_in(value)
     }
 }
 
@@ -150,26 +185,10 @@ impl<'w, S: State> StateRef<'w, S> {
         )
     }
 
-    // Alias for `would_have_been_absent`.
-    pub fn is_absent(&self) -> bool {
-        matches!(self.get(), (None, _))
-    }
-
-    // Alias for `would_have_been_present`.
-    pub fn is_present(&self) -> bool {
-        matches!(self.get(), (Some(_), _))
-    }
-
-    // Alias for `would_have_been_in`.
-    pub fn is_in(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), _) if x == value)
-    }
-
     pub fn would_have_been_absent(&self) -> bool {
         matches!(self.get(), (None, _))
     }
 
-    // Equivalent to `would_be_exiting`.
     pub fn would_have_been_present(&self) -> bool {
         matches!(self.get(), (Some(_), _))
     }
@@ -182,13 +201,47 @@ impl<'w, S: State> StateRef<'w, S> {
         matches!(self.get(), (_, None))
     }
 
-    // Equivalent to `would_be_entering`.
     pub fn would_be_present(&self) -> bool {
         matches!(self.get(), (_, Some(_)))
     }
 
     pub fn would_be_in(&self, value: &S) -> bool {
         matches!(self.get(), (_, Some(y)) if y == value)
+    }
+
+    // Alias for `would_have_been_absent`.
+    pub fn is_absent(&self) -> bool {
+        self.would_have_been_absent()
+    }
+
+    // Alias for `would_have_been_present`.
+    pub fn is_present(&self) -> bool {
+        self.would_have_been_present()
+    }
+
+    // Alias for `would_have_been_in`.
+    pub fn is_in(&self, value: &S) -> bool {
+        self.would_have_been_in(value)
+    }
+
+    // Alias for `would_have_been_present`.
+    pub fn would_be_exiting(&self) -> bool {
+        self.would_have_been_present()
+    }
+
+    // Alias for `would_have_been_in`.
+    pub fn would_exit(&self, from: &S) -> bool {
+        self.would_have_been_in(from)
+    }
+
+    // Alias for `would_be_present`.
+    pub fn would_be_entering(&self) -> bool {
+        self.would_be_present()
+    }
+
+    // Alias for `would_be_in`.
+    pub fn would_enter(&self, to: &S) -> bool {
+        self.would_be_in(to)
     }
 
     pub fn would_be_inserted(&self) -> bool {
@@ -207,36 +260,14 @@ impl<'w, S: State> StateRef<'w, S> {
         matches!(self.get(), (Some(x), None) if x == value)
     }
 
-    // Equivalent to `would_have_been_present`.
-    pub fn would_be_exiting(&self) -> bool {
-        matches!(self.get(), (Some(_), _))
-    }
-
-    // Equivalent to `would_mutate_from`.
-    pub fn would_exit(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), _) if from == x)
-    }
-
-    // Equivalent to `would_be_present`.
-    pub fn would_be_entering(&self) -> bool {
-        matches!(self.get(), (_, Some(_)))
-    }
-
-    // Equivalent to `would_mutate_to`.
-    pub fn would_enter(&self, to: &S) -> bool {
-        matches!(self.get(), (_, Some(y)) if y == to)
-    }
-
     pub fn would_mutate(&self) -> bool {
         matches!(self.get(), (x, y) if x != y)
     }
 
-    // Equivalent to `would_exit`.
     pub fn would_mutate_from(&self, from: &S) -> bool {
         matches!(self.get(), (Some(x), y) if from == x && Some(x) != y)
     }
 
-    // Equivalent to `would_enter`.
     pub fn would_mutate_to(&self, to: &S) -> bool {
         matches!(self.get(), (x, Some(y)) if x != Some(y) && y == to)
     }
@@ -316,7 +347,6 @@ impl<'w, S: State> StateRef<'w, S> {
         self.will_flush() && self.would_have_been_absent()
     }
 
-    // Equivalent to `will_be_exiting`.
     pub fn will_have_been_present(&self) -> bool {
         self.will_flush() && self.would_have_been_present()
     }
@@ -329,13 +359,32 @@ impl<'w, S: State> StateRef<'w, S> {
         self.will_flush() && self.would_be_absent()
     }
 
-    // Equivalent to `will_be_entering`.
     pub fn will_be_present(&self) -> bool {
         self.will_flush() && self.would_be_present()
     }
 
     pub fn will_be_in(&self, value: &S) -> bool {
         self.will_flush() && self.would_be_in(value)
+    }
+
+    // Alias for `will_have_been_present`.
+    pub fn will_be_exiting(&self) -> bool {
+        self.will_have_been_present()
+    }
+
+    // Alias for `will_have_been_in`.
+    pub fn will_exit(&self, from: &S) -> bool {
+        self.will_have_been_in(from)
+    }
+
+    // Alias for `will_be_present`.
+    pub fn will_be_entering(&self) -> bool {
+        self.will_be_present()
+    }
+
+    // Alias for `will_be_in`.
+    pub fn will_enter(&self, to: &S) -> bool {
+        self.will_be_in(to)
     }
 
     pub fn will_be_inserted(&self) -> bool {
@@ -354,36 +403,14 @@ impl<'w, S: State> StateRef<'w, S> {
         self.will_flush() && self.would_remove(value)
     }
 
-    // Equivalent to `will_have_been_present`.
-    pub fn will_be_exiting(&self) -> bool {
-        self.will_flush() && self.would_be_exiting()
-    }
-
-    // Equivalent to `will_mutate_from`.
-    pub fn will_exit(&self, from: &S) -> bool {
-        self.will_flush() && self.would_exit(from)
-    }
-
-    // Equivalent to `will_be_present`.
-    pub fn will_be_entering(&self) -> bool {
-        self.will_flush() && self.would_be_entering()
-    }
-
-    // Equivalent to `will_mutate_to`.
-    pub fn will_enter(&self, to: &S) -> bool {
-        self.will_flush() && self.would_enter(to)
-    }
-
     pub fn will_mutate(&self) -> bool {
         self.will_flush() && self.would_mutate()
     }
 
-    // Equivalent to `will_exit`.
     pub fn will_mutate_from(&self, from: &S) -> bool {
         self.will_flush() && self.would_mutate_from(from)
     }
 
-    // Equivalent to `will_enter`.
     pub fn will_mutate_to(&self, to: &S) -> bool {
         self.will_flush() && self.would_mutate_to(to)
     }
@@ -463,16 +490,14 @@ pub struct StateMut<'w, S: State> {
 }
 
 impl<'w, S: State + Default> StateMut<'w, S> {
-    // Sets the next state to the current or default state unless there's already a next state.
+    // Sets the next state to the default state unless there's already a next state.
     pub fn init(&mut self) -> &mut S {
-        self.next
-            .inner
-            .get_or_insert_with(|| self.current.inner.clone().unwrap_or_default())
+        self.next.init()
     }
 
-    // Sets the next state to the default state even if there is already a next state.
+    // Sets the next state to the default state.
     pub fn restart(&mut self) -> &mut S {
-        self.insert(S::default())
+        self.next.restart()
     }
 }
 
@@ -506,44 +531,28 @@ impl<'w, S: State> StateMut<'w, S> {
         self
     }
 
-    // Sets the next state to the given value, and returns a mutable reference to it.
+    // Sets the next state to the given value and returns a mutable reference to it.
     pub fn set(&mut self, value: S) -> &mut S {
-        self.next.inner.insert(value)
+        self.next.set(value)
     }
 
     // Alias for `set`.
     pub fn insert(&mut self, value: S) -> &mut S {
-        self.next.inner.insert(value)
+        self.set(value)
     }
 
     pub fn remove(&mut self) {
-        self.next.inner = None;
+        self.next.remove();
     }
 
     pub fn refresh(&mut self) {
         self.next.inner.clone_from(&self.current.inner);
     }
 
-    // Alias for `would_have_been_absent`.
-    pub fn is_absent(&self) -> bool {
-        matches!(self.get(), (None, _))
-    }
-
-    // Alias for `would_have_been_present`.
-    pub fn is_present(&self) -> bool {
-        matches!(self.get(), (Some(_), _))
-    }
-
-    // Alias for `would_have_been_in`.
-    pub fn is_in(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), _) if x == value)
-    }
-
     pub fn would_have_been_absent(&self) -> bool {
         matches!(self.get(), (None, _))
     }
 
-    // Equivalent to `would_be_exiting`.
     pub fn would_have_been_present(&self) -> bool {
         matches!(self.get(), (Some(_), _))
     }
@@ -556,13 +565,47 @@ impl<'w, S: State> StateMut<'w, S> {
         matches!(self.get(), (_, None))
     }
 
-    // Equivalent to `would_be_entering`.
     pub fn would_be_present(&self) -> bool {
         matches!(self.get(), (_, Some(_)))
     }
 
     pub fn would_be_in(&self, value: &S) -> bool {
         matches!(self.get(), (_, Some(y)) if y == value)
+    }
+
+    // Alias for `would_have_been_absent`.
+    pub fn is_absent(&self) -> bool {
+        self.would_have_been_absent()
+    }
+
+    // Alias for `would_have_been_present`.
+    pub fn is_present(&self) -> bool {
+        self.would_have_been_present()
+    }
+
+    // Alias for `would_have_been_in`.
+    pub fn is_in(&self, value: &S) -> bool {
+        self.would_have_been_in(value)
+    }
+
+    // Alias for `would_have_been_present`.
+    pub fn would_be_exiting(&self) -> bool {
+        self.would_have_been_present()
+    }
+
+    // Alias for `would_have_been_in`.
+    pub fn would_exit(&self, from: &S) -> bool {
+        self.would_have_been_in(from)
+    }
+
+    // Alias for `would_be_present`.
+    pub fn would_be_entering(&self) -> bool {
+        self.would_be_present()
+    }
+
+    // Alias for `would_be_in`.
+    pub fn would_enter(&self, to: &S) -> bool {
+        self.would_be_in(to)
     }
 
     pub fn would_be_inserted(&self) -> bool {
@@ -581,36 +624,14 @@ impl<'w, S: State> StateMut<'w, S> {
         matches!(self.get(), (Some(x), None) if x == value)
     }
 
-    // Equivalent to `would_have_been_present`.
-    pub fn would_be_exiting(&self) -> bool {
-        matches!(self.get(), (Some(_), _))
-    }
-
-    // Equivalent to `would_mutate_from`.
-    pub fn would_exit(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), _) if from == x)
-    }
-
-    // Equivalent to `would_be_present`.
-    pub fn would_be_entering(&self) -> bool {
-        matches!(self.get(), (_, Some(_)))
-    }
-
-    // Equivalent to `would_mutate_to`.
-    pub fn would_enter(&self, to: &S) -> bool {
-        matches!(self.get(), (_, Some(y)) if y == to)
-    }
-
     pub fn would_mutate(&self) -> bool {
         matches!(self.get(), (x, y) if x != y)
     }
 
-    // Equivalent to `would_exit`.
     pub fn would_mutate_from(&self, from: &S) -> bool {
         matches!(self.get(), (Some(x), y) if from == x && Some(x) != y)
     }
 
-    // Equivalent to `would_enter`.
     pub fn would_mutate_to(&self, to: &S) -> bool {
         matches!(self.get(), (x, Some(y)) if x != Some(y) && y == to)
     }
@@ -690,7 +711,6 @@ impl<'w, S: State> StateMut<'w, S> {
         self.will_flush() && self.would_have_been_absent()
     }
 
-    // Equivalent to `will_be_exiting`.
     pub fn will_have_been_present(&self) -> bool {
         self.will_flush() && self.would_have_been_present()
     }
@@ -703,13 +723,32 @@ impl<'w, S: State> StateMut<'w, S> {
         self.will_flush() && self.would_be_absent()
     }
 
-    // Equivalent to `will_be_entering`.
     pub fn will_be_present(&self) -> bool {
         self.will_flush() && self.would_be_present()
     }
 
     pub fn will_be_in(&self, value: &S) -> bool {
         self.will_flush() && self.would_be_in(value)
+    }
+
+    // Alias for `will_have_been_present`.
+    pub fn will_be_exiting(&self) -> bool {
+        self.will_have_been_present()
+    }
+
+    // Alias for `will_have_been_in`.
+    pub fn will_exit(&self, from: &S) -> bool {
+        self.will_have_been_in(from)
+    }
+
+    // Alias for `will_be_present`.
+    pub fn will_be_entering(&self) -> bool {
+        self.will_be_present()
+    }
+
+    // Alias for `will_be_in`.
+    pub fn will_enter(&self, to: &S) -> bool {
+        self.will_be_in(to)
     }
 
     pub fn will_be_inserted(&self) -> bool {
@@ -728,36 +767,14 @@ impl<'w, S: State> StateMut<'w, S> {
         self.will_flush() && self.would_remove(value)
     }
 
-    // Equivalent to `will_have_been_present`.
-    pub fn will_be_exiting(&self) -> bool {
-        self.will_flush() && self.would_be_exiting()
-    }
-
-    // Equivalent to `will_mutate_from`.
-    pub fn will_exit(&self, from: &S) -> bool {
-        self.will_flush() && self.would_exit(from)
-    }
-
-    // Equivalent to `will_be_present`.
-    pub fn will_be_entering(&self) -> bool {
-        self.will_flush() && self.would_be_entering()
-    }
-
-    // Equivalent to `will_mutate_to`.
-    pub fn will_enter(&self, to: &S) -> bool {
-        self.will_flush() && self.would_enter(to)
-    }
-
     pub fn will_mutate(&self) -> bool {
         self.will_flush() && self.would_mutate()
     }
 
-    // Equivalent to `will_exit`.
     pub fn will_mutate_from(&self, from: &S) -> bool {
         self.will_flush() && self.would_mutate_from(from)
     }
 
-    // Equivalent to `will_enter`.
     pub fn will_mutate_to(&self, to: &S) -> bool {
         self.will_flush() && self.would_mutate_to(to)
     }
