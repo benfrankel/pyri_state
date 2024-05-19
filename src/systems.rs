@@ -1,29 +1,6 @@
-use bevy_ecs::{
-    event::EventWriter,
-    system::{Res, ResMut},
-};
+use bevy_ecs::system::{Res, ResMut};
 
-use crate::{
-    schedule::StateTransitionEvent,
-    state::{CurrentState, NextState, State, StateMut, StateRef},
-};
-
-pub(crate) fn send_transition_event<S: State>(
-    state: StateRef<S>,
-    mut events: EventWriter<StateTransitionEvent<S>>,
-) {
-    events.send(StateTransitionEvent {
-        before: state.current.inner.clone(),
-        after: state.next.inner.clone(),
-    });
-}
-
-pub(crate) fn apply_flush_state<S: State>(
-    mut current: ResMut<CurrentState<S>>,
-    next: Res<NextState<S>>,
-) {
-    current.inner.clone_from(&next.inner);
-}
+use crate::state::{CurrentState, NextState, State, StateMut, StateRef};
 
 pub fn flush_state<S: State>(mut next: ResMut<NextState<S>>) {
     next.will_flush = true;

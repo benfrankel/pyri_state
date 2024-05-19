@@ -1,15 +1,16 @@
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
-    event::Event,
+    event::{Event, EventWriter},
     schedule::{IntoSystemConfigs, IntoSystemSetConfigs, Schedule, ScheduleLabel, SystemSet},
+    system::{Res, ResMut},
 };
 
 use crate::{
-    state::State,
+    state::{CurrentState, NextState, State, StateRef},
     systems::{
-        apply_flush_state, clear_flush_state, flush_state, send_transition_event, state_will_flush,
-        state_will_mutate, state_would_be_entering, state_would_be_exiting,
+        clear_flush_state, flush_state, state_will_flush, state_will_mutate,
+        state_would_be_entering, state_would_be_exiting,
     },
 };
 
@@ -46,10 +47,10 @@ pub struct PostStateTransition;
 
 impl PostStateTransition {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
-        // TODO: Make send_transition_event opt-out
+        // TODO: Make send_flush_event opt-out
         schedule.add_systems(
             ((
-                (send_transition_event::<S>, apply_flush_state::<S>).chain(),
+                (send_flush_event::<S>, apply_flush::<S>).chain(),
                 clear_flush_state::<S>,
             ),)
                 .run_if(state_will_flush::<S>),
@@ -84,7 +85,18 @@ impl<S> Debug for OnTrans<S> {
 }
 
 #[derive(Event)]
-pub struct StateTransitionEvent<S: State> {
+pub struct StateFlushEvent<S: State> {
     pub before: Option<S>,
     pub after: Option<S>,
+}
+
+fn send_flush_event<S: State>(state: StateRef<S>, mut events: EventWriter<StateFlushEvent<S>>) {
+    events.send(StateFlushEvent {
+        before: state.current.inner.clone(),
+        after: state.next.inner.clone(),
+    });
+}
+
+fn apply_flush<S: State>(mut current: ResMut<CurrentState<S>>, next: Res<NextState<S>>) {
+    current.inner.clone_from(&next.inner);
 }
