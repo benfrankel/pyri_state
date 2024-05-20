@@ -6,21 +6,21 @@ use bevy_ecs::{
     system::{Res, ResMut},
 };
 
-use crate::{
-    state::{CurrentState, NextState, State, StateRef},
-    systems::{
-        clear_flush_state, flush_state, state_is_present, state_will_flush, state_will_mutate,
-        state_would_be_present,
-    },
-};
+use crate::state::{CurrentState, NextState, State, StateExtEq, StateRef};
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct PreStateFlush;
 
 impl PreStateFlush {
-    pub fn register_state<S: State>(schedule: &mut Schedule) {
-        // TODO: Make this opt-out
-        schedule.add_systems(flush_state::<S>.run_if(state_will_mutate::<S>));
+    pub fn register_state<S: State + Eq>(schedule: &mut Schedule) {
+        // TODO: Make flush on change opt-out
+        schedule.add_systems(S::flush(true).run_if(S::will_change));
+        schedule.add_systems(
+            (|mut x: ResMut<NextState<S>>| {
+                x.flush = true;
+            })
+            .run_if(S::will_change),
+        );
     }
 }
 
@@ -31,13 +31,14 @@ impl StateFlush {
     // TODO: Configure the declared state dependencies
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         schedule.configure_sets((
-            OnFlush::<S>::Any.run_if(state_will_flush::<S>),
+            S::on_flush().run_if(|x: Res<NextState<S>>| x.flush),
             (
-                OnFlush::<S>::Exit.run_if(state_is_present::<S>),
-                OnFlush::<S>::Enter.run_if(state_would_be_present::<S>),
+                S::on_exit().run_if(|x: Res<CurrentState<S>>| x.is_present()),
+                S::on_transition().run_if(|x: StateRef<S>| matches!(x.get(), (Some(_), Some(_)))),
+                S::on_enter().run_if(|x: Res<NextState<S>>| x.will_be_present()),
             )
                 .chain()
-                .in_set(OnFlush::<S>::Any),
+                .in_set(S::on_flush()),
         ));
     }
 }
@@ -47,37 +48,47 @@ pub struct PostStateFlush;
 
 impl PostStateFlush {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
-        // TODO: Make send_flush_event opt-out
+        // TODO: Make flush event opt-out
         schedule.add_systems(
-            ((
+            (
                 (send_flush_event::<S>, apply_flush::<S>).chain(),
-                clear_flush_state::<S>,
-            ),)
-                .run_if(state_will_flush::<S>),
+                S::flush(false),
+            )
+                .run_if(|x: Res<NextState<S>>| x.flush),
         );
     }
 }
 
-#[derive(SystemSet, Clone, PartialEq, Eq, Default)]
-pub enum OnFlush<S> {
+#[derive(SystemSet, Clone, Default)]
+pub enum OnState<S> {
     #[default]
-    Any,
+    Flush,
     Exit,
+    Transition,
     Enter,
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S> Hash for OnFlush<S> {
+impl<S> PartialEq for OnState<S> {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
+}
+
+impl<S> Eq for OnState<S> {}
+
+impl<S> Hash for OnState<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S> Debug for OnFlush<S> {
+impl<S> Debug for OnState<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Any => write!(f, "Any"),
+            Self::Flush => write!(f, "Flush"),
             Self::Exit => write!(f, "Exit"),
+            Self::Transition => write!(f, "Transition"),
             Self::Enter => write!(f, "Enter"),
             _ => unreachable!(),
         }

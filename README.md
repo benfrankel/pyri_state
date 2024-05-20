@@ -18,12 +18,7 @@ Using `bevy_state`:
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug)]
 enum GameState { ... }
 
-fn frobnicate(
-    game_state: Res<State<GameState>>,
-    mut next_game_state: ResMut<NextState<GameState>>,
-) { ... }
-
-enum ShouldSpawnEasterEggState(bool);
+struct ShouldSpawnEasterEggState(bool);
 
 impl ComputedState for ShouldSpawnEasterEggState {
     type SourceStates = GameState;
@@ -42,16 +37,11 @@ Using `pyri_state`:
 #[derive(State, Clone, PartialEq, Eq)]
 enum GameState { ... }
 
-fn frobnicate(mut game_state: StateMut<GameState>) { ... }
-
-fn should_spawn_easter_egg(game_state: StateRef<GameState>) -> bool {
-    let (current, next) = game_state.unwrap();
-    ...
-}
-
 app.add_systems(
-    StateTransition,
-    spawn_easter_egg.run_if(should_spawn_easter_egg).in_set(OnTrans::<GameState>::Apply),
+    StateFlush,
+    spawn_easter_egg
+        .run_if(GameState::will_transition_and(|current, next| ...))
+        .in_set(GameState::on_transition()),
 );
 ```
 

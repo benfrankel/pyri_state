@@ -28,7 +28,8 @@ fn set_up_schedules<S: State>(app: &mut App) -> &mut App {
 
     let mut schedules = app.world.resource_mut::<Schedules>();
 
-    PreStateFlush::register_state::<S>(schedules.get_mut(PreStateFlush).unwrap());
+    // TODO: ... is it possible to only call this if S also impls Eq?
+    //PreStateFlush::register_state::<S>(schedules.get_mut(PreStateFlush).unwrap());
     StateFlush::register_state::<S>(schedules.get_mut(StateFlush).unwrap());
     PostStateFlush::register_state::<S>(schedules.get_mut(PostStateFlush).unwrap());
 
@@ -36,15 +37,15 @@ fn set_up_schedules<S: State>(app: &mut App) -> &mut App {
 }
 
 pub trait AppStateExt {
-    fn add_state<S: State>(&mut self) -> &mut Self;
+    fn add_pyri_state<S: State>(&mut self) -> &mut Self;
 
-    fn init_state_ext<S: State + FromWorld>(&mut self) -> &mut Self;
+    fn init_pyri_state<S: State + FromWorld>(&mut self) -> &mut Self;
 
-    fn insert_state_ext<S: State>(&mut self, value: S) -> &mut Self;
+    fn insert_pyri_state<S: State>(&mut self, value: S) -> &mut Self;
 }
 
 impl AppStateExt for App {
-    fn add_state<S: State>(&mut self) -> &mut Self {
+    fn add_pyri_state<S: State>(&mut self) -> &mut Self {
         if self.world.contains_resource::<CurrentState<S>>() {
             return self;
         }
@@ -54,7 +55,7 @@ impl AppStateExt for App {
             .init_resource::<NextState<S>>()
     }
 
-    fn init_state_ext<S: State + FromWorld>(&mut self) -> &mut Self {
+    fn init_pyri_state<S: State + FromWorld>(&mut self) -> &mut Self {
         if self.world.contains_resource::<CurrentState<S>>() {
             return self;
         }
@@ -66,7 +67,7 @@ impl AppStateExt for App {
             .insert_resource(NextState::new(value))
     }
 
-    fn insert_state_ext<S: State>(&mut self, value: S) -> &mut Self {
+    fn insert_pyri_state<S: State>(&mut self, value: S) -> &mut Self {
         if self.world.contains_resource::<CurrentState<S>>() {
             return self;
         }

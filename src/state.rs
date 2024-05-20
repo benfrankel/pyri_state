@@ -1,10 +1,138 @@
-use bevy_ecs::system::{Res, ResMut, Resource, SystemParam};
+use bevy_ecs::system::{BoxedSystem, IntoSystem, Res, ResMut, Resource, SystemParam};
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 
-// TODO: Is PartialEq + Eq strictly necessary?
-pub trait State: 'static + Send + Sync + Clone + PartialEq + Eq {}
+use crate::schedule::OnState;
+
+pub trait State: 'static + Send + Sync + Clone {
+    fn on_flush() -> OnState<Self> {
+        OnState::Flush
+    }
+
+    fn on_exit() -> OnState<Self> {
+        OnState::Exit
+    }
+
+    fn on_enter() -> OnState<Self> {
+        OnState::Enter
+    }
+
+    fn on_transition() -> OnState<Self> {
+        OnState::Transition
+    }
+
+    // TODO: This doesn't check `flush`. Could be confusing.
+    fn will_flush_and(
+        test: impl Fn(Option<&Self>, Option<&Self>) -> bool,
+    ) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| matches!(state.get(), (x, y) if test(x, y))
+    }
+
+    fn will_exit_and(test: impl Fn(&Self) -> bool) -> impl Fn(Res<CurrentState<Self>>) -> bool {
+        move |state| matches!(state.get(), Some(x) if test(x))
+    }
+
+    fn will_enter_and(test: impl Fn(&Self) -> bool) -> impl Fn(Res<NextState<Self>>) -> bool {
+        move |state| matches!(state.get(), Some(y) if test(y))
+    }
+
+    fn will_transition_and(test: impl Fn(&Self, &Self) -> bool) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| matches!(state.get(), (Some(x), Some(y)) if test(x, y))
+    }
+
+    // TODO: BoxedSystem is a workaround for https://github.com/bevyengine/bevy/issues/13436.
+    fn flush(flush: bool) -> BoxedSystem {
+        Box::new(IntoSystem::into_system(
+            move |mut state: ResMut<NextState<Self>>| {
+                state.flush(flush);
+            },
+        ))
+    }
+
+    fn remove(mut state: ResMut<NextState<Self>>) {
+        state.remove();
+    }
+
+    // TODO: BoxedSystem is a workaround for https://github.com/bevyengine/bevy/issues/13436.
+    fn insert(value: Self) -> BoxedSystem {
+        Box::new(IntoSystem::into_system(
+            move |mut state: ResMut<NextState<Self>>| {
+                state.insert(value.clone());
+            },
+        ))
+    }
+
+    // TODO: BoxedSystem is a workaround for https://github.com/bevyengine/bevy/issues/13436.
+    // Alias for `insert`.
+    fn set(value: Self) -> BoxedSystem {
+        Self::insert(value)
+    }
+
+    fn stay(mut state: StateMut<Self>) {
+        state.stay();
+    }
+
+    fn refresh(mut state: StateMut<Self>) {
+        state.refresh();
+    }
+}
+
+pub trait StateExtEq: State + Eq {
+    fn will_exit(before: Self) -> impl Fn(Res<CurrentState<Self>>) -> bool {
+        move |state| state.is_in(&before)
+    }
+
+    fn will_enter(after: Self) -> impl Fn(Res<NextState<Self>>) -> bool {
+        move |state| state.will_be_in(&after)
+    }
+
+    fn will_transition(before: Self, after: Self) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| state.will_transition(&before, &after)
+    }
+
+    fn will_change(state: StateRef<Self>) -> bool {
+        state.will_change()
+    }
+
+    fn will_stay(state: StateRef<Self>) -> bool {
+        state.will_stay()
+    }
+
+    fn will_stay_as(value: Option<Self>) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| state.will_stay_as(value.as_ref())
+    }
+
+    fn will_stay_and(test: impl Fn(Option<&Self>) -> bool) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| matches!(state.get(), (x, y) if x == y && test(x))
+    }
+
+    fn will_refresh(state: StateRef<Self>) -> bool {
+        state.will_refresh()
+    }
+
+    fn will_refresh_as(value: Self) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| state.will_refresh_as(&value)
+    }
+
+    fn will_refresh_and(test: impl Fn(&Self) -> bool) -> impl Fn(StateRef<Self>) -> bool {
+        move |state| matches!(state.get(), (Some(x), Some(y)) if x == y && test(x))
+    }
+}
+
+impl<T: State + Eq> StateExtEq for T {}
+
+pub trait StateExtDefault: State + Default {
+    fn init(mut state: ResMut<NextState<Self>>) {
+        state.init();
+    }
+
+    fn restart(mut state: ResMut<NextState<Self>>) {
+        state.restart();
+    }
+}
+
+impl<T: State + Default> StateExtDefault for T {}
 
 // The immutable half of the double-buffered state.
 // This should never be accessed mutably during normal usage.
@@ -48,7 +176,9 @@ impl<S: State> CurrentState<S> {
     pub fn is_present(&self) -> bool {
         self.inner.is_some()
     }
+}
 
+impl<S: State + Eq> CurrentState<S> {
     pub fn is_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
     }
@@ -63,7 +193,7 @@ impl<S: State> CurrentState<S> {
 )]
 pub struct NextState<S: State> {
     pub inner: Option<S>,
-    pub will_flush: bool,
+    pub flush: bool,
 }
 
 impl<S: State> Default for NextState<S> {
@@ -73,14 +203,18 @@ impl<S: State> Default for NextState<S> {
 }
 
 impl<S: State + Default> NextState<S> {
-    // Sets the next state to the default state unless there's already a next state.
     pub fn init(&mut self) -> &mut S {
         self.inner.get_or_insert_with(|| S::default())
     }
 
-    // Sets the next state to the default state.
     pub fn restart(&mut self) -> &mut S {
         self.insert(S::default())
+    }
+}
+
+impl<S: State + Eq> NextState<S> {
+    pub fn will_be_in(&self, value: &S) -> bool {
+        self.inner.as_ref() == Some(value)
     }
 }
 
@@ -88,14 +222,14 @@ impl<S: State> NextState<S> {
     pub fn new(value: S) -> Self {
         Self {
             inner: Some(value),
-            will_flush: false,
+            flush: false,
         }
     }
 
     pub fn absent() -> Self {
         Self {
             inner: None,
-            will_flush: false,
+            flush: false,
         }
     }
 
@@ -115,56 +249,30 @@ impl<S: State> NextState<S> {
         self.get_mut().unwrap()
     }
 
-    pub fn flush(&mut self) -> &mut Self {
-        self.will_flush = true;
+    pub fn will_be_absent(&self) -> bool {
+        self.inner.is_none()
+    }
+
+    pub fn will_be_present(&self) -> bool {
+        self.inner.is_some()
+    }
+
+    pub fn flush(&mut self, flush: bool) -> &mut Self {
+        self.flush = flush;
         self
-    }
-
-    pub fn clear_flush(&mut self) -> &mut Self {
-        self.will_flush = false;
-        self
-    }
-
-    // Sets the next state to the given value and returns a mutable reference to it.
-    pub fn set(&mut self, value: S) -> &mut S {
-        self.inner.insert(value)
-    }
-
-    // Alias for `set`.
-    pub fn insert(&mut self, value: S) -> &mut S {
-        self.set(value)
     }
 
     pub fn remove(&mut self) {
         self.inner = None;
     }
 
-    pub fn would_be_absent(&self) -> bool {
-        self.inner.is_none()
+    pub fn insert(&mut self, value: S) -> &mut S {
+        self.set(value)
     }
 
-    pub fn would_be_present(&self) -> bool {
-        self.inner.is_some()
-    }
-
-    pub fn would_be_in(&self, value: &S) -> bool {
-        self.inner.as_ref() == Some(value)
-    }
-
-    pub fn will_flush(&self) -> bool {
-        self.will_flush
-    }
-
-    pub fn will_be_absent(&self) -> bool {
-        self.will_flush() && self.would_be_absent()
-    }
-
-    pub fn will_be_present(&self) -> bool {
-        self.will_flush() && self.would_be_present()
-    }
-
-    pub fn will_be_in(&self, value: &S) -> bool {
-        self.will_flush() && self.would_be_in(value)
+    // Alias for `insert`.
+    pub fn set(&mut self, value: S) -> &mut S {
+        self.inner.insert(value)
     }
 }
 
@@ -172,6 +280,40 @@ impl<S: State> NextState<S> {
 pub struct StateRef<'w, S: State> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: Res<'w, NextState<S>>,
+}
+
+impl<'w, S: State + Eq> StateRef<'w, S> {
+    pub fn will_exit(&self, before: &S) -> bool {
+        self.current.is_in(before)
+    }
+
+    pub fn will_enter(&self, after: &S) -> bool {
+        self.next.will_be_in(after)
+    }
+
+    pub fn will_transition(&self, before: &S, after: &S) -> bool {
+        self.will_exit(before) && self.will_enter(after)
+    }
+
+    pub fn will_change(&self) -> bool {
+        self.current.inner != self.next.inner
+    }
+
+    pub fn will_stay(&self) -> bool {
+        self.current.inner == self.next.inner
+    }
+
+    pub fn will_stay_as(&self, value: Option<&S>) -> bool {
+        self.current.get() == value && self.next.get() == value
+    }
+
+    pub fn will_refresh(&self) -> bool {
+        self.current.is_present() && self.will_stay()
+    }
+
+    pub fn will_refresh_as(&self, value: &S) -> bool {
+        self.current.is_in(value) && self.next.will_be_in(value)
+    }
 }
 
 impl<'w, S: State> StateRef<'w, S> {
@@ -185,309 +327,46 @@ impl<'w, S: State> StateRef<'w, S> {
             self.next.inner.as_ref().unwrap(),
         )
     }
-
-    pub fn would_have_been_absent(&self) -> bool {
-        matches!(self.get(), (None, _))
-    }
-
-    pub fn would_have_been_present(&self) -> bool {
-        matches!(self.get(), (Some(_), _))
-    }
-
-    pub fn would_have_been_in(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), _) if x == value)
-    }
-
-    pub fn would_be_absent(&self) -> bool {
-        matches!(self.get(), (_, None))
-    }
-
-    pub fn would_be_present(&self) -> bool {
-        matches!(self.get(), (_, Some(_)))
-    }
-
-    pub fn would_be_in(&self, value: &S) -> bool {
-        matches!(self.get(), (_, Some(y)) if y == value)
-    }
-
-    // Alias for `would_have_been_absent`.
-    pub fn is_absent(&self) -> bool {
-        self.would_have_been_absent()
-    }
-
-    // Alias for `would_have_been_present`.
-    pub fn is_present(&self) -> bool {
-        self.would_have_been_present()
-    }
-
-    // Alias for `would_have_been_in`.
-    pub fn is_in(&self, value: &S) -> bool {
-        self.would_have_been_in(value)
-    }
-
-    // Alias for `would_have_been_present`.
-    pub fn would_be_exiting(&self) -> bool {
-        self.would_have_been_present()
-    }
-
-    // Alias for `would_have_been_in`.
-    pub fn would_exit(&self, from: &S) -> bool {
-        self.would_have_been_in(from)
-    }
-
-    // Alias for `would_be_present`.
-    pub fn would_be_entering(&self) -> bool {
-        self.would_be_present()
-    }
-
-    // Alias for `would_be_in`.
-    pub fn would_enter(&self, to: &S) -> bool {
-        self.would_be_in(to)
-    }
-
-    pub fn would_be_inserted(&self) -> bool {
-        matches!(self.get(), (None, Some(_)))
-    }
-
-    pub fn would_insert(&self, value: &S) -> bool {
-        matches!(self.get(), (None, Some(y)) if y == value)
-    }
-
-    pub fn would_be_removed(&self) -> bool {
-        matches!(self.get(), (Some(_), None))
-    }
-
-    pub fn would_remove(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), None) if x == value)
-    }
-
-    pub fn would_mutate(&self) -> bool {
-        matches!(self.get(), (x, y) if x != y)
-    }
-
-    pub fn would_mutate_from(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), y) if from == x && Some(x) != y)
-    }
-
-    pub fn would_mutate_to(&self, to: &S) -> bool {
-        matches!(self.get(), (x, Some(y)) if x != Some(y) && y == to)
-    }
-
-    // Equivalent to `would_change_from_to`.
-    pub fn would_mutate_from_to(&self, from: &S, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && x != y && y == to)
-    }
-
-    // Equivalent to `would_stay_present`.
-    pub fn would_transition(&self) -> bool {
-        matches!(self.get(), (Some(_), Some(_)))
-    }
-
-    pub fn would_transition_from(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(_)) if from == x)
-    }
-
-    pub fn would_transition_to(&self, to: &S) -> bool {
-        matches!(self.get(), (Some(_), Some(y)) if y == to)
-    }
-
-    pub fn would_transition_from_to(&self, from: &S, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && y == to)
-    }
-
-    pub fn would_change(&self) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y)
-    }
-
-    pub fn would_change_from(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && x != y)
-    }
-
-    pub fn would_change_to(&self, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y && y == to)
-    }
-
-    // Equivalent to `would_mutate_from_to`.
-    pub fn would_change_from_to(&self, from: &S, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && x != y && y == to)
-    }
-
-    pub fn would_stay(&self) -> bool {
-        matches!(self.get(), (x, y) if x == y)
-    }
-
-    pub fn would_stay_absent(&self) -> bool {
-        matches!(self.get(), (None, None))
-    }
-
-    // Does not imply the state would not change; only that it would be present both before and after.
-    // Equivalent to `would_transition`.
-    pub fn would_stay_present(&self) -> bool {
-        matches!(self.get(), (Some(_), Some(_)))
-    }
-
-    // Equivalent to `would_refresh_as`.
-    pub fn would_stay_as(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if value == x && x == y)
-    }
-
-    pub fn would_refresh(&self) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x == y)
-    }
-
-    // Equivalent to `would_stay_as`.
-    pub fn would_refresh_as(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if value == x && x == y)
-    }
-
-    pub fn will_flush(&self) -> bool {
-        self.next.will_flush
-    }
-
-    pub fn will_have_been_absent(&self) -> bool {
-        self.will_flush() && self.would_have_been_absent()
-    }
-
-    pub fn will_have_been_present(&self) -> bool {
-        self.will_flush() && self.would_have_been_present()
-    }
-
-    pub fn will_have_been_in(&self, value: &S) -> bool {
-        self.will_flush() && self.would_have_been_in(value)
-    }
-
-    pub fn will_be_absent(&self) -> bool {
-        self.will_flush() && self.would_be_absent()
-    }
-
-    pub fn will_be_present(&self) -> bool {
-        self.will_flush() && self.would_be_present()
-    }
-
-    pub fn will_be_in(&self, value: &S) -> bool {
-        self.will_flush() && self.would_be_in(value)
-    }
-
-    // Alias for `will_have_been_present`.
-    pub fn will_be_exiting(&self) -> bool {
-        self.will_have_been_present()
-    }
-
-    // Alias for `will_have_been_in`.
-    pub fn will_exit(&self, from: &S) -> bool {
-        self.will_have_been_in(from)
-    }
-
-    // Alias for `will_be_present`.
-    pub fn will_be_entering(&self) -> bool {
-        self.will_be_present()
-    }
-
-    // Alias for `will_be_in`.
-    pub fn will_enter(&self, to: &S) -> bool {
-        self.will_be_in(to)
-    }
-
-    pub fn will_be_inserted(&self) -> bool {
-        self.will_flush() && self.would_be_inserted()
-    }
-
-    pub fn will_insert(&self, value: &S) -> bool {
-        self.will_flush() && self.would_insert(value)
-    }
-
-    pub fn will_be_removed(&self) -> bool {
-        self.will_flush() && self.would_be_removed()
-    }
-
-    pub fn will_remove(&self, value: &S) -> bool {
-        self.will_flush() && self.would_remove(value)
-    }
-
-    pub fn will_mutate(&self) -> bool {
-        self.will_flush() && self.would_mutate()
-    }
-
-    pub fn will_mutate_from(&self, from: &S) -> bool {
-        self.will_flush() && self.would_mutate_from(from)
-    }
-
-    pub fn will_mutate_to(&self, to: &S) -> bool {
-        self.will_flush() && self.would_mutate_to(to)
-    }
-
-    // Equivalent to `will_change_from_to`.
-    pub fn will_mutate_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_flush() && self.would_mutate_from_to(from, to)
-    }
-
-    // Equivalent to `will_stay_present`.
-    pub fn will_transition(&self) -> bool {
-        self.will_flush() && self.would_transition()
-    }
-
-    pub fn will_transition_from(&self, from: &S) -> bool {
-        self.will_flush() && self.would_transition_from(from)
-    }
-
-    pub fn will_transition_to(&self, to: &S) -> bool {
-        self.will_flush() && self.would_transition_to(to)
-    }
-
-    pub fn will_transition_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_flush() && self.would_transition_from_to(from, to)
-    }
-
-    pub fn will_change(&self) -> bool {
-        self.will_flush() && self.would_change()
-    }
-
-    pub fn will_change_from(&self, from: &S) -> bool {
-        self.will_flush() && self.would_change_from(from)
-    }
-
-    pub fn will_change_to(&self, to: &S) -> bool {
-        self.will_flush() && self.would_change_to(to)
-    }
-
-    // Equivalent to `would_mutate_from_to`.
-    pub fn will_change_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_flush() && self.would_change_from_to(from, to)
-    }
-
-    pub fn will_stay(&self) -> bool {
-        self.will_flush() && self.would_stay()
-    }
-
-    pub fn will_stay_absent(&self) -> bool {
-        self.will_flush() && self.would_stay_absent()
-    }
-
-    // Does not imply the state will not change; only that it will be present both before and after.
-    // Equivalent to `will_transition`.
-    pub fn will_stay_present(&self) -> bool {
-        self.will_flush() && self.would_stay_present()
-    }
-
-    // Equivalent to `will_refresh_as`.
-    pub fn will_stay_as(&self, value: &S) -> bool {
-        self.will_flush() && self.would_stay_as(value)
-    }
-
-    pub fn will_refresh(&self) -> bool {
-        self.will_flush() && self.would_refresh()
-    }
-
-    // Equivalent to `will_stay_as`.
-    pub fn will_refresh_as(&self, value: &S) -> bool {
-        self.will_flush() && self.would_refresh_as(value)
-    }
 }
 
 #[derive(SystemParam)]
 pub struct StateMut<'w, S: State> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: ResMut<'w, NextState<S>>,
+}
+
+impl<'w, S: State + Eq> StateMut<'w, S> {
+    pub fn will_exit(&self, before: &S) -> bool {
+        self.current.is_in(before)
+    }
+
+    pub fn will_enter(&self, after: &S) -> bool {
+        self.next.will_be_in(after)
+    }
+
+    pub fn will_transition(&self, before: &S, after: &S) -> bool {
+        self.will_exit(before) && self.will_enter(after)
+    }
+
+    pub fn will_change(&self) -> bool {
+        self.current.inner != self.next.inner
+    }
+
+    pub fn will_stay(&self) -> bool {
+        self.current.inner == self.next.inner
+    }
+
+    pub fn will_stay_as(&self, value: Option<&S>) -> bool {
+        self.current.get() == value && self.next.get() == value
+    }
+
+    pub fn will_refresh(&self) -> bool {
+        self.current.is_present() && self.will_stay()
+    }
+
+    pub fn will_refresh_as(&self, value: &S) -> bool {
+        self.current.is_in(value) && self.next.will_be_in(value)
+    }
 }
 
 impl<'w, S: State + Default> StateMut<'w, S> {
@@ -522,328 +401,32 @@ impl<'w, S: State> StateMut<'w, S> {
         )
     }
 
-    pub fn flush(&mut self) -> &mut Self {
-        self.next.will_flush = true;
+    pub fn flush(&mut self, flush: bool) -> &mut Self {
+        self.next.flush = flush;
         self
-    }
-
-    pub fn clear_flush(&mut self) -> &mut Self {
-        self.next.will_flush = false;
-        self
-    }
-
-    // Sets the next state to the given value and returns a mutable reference to it.
-    pub fn set(&mut self, value: S) -> &mut S {
-        self.next.set(value)
-    }
-
-    // Alias for `set`.
-    pub fn insert(&mut self, value: S) -> &mut S {
-        self.set(value)
     }
 
     pub fn remove(&mut self) {
         self.next.remove();
     }
 
-    pub fn refresh(&mut self) {
+    pub fn insert(&mut self, value: S) -> &mut S {
+        self.set(value)
+    }
+
+    // Alias for `insert`.
+    pub fn set(&mut self, value: S) -> &mut S {
+        self.next.set(value)
+    }
+
+    pub fn stay(&mut self) {
         self.next.inner.clone_from(&self.current.inner);
     }
 
-    pub fn would_have_been_absent(&self) -> bool {
-        matches!(self.get(), (None, _))
-    }
-
-    pub fn would_have_been_present(&self) -> bool {
-        matches!(self.get(), (Some(_), _))
-    }
-
-    pub fn would_have_been_in(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), _) if x == value)
-    }
-
-    pub fn would_be_absent(&self) -> bool {
-        matches!(self.get(), (_, None))
-    }
-
-    pub fn would_be_present(&self) -> bool {
-        matches!(self.get(), (_, Some(_)))
-    }
-
-    pub fn would_be_in(&self, value: &S) -> bool {
-        matches!(self.get(), (_, Some(y)) if y == value)
-    }
-
-    // Alias for `would_have_been_absent`.
-    pub fn is_absent(&self) -> bool {
-        self.would_have_been_absent()
-    }
-
-    // Alias for `would_have_been_present`.
-    pub fn is_present(&self) -> bool {
-        self.would_have_been_present()
-    }
-
-    // Alias for `would_have_been_in`.
-    pub fn is_in(&self, value: &S) -> bool {
-        self.would_have_been_in(value)
-    }
-
-    // Alias for `would_have_been_present`.
-    pub fn would_be_exiting(&self) -> bool {
-        self.would_have_been_present()
-    }
-
-    // Alias for `would_have_been_in`.
-    pub fn would_exit(&self, from: &S) -> bool {
-        self.would_have_been_in(from)
-    }
-
-    // Alias for `would_be_present`.
-    pub fn would_be_entering(&self) -> bool {
-        self.would_be_present()
-    }
-
-    // Alias for `would_be_in`.
-    pub fn would_enter(&self, to: &S) -> bool {
-        self.would_be_in(to)
-    }
-
-    pub fn would_be_inserted(&self) -> bool {
-        matches!(self.get(), (None, Some(_)))
-    }
-
-    pub fn would_insert(&self, value: &S) -> bool {
-        matches!(self.get(), (None, Some(y)) if y == value)
-    }
-
-    pub fn would_be_removed(&self) -> bool {
-        matches!(self.get(), (Some(_), None))
-    }
-
-    pub fn would_remove(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), None) if x == value)
-    }
-
-    pub fn would_mutate(&self) -> bool {
-        matches!(self.get(), (x, y) if x != y)
-    }
-
-    pub fn would_mutate_from(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), y) if from == x && Some(x) != y)
-    }
-
-    pub fn would_mutate_to(&self, to: &S) -> bool {
-        matches!(self.get(), (x, Some(y)) if x != Some(y) && y == to)
-    }
-
-    // Equivalent to `would_change_from_to`.
-    pub fn would_mutate_from_to(&self, from: &S, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && x != y && y == to)
-    }
-
-    // Equivalent to `would_stay_present`.
-    pub fn would_transition(&self) -> bool {
-        matches!(self.get(), (Some(_), Some(_)))
-    }
-
-    pub fn would_transition_from(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(_)) if from == x)
-    }
-
-    pub fn would_transition_to(&self, to: &S) -> bool {
-        matches!(self.get(), (Some(_), Some(y)) if y == to)
-    }
-
-    pub fn would_transition_from_to(&self, from: &S, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && y == to)
-    }
-
-    pub fn would_change(&self) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y)
-    }
-
-    pub fn would_change_from(&self, from: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && x != y)
-    }
-
-    pub fn would_change_to(&self, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y && y == to)
-    }
-
-    // Equivalent to `would_mutate_from_to`.
-    pub fn would_change_from_to(&self, from: &S, to: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if from == x && x != y && y == to)
-    }
-
-    pub fn would_stay(&self) -> bool {
-        matches!(self.get(), (x, y) if x == y)
-    }
-
-    pub fn would_stay_absent(&self) -> bool {
-        matches!(self.get(), (None, None))
-    }
-
-    // Does not imply the state would not change; only that it would be present both before and after.
-    // Equivalent to `would_transition`.
-    pub fn would_stay_present(&self) -> bool {
-        matches!(self.get(), (Some(_), Some(_)))
-    }
-
-    // Equivalent to `would_refresh_as`.
-    pub fn would_stay_as(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if value == x && x == y)
-    }
-
-    pub fn would_refresh(&self) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x == y)
-    }
-
-    // Equivalent to `would_stay_as`.
-    pub fn would_refresh_as(&self, value: &S) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if value == x && x == y)
-    }
-
-    pub fn will_flush(&self) -> bool {
-        self.next.will_flush
-    }
-
-    pub fn will_have_been_absent(&self) -> bool {
-        self.will_flush() && self.would_have_been_absent()
-    }
-
-    pub fn will_have_been_present(&self) -> bool {
-        self.will_flush() && self.would_have_been_present()
-    }
-
-    pub fn will_have_been_in(&self, value: &S) -> bool {
-        self.will_flush() && self.would_have_been_in(value)
-    }
-
-    pub fn will_be_absent(&self) -> bool {
-        self.will_flush() && self.would_be_absent()
-    }
-
-    pub fn will_be_present(&self) -> bool {
-        self.will_flush() && self.would_be_present()
-    }
-
-    pub fn will_be_in(&self, value: &S) -> bool {
-        self.will_flush() && self.would_be_in(value)
-    }
-
-    // Alias for `will_have_been_present`.
-    pub fn will_be_exiting(&self) -> bool {
-        self.will_have_been_present()
-    }
-
-    // Alias for `will_have_been_in`.
-    pub fn will_exit(&self, from: &S) -> bool {
-        self.will_have_been_in(from)
-    }
-
-    // Alias for `will_be_present`.
-    pub fn will_be_entering(&self) -> bool {
-        self.will_be_present()
-    }
-
-    // Alias for `will_be_in`.
-    pub fn will_enter(&self, to: &S) -> bool {
-        self.will_be_in(to)
-    }
-
-    pub fn will_be_inserted(&self) -> bool {
-        self.will_flush() && self.would_be_inserted()
-    }
-
-    pub fn will_insert(&self, value: &S) -> bool {
-        self.will_flush() && self.would_insert(value)
-    }
-
-    pub fn will_be_removed(&self) -> bool {
-        self.will_flush() && self.would_be_removed()
-    }
-
-    pub fn will_remove(&self, value: &S) -> bool {
-        self.will_flush() && self.would_remove(value)
-    }
-
-    pub fn will_mutate(&self) -> bool {
-        self.will_flush() && self.would_mutate()
-    }
-
-    pub fn will_mutate_from(&self, from: &S) -> bool {
-        self.will_flush() && self.would_mutate_from(from)
-    }
-
-    pub fn will_mutate_to(&self, to: &S) -> bool {
-        self.will_flush() && self.would_mutate_to(to)
-    }
-
-    // Equivalent to `will_change_from_to`.
-    pub fn will_mutate_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_flush() && self.would_mutate_from_to(from, to)
-    }
-
-    // Equivalent to `will_stay_present`.
-    pub fn will_transition(&self) -> bool {
-        self.will_flush() && self.would_transition()
-    }
-
-    pub fn will_transition_from(&self, from: &S) -> bool {
-        self.will_flush() && self.would_transition_from(from)
-    }
-
-    pub fn will_transition_to(&self, to: &S) -> bool {
-        self.will_flush() && self.would_transition_to(to)
-    }
-
-    pub fn will_transition_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_flush() && self.would_transition_from_to(from, to)
-    }
-
-    pub fn will_change(&self) -> bool {
-        self.will_flush() && self.would_change()
-    }
-
-    pub fn will_change_from(&self, from: &S) -> bool {
-        self.will_flush() && self.would_change_from(from)
-    }
-
-    pub fn will_change_to(&self, to: &S) -> bool {
-        self.will_flush() && self.would_change_to(to)
-    }
-
-    // Equivalent to `would_mutate_from_to`.
-    pub fn will_change_from_to(&self, from: &S, to: &S) -> bool {
-        self.will_flush() && self.would_change_from_to(from, to)
-    }
-
-    pub fn will_stay(&self) -> bool {
-        self.will_flush() && self.would_stay()
-    }
-
-    pub fn will_stay_absent(&self) -> bool {
-        self.will_flush() && self.would_stay_absent()
-    }
-
-    // Does not imply the state will not change; only that it will be present both before and after.
-    // Equivalent to `will_transition`.
-    pub fn will_stay_present(&self) -> bool {
-        self.will_flush() && self.would_stay_present()
-    }
-
-    // Equivalent to `will_refresh_as`.
-    pub fn will_stay_as(&self, value: &S) -> bool {
-        self.will_flush() && self.would_stay_as(value)
-    }
-
-    pub fn will_refresh(&self) -> bool {
-        self.will_flush() && self.would_refresh()
-    }
-
-    // Equivalent to `will_stay_as`.
-    pub fn will_refresh_as(&self, value: &S) -> bool {
-        self.will_flush() && self.would_refresh_as(value)
+    pub fn refresh(&mut self) {
+        self.stay();
+        if self.next.will_be_present() {
+            self.next.flush = true;
+        }
     }
 }

@@ -22,10 +22,7 @@ mod tests {
     };
     use pyri_state_macros::State;
 
-    use crate::{
-        prelude::*,
-        systems::{init_state, remove_state, state_will_enter, state_will_exit, state_will_mutate},
-    };
+    use crate::prelude::*;
 
     fn do_stuff<T>(x: T) {
         let _ = x;
@@ -66,7 +63,7 @@ mod tests {
     }
 
     // TODO: Specify that ColorState depends on LevelState
-    #[derive(State, Clone, PartialEq, Eq)]
+    #[derive(State, Clone)]
     enum ColorState {
         Black,
         White,
@@ -99,34 +96,44 @@ mod tests {
     fn foo() {
         let mut app = App::new();
 
-        app.add_plugins(StatePlugin)
-            .init_state_ext::<GameState>()
-            .add_state::<PauseState>()
-            .add_state::<LevelState>()
-            .add_state::<ColorState>()
-            .add_systems(
-                StateFlush,
-                (
-                    // GameState
-                    (
-                        (init_state::<LevelState>, init_state::<PauseState>)
-                            .run_if(state_will_enter(GameState::Playing)),
-                        (remove_state::<LevelState>, remove_state::<PauseState>)
-                            .run_if(state_will_exit(GameState::Playing)),
-                    )
-                        .in_set(OnFlush::<GameState>::Any),
-                    // PauseState
-                    apply_pause.in_set(OnFlush::<PauseState>::Any),
-                    // LevelState
-                    exit_level.in_set(OnFlush::<LevelState>::Exit),
-                    enter_level.in_set(OnFlush::<LevelState>::Enter),
-                    compute_color
-                        .run_if(state_will_mutate::<LevelState>)
-                        .in_set(OnFlush::<LevelState>::Any),
-                    // ColorState
-                    exit_color.in_set(OnFlush::<ColorState>::Exit),
-                    enter_color.in_set(OnFlush::<ColorState>::Enter),
-                ),
-            );
+        app.add_plugins(StatePlugin);
+
+        // Set up GameState
+        app.init_pyri_state::<GameState>().add_systems(
+            StateFlush,
+            (
+                (LevelState::remove, PauseState::remove)
+                    .run_if(GameState::will_exit(GameState::Playing))
+                    .in_set(GameState::on_exit()),
+                (LevelState::init, PauseState::init)
+                    .run_if(GameState::will_enter(GameState::Playing))
+                    .in_set(GameState::on_enter()),
+            ),
+        );
+
+        // Set up PauseState
+        app.add_pyri_state::<PauseState>()
+            .add_systems(StateFlush, apply_pause.in_set(PauseState::on_transition()));
+
+        // Set up LevelState
+        app.add_pyri_state::<LevelState>().add_systems(
+            StateFlush,
+            (
+                exit_level.in_set(LevelState::on_exit()),
+                enter_level.in_set(LevelState::on_enter()),
+                compute_color
+                    .run_if(LevelState::will_change)
+                    .in_set(LevelState::on_transition()),
+            ),
+        );
+
+        // Set up ColorState
+        app.add_pyri_state::<ColorState>().add_systems(
+            StateFlush,
+            (
+                exit_color.in_set(ColorState::on_exit()),
+                enter_color.in_set(ColorState::on_enter()),
+            ),
+        );
     }
 }
