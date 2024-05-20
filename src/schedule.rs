@@ -9,15 +9,15 @@ use bevy_ecs::{
 use crate::{
     state::{CurrentState, NextState, State, StateRef},
     systems::{
-        clear_flush_state, flush_state, state_will_flush, state_will_mutate,
-        state_would_be_entering, state_would_be_exiting,
+        clear_flush_state, flush_state, state_is_present, state_will_flush, state_will_mutate,
+        state_would_be_present,
     },
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
-pub struct PreStateTransition;
+pub struct PreStateFlush;
 
-impl PreStateTransition {
+impl PreStateFlush {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         // TODO: Make this opt-out
         schedule.add_systems(flush_state::<S>.run_if(state_will_mutate::<S>));
@@ -25,27 +25,27 @@ impl PreStateTransition {
 }
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
-pub struct StateTransition;
+pub struct StateFlush;
 
-impl StateTransition {
+impl StateFlush {
     // TODO: Configure the declared state dependencies
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         schedule.configure_sets((
-            OnTrans::<S>::Apply.run_if(state_will_flush::<S>),
+            OnFlush::<S>::Any.run_if(state_will_flush::<S>),
             (
-                OnTrans::<S>::Exit.run_if(state_would_be_exiting::<S>),
-                OnTrans::<S>::Enter.run_if(state_would_be_entering::<S>),
+                OnFlush::<S>::Exit.run_if(state_is_present::<S>),
+                OnFlush::<S>::Enter.run_if(state_would_be_present::<S>),
             )
                 .chain()
-                .in_set(OnTrans::<S>::Apply),
+                .in_set(OnFlush::<S>::Any),
         ));
     }
 }
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
-pub struct PostStateTransition;
+pub struct PostStateFlush;
 
-impl PostStateTransition {
+impl PostStateFlush {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         // TODO: Make send_flush_event opt-out
         schedule.add_systems(
@@ -59,24 +59,24 @@ impl PostStateTransition {
 }
 
 #[derive(SystemSet, Clone, PartialEq, Eq, Default)]
-pub enum OnTrans<S> {
+pub enum OnFlush<S> {
     #[default]
-    Apply,
+    Any,
     Exit,
     Enter,
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S> Hash for OnTrans<S> {
+impl<S> Hash for OnFlush<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S> Debug for OnTrans<S> {
+impl<S> Debug for OnFlush<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Apply => write!(f, "Any"),
+            Self::Any => write!(f, "Any"),
             Self::Exit => write!(f, "Exit"),
             Self::Enter => write!(f, "Enter"),
             _ => unreachable!(),

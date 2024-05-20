@@ -3,10 +3,11 @@ use bevy_ecs::system::{Res, ResMut, Resource, SystemParam};
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 
+// TODO: Is PartialEq + Eq strictly necessary?
 pub trait State: 'static + Send + Sync + Clone + PartialEq + Eq {}
 
 // The immutable half of the double-buffered state.
-// This should not be accessed mutably unless you know what you're doing.
+// This should never be accessed mutably during normal usage.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",

@@ -105,7 +105,7 @@ mod tests {
             .add_state::<LevelState>()
             .add_state::<ColorState>()
             .add_systems(
-                StateTransition,
+                StateFlush,
                 (
                     // GameState
                     (
@@ -114,18 +114,18 @@ mod tests {
                         (remove_state::<LevelState>, remove_state::<PauseState>)
                             .run_if(state_will_exit(GameState::Playing)),
                     )
-                        .in_set(OnTrans::<GameState>::Apply),
+                        .in_set(OnFlush::<GameState>::Any),
                     // PauseState
-                    apply_pause.in_set(OnTrans::<PauseState>::Apply),
+                    apply_pause.in_set(OnFlush::<PauseState>::Any),
                     // LevelState
-                    exit_level.in_set(OnTrans::<LevelState>::Exit),
-                    enter_level.in_set(OnTrans::<LevelState>::Enter),
+                    exit_level.in_set(OnFlush::<LevelState>::Exit),
+                    enter_level.in_set(OnFlush::<LevelState>::Enter),
                     compute_color
                         .run_if(state_will_mutate::<LevelState>)
-                        .in_set(OnTrans::<LevelState>::Apply),
+                        .in_set(OnFlush::<LevelState>::Any),
                     // ColorState
-                    exit_color.in_set(OnTrans::<ColorState>::Exit),
-                    enter_color.in_set(OnTrans::<ColorState>::Enter),
+                    exit_color.in_set(OnFlush::<ColorState>::Exit),
+                    enter_color.in_set(OnFlush::<ColorState>::Enter),
                 ),
             );
     }

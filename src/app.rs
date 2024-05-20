@@ -3,7 +3,7 @@ use bevy_ecs::{schedule::Schedules, world::FromWorld};
 
 use crate::{
     prelude::StateFlushEvent,
-    schedule::{PostStateTransition, PreStateTransition, StateTransition},
+    schedule::{PostStateFlush, PreStateFlush, StateFlush},
     state::{CurrentState, NextState, State},
 };
 
@@ -11,14 +11,14 @@ pub struct StatePlugin;
 
 impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
-        app.init_schedule(PreStateTransition)
-            .init_schedule(StateTransition)
-            .init_schedule(PostStateTransition);
+        app.init_schedule(PreStateFlush)
+            .init_schedule(StateFlush)
+            .init_schedule(PostStateFlush);
 
         let mut order = app.world.resource_mut::<MainScheduleOrder>();
-        order.insert_after(PreUpdate, PreStateTransition);
-        order.insert_after(PreStateTransition, StateTransition);
-        order.insert_after(StateTransition, PostStateTransition);
+        order.insert_after(PreUpdate, PreStateFlush);
+        order.insert_after(PreStateFlush, StateFlush);
+        order.insert_after(StateFlush, PostStateFlush);
     }
 }
 
@@ -28,9 +28,9 @@ fn set_up_schedules<S: State>(app: &mut App) -> &mut App {
 
     let mut schedules = app.world.resource_mut::<Schedules>();
 
-    PreStateTransition::register_state::<S>(schedules.get_mut(PreStateTransition).unwrap());
-    StateTransition::register_state::<S>(schedules.get_mut(StateTransition).unwrap());
-    PostStateTransition::register_state::<S>(schedules.get_mut(PostStateTransition).unwrap());
+    PreStateFlush::register_state::<S>(schedules.get_mut(PreStateFlush).unwrap());
+    StateFlush::register_state::<S>(schedules.get_mut(StateFlush).unwrap());
+    PostStateFlush::register_state::<S>(schedules.get_mut(PostStateFlush).unwrap());
 
     app
 }
