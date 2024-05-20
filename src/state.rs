@@ -1,4 +1,7 @@
-use bevy_ecs::system::{BoxedSystem, IntoSystem, Res, ResMut, Resource, SystemParam};
+use bevy_ecs::{
+    schedule::{IntoSystemConfigs, SystemConfigs},
+    system::{Res, ResMut, Resource, SystemParam},
+};
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
@@ -6,66 +9,125 @@ use bevy_ecs::reflect::ReflectResource;
 use crate::schedule::OnState;
 
 pub trait State: 'static + Send + Sync + Clone {
-    fn on_flush() -> OnState<Self> {
-        OnState::Flush
+    fn will_any_flush(state: Res<NextState<Self>>) -> bool {
+        state.flush
     }
 
-    fn on_exit() -> OnState<Self> {
-        OnState::Exit
+    fn on_any_flush<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(Self::will_any_flush)
+            .in_set(OnState::<Self>::Flush)
     }
 
-    fn on_enter() -> OnState<Self> {
-        OnState::Enter
+    fn will_any_exit(state: Res<CurrentState<Self>>) -> bool {
+        state.will_any_exit()
     }
 
-    fn on_transition() -> OnState<Self> {
-        OnState::Transition
+    fn on_any_exit<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(Self::will_any_exit)
+            .in_set(OnState::<Self>::Exit)
+    }
+
+    fn will_any_enter(state: Res<NextState<Self>>) -> bool {
+        state.will_any_enter()
+    }
+
+    fn on_any_enter<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(Self::will_any_enter)
+            .in_set(OnState::<Self>::Enter)
+    }
+
+    fn will_any_transition(state: StateRef<Self>) -> bool {
+        state.will_any_transition()
+    }
+
+    fn on_any_transition<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(Self::will_any_transition)
+            .in_set(OnState::<Self>::Flush)
     }
 
     // TODO: This doesn't check `flush`. Could be confusing.
     fn will_flush_and(
-        test: impl Fn(Option<&Self>, Option<&Self>) -> bool,
-    ) -> impl Fn(StateRef<Self>) -> bool {
-        move |state| matches!(state.get(), (x, y) if test(x, y))
+        test: impl Fn(Option<&Self>, Option<&Self>) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
+        move |state| state.will_flush_and(&test)
     }
 
-    fn will_exit_and(test: impl Fn(&Self) -> bool) -> impl Fn(Res<CurrentState<Self>>) -> bool {
-        move |state| matches!(state.get(), Some(x) if test(x))
+    fn on_flush_and<M>(
+        test: impl Fn(Option<&Self>, Option<&Self>) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_flush_and(test))
+            .in_set(OnState::<Self>::Flush)
     }
 
-    fn will_enter_and(test: impl Fn(&Self) -> bool) -> impl Fn(Res<NextState<Self>>) -> bool {
-        move |state| matches!(state.get(), Some(y) if test(y))
+    fn will_exit_and(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
+        move |state| state.will_exit_and(&test)
     }
 
-    fn will_transition_and(test: impl Fn(&Self, &Self) -> bool) -> impl Fn(StateRef<Self>) -> bool {
-        move |state| matches!(state.get(), (Some(x), Some(y)) if test(x, y))
+    fn on_exit_and<M>(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_exit_and(test))
+            .in_set(OnState::<Self>::Exit)
     }
 
-    // TODO: BoxedSystem is a workaround for https://github.com/bevyengine/bevy/issues/13436.
-    fn flush(flush: bool) -> BoxedSystem {
-        Box::new(IntoSystem::into_system(
-            move |mut state: ResMut<NextState<Self>>| {
-                state.flush(flush);
-            },
-        ))
+    fn will_enter_and(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(Res<NextState<Self>>) -> bool + 'static + Send + Sync {
+        move |state| state.will_enter_and(&test)
+    }
+
+    fn on_enter_and<M>(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_enter_and(test))
+            .in_set(OnState::<Self>::Enter)
+    }
+
+    fn will_transition_and(
+        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
+        move |state| state.will_transition_and(&test)
+    }
+
+    fn on_transition_and<M>(
+        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_transition_and(test))
+            .in_set(OnState::<Self>::Flush)
+    }
+
+    fn flush(flush: bool) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+        move |mut state| {
+            state.flush(flush);
+        }
     }
 
     fn remove(mut state: ResMut<NextState<Self>>) {
         state.remove();
     }
 
-    // TODO: BoxedSystem is a workaround for https://github.com/bevyengine/bevy/issues/13436.
-    fn insert(value: Self) -> BoxedSystem {
-        Box::new(IntoSystem::into_system(
-            move |mut state: ResMut<NextState<Self>>| {
-                state.insert(value.clone());
-            },
-        ))
+    fn insert(self) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+        move |mut state| {
+            state.insert(self.clone());
+        }
     }
 
-    // TODO: BoxedSystem is a workaround for https://github.com/bevyengine/bevy/issues/13436.
     // Alias for `insert`.
-    fn set(value: Self) -> BoxedSystem {
+    fn set(value: Self) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
         Self::insert(value)
     }
 
@@ -79,44 +141,101 @@ pub trait State: 'static + Send + Sync + Clone {
 }
 
 pub trait StateExtEq: State + Eq {
-    fn will_exit(before: Self) -> impl Fn(Res<CurrentState<Self>>) -> bool {
-        move |state| state.is_in(&before)
+    fn will_exit(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
+        move |state| state.will_exit(&self)
     }
 
-    fn will_enter(after: Self) -> impl Fn(Res<NextState<Self>>) -> bool {
-        move |state| state.will_be_in(&after)
+    fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(self.will_exit())
+            .in_set(OnState::<Self>::Exit)
     }
 
-    fn will_transition(before: Self, after: Self) -> impl Fn(StateRef<Self>) -> bool {
+    fn will_enter(self) -> impl Fn(Res<NextState<Self>>) -> bool + 'static + Send + Sync {
+        move |state| state.will_enter(&self)
+    }
+
+    fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(self.will_enter())
+            .in_set(OnState::<Self>::Enter)
+    }
+
+    fn will_transition(
+        before: Self,
+        after: Self,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
         move |state| state.will_transition(&before, &after)
     }
 
-    fn will_change(state: StateRef<Self>) -> bool {
-        state.will_change()
+    fn on_transition<M>(
+        before: Self,
+        after: Self,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_transition(before, after))
+            .in_set(OnState::<Self>::Flush)
     }
 
-    fn will_stay(state: StateRef<Self>) -> bool {
-        state.will_stay()
+    fn will_any_change(state: StateRef<Self>) -> bool {
+        state.will_any_change()
     }
 
-    fn will_stay_as(value: Option<Self>) -> impl Fn(StateRef<Self>) -> bool {
-        move |state| state.will_stay_as(value.as_ref())
+    fn on_any_change<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(Self::will_any_change)
+            .in_set(OnState::<Self>::Flush)
     }
 
-    fn will_stay_and(test: impl Fn(Option<&Self>) -> bool) -> impl Fn(StateRef<Self>) -> bool {
-        move |state| matches!(state.get(), (x, y) if x == y && test(x))
+    fn will_change_and(
+        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
+        move |state| state.will_change_and(&test)
     }
 
-    fn will_refresh(state: StateRef<Self>) -> bool {
-        state.will_refresh()
+    fn on_change_and<M>(
+        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_change_and(test))
+            .in_set(OnState::<Self>::Flush)
     }
 
-    fn will_refresh_as(value: Self) -> impl Fn(StateRef<Self>) -> bool {
-        move |state| state.will_refresh_as(&value)
+    fn will_any_refresh(state: StateRef<Self>) -> bool {
+        state.will_any_refresh()
     }
 
-    fn will_refresh_and(test: impl Fn(&Self) -> bool) -> impl Fn(StateRef<Self>) -> bool {
-        move |state| matches!(state.get(), (Some(x), Some(y)) if x == y && test(x))
+    fn on_any_refresh<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(Self::will_any_refresh)
+            .in_set(OnState::<Self>::Flush)
+    }
+
+    fn will_refresh(self) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
+        move |state| state.will_refresh(&self)
+    }
+
+    fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(self.will_refresh())
+            .in_set(OnState::<Self>::Flush)
+    }
+
+    fn will_refresh_and(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
+        move |state| state.will_refresh_and(&test)
+    }
+
+    fn on_refresh_and<M>(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems
+            .run_if(Self::will_refresh_and(test))
+            .in_set(OnState::<Self>::Flush)
     }
 }
 
@@ -153,12 +272,16 @@ impl<S: State> Default for CurrentState<S> {
 }
 
 impl<S: State> CurrentState<S> {
-    pub fn new(value: S) -> Self {
-        Self { inner: Some(value) }
+    pub fn new(inner: Option<S>) -> Self {
+        Self { inner }
     }
 
     pub fn absent() -> Self {
-        Self { inner: None }
+        Self::new(None)
+    }
+
+    pub fn present(value: S) -> Self {
+        Self::new(Some(value))
     }
 
     pub fn get(&self) -> Option<&S> {
@@ -176,11 +299,25 @@ impl<S: State> CurrentState<S> {
     pub fn is_present(&self) -> bool {
         self.inner.is_some()
     }
+
+    // Equivalent to `is_present`.
+    pub fn will_any_exit(&self) -> bool {
+        self.is_present()
+    }
+
+    pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        self.get().is_some_and(test)
+    }
 }
 
 impl<S: State + Eq> CurrentState<S> {
     pub fn is_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
+    }
+
+    // Alias for `is_in`.
+    pub fn will_exit(&self, value: &S) -> bool {
+        self.is_in(value)
     }
 }
 
@@ -216,21 +353,27 @@ impl<S: State + Eq> NextState<S> {
     pub fn will_be_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
     }
+
+    // Alias for `will_be_in`.
+    pub fn will_enter(&self, value: &S) -> bool {
+        self.will_be_in(value)
+    }
 }
 
 impl<S: State> NextState<S> {
-    pub fn new(value: S) -> Self {
+    pub fn new(inner: Option<S>) -> Self {
         Self {
-            inner: Some(value),
+            inner,
             flush: false,
         }
     }
 
     pub fn absent() -> Self {
-        Self {
-            inner: None,
-            flush: false,
-        }
+        Self::new(None)
+    }
+
+    pub fn present(value: S) -> Self {
+        Self::new(Some(value))
     }
 
     pub fn get(&self) -> Option<&S> {
@@ -255,6 +398,15 @@ impl<S: State> NextState<S> {
 
     pub fn will_be_present(&self) -> bool {
         self.inner.is_some()
+    }
+
+    // Alias for `will_be_present`.
+    pub fn will_any_enter(&self) -> bool {
+        self.will_be_present()
+    }
+
+    pub fn will_enter_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        self.get().is_some_and(test)
     }
 
     pub fn flush(&mut self, flush: bool) -> &mut Self {
@@ -283,36 +435,36 @@ pub struct StateRef<'w, S: State> {
 }
 
 impl<'w, S: State + Eq> StateRef<'w, S> {
-    pub fn will_exit(&self, before: &S) -> bool {
-        self.current.is_in(before)
+    pub fn will_exit(&self, value: &S) -> bool {
+        matches!(self.get(), (Some(x), _) if value == x)
     }
 
-    pub fn will_enter(&self, after: &S) -> bool {
-        self.next.will_be_in(after)
+    pub fn will_enter(&self, value: &S) -> bool {
+        matches!(self.get(), (_, Some(y)) if y == value)
     }
 
     pub fn will_transition(&self, before: &S, after: &S) -> bool {
-        self.will_exit(before) && self.will_enter(after)
+        matches!(self.get(), (Some(x), Some(y)) if before == x && y == after)
     }
 
-    pub fn will_change(&self) -> bool {
-        self.current.inner != self.next.inner
+    pub fn will_any_change(&self) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x != y)
     }
 
-    pub fn will_stay(&self) -> bool {
-        self.current.inner == self.next.inner
+    pub fn will_change_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x != y && test(x, y))
     }
 
-    pub fn will_stay_as(&self, value: Option<&S>) -> bool {
-        self.current.get() == value && self.next.get() == value
+    pub fn will_any_refresh(&self) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x == y)
     }
 
-    pub fn will_refresh(&self) -> bool {
-        self.current.is_present() && self.will_stay()
+    pub fn will_refresh(&self, value: &S) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if value == x && x == y)
     }
 
-    pub fn will_refresh_as(&self, value: &S) -> bool {
-        self.current.is_in(value) && self.next.will_be_in(value)
+    pub fn will_refresh_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x == y && test(y))
     }
 }
 
@@ -327,6 +479,34 @@ impl<'w, S: State> StateRef<'w, S> {
             self.next.inner.as_ref().unwrap(),
         )
     }
+
+    pub fn will_flush_and(&self, test: impl Fn(Option<&S>, Option<&S>) -> bool) -> bool {
+        matches!(self.get(), (x, y) if test(x, y))
+    }
+
+    pub fn will_any_exit(&self) -> bool {
+        matches!(self.get(), (Some(_), _))
+    }
+
+    pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), _) if test(x))
+    }
+
+    pub fn will_any_enter(&self) -> bool {
+        matches!(self.get(), (_, Some(_)))
+    }
+
+    pub fn will_enter_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        matches!(self.get(), (_, Some(y)) if test(y))
+    }
+
+    pub fn will_any_transition(&self) -> bool {
+        matches!(self.get(), (Some(_), Some(_)))
+    }
+
+    pub fn will_transition_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if test(x, y))
+    }
 }
 
 #[derive(SystemParam)]
@@ -336,36 +516,36 @@ pub struct StateMut<'w, S: State> {
 }
 
 impl<'w, S: State + Eq> StateMut<'w, S> {
-    pub fn will_exit(&self, before: &S) -> bool {
-        self.current.is_in(before)
+    pub fn will_exit(&self, value: &S) -> bool {
+        matches!(self.get(), (Some(x), _) if value == x)
     }
 
-    pub fn will_enter(&self, after: &S) -> bool {
-        self.next.will_be_in(after)
+    pub fn will_enter(&self, value: &S) -> bool {
+        matches!(self.get(), (_, Some(y)) if y == value)
     }
 
     pub fn will_transition(&self, before: &S, after: &S) -> bool {
-        self.will_exit(before) && self.will_enter(after)
+        matches!(self.get(), (Some(x), Some(y)) if before == x && y == after)
     }
 
-    pub fn will_change(&self) -> bool {
-        self.current.inner != self.next.inner
+    pub fn will_any_change(&self) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x != y)
     }
 
-    pub fn will_stay(&self) -> bool {
-        self.current.inner == self.next.inner
+    pub fn will_change_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x != y && test(x, y))
     }
 
-    pub fn will_stay_as(&self, value: Option<&S>) -> bool {
-        self.current.get() == value && self.next.get() == value
+    pub fn will_any_refresh(&self) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x == y)
     }
 
-    pub fn will_refresh(&self) -> bool {
-        self.current.is_present() && self.will_stay()
+    pub fn will_refresh(&self, value: &S) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if value == x && x == y)
     }
 
-    pub fn will_refresh_as(&self, value: &S) -> bool {
-        self.current.is_in(value) && self.next.will_be_in(value)
+    pub fn will_refresh_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if x == y && test(y))
     }
 }
 
@@ -401,6 +581,34 @@ impl<'w, S: State> StateMut<'w, S> {
         )
     }
 
+    pub fn will_flush_and(&self, test: impl Fn(Option<&S>, Option<&S>) -> bool) -> bool {
+        matches!(self.get(), (x, y) if test(x, y))
+    }
+
+    pub fn will_any_exit(&self) -> bool {
+        matches!(self.get(), (Some(_), _))
+    }
+
+    pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), _) if test(x))
+    }
+
+    pub fn will_any_enter(&self) -> bool {
+        matches!(self.get(), (_, Some(_)))
+    }
+
+    pub fn will_enter_and(&self, test: impl Fn(&S) -> bool) -> bool {
+        matches!(self.get(), (_, Some(y)) if test(y))
+    }
+
+    pub fn will_any_transition(&self) -> bool {
+        matches!(self.get(), (Some(_), Some(_)))
+    }
+
+    pub fn will_transition_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if test(x, y))
+    }
+
     pub fn flush(&mut self, flush: bool) -> &mut Self {
         self.next.flush = flush;
         self
@@ -419,6 +627,7 @@ impl<'w, S: State> StateMut<'w, S> {
         self.next.set(value)
     }
 
+    // TODO: Rename to `reset`? Or would that be confusing alongside `restart`, `refresh`, and `remove`?
     pub fn stay(&mut self) {
         self.next.inner.clone_from(&self.current.inner);
     }

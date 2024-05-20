@@ -17,7 +17,7 @@ pub mod prelude {
 mod tests {
     use bevy_app::App;
     use bevy_ecs::{
-        schedule::IntoSystemConfigs,
+        schedule::{IntoSystemConfigs, IntoSystemSetConfigs},
         system::{Res, ResMut},
     };
     use pyri_state_macros::State;
@@ -40,7 +40,7 @@ mod tests {
     #[derive(State, Clone, PartialEq, Eq, Default)]
     struct PauseState(bool);
 
-    fn apply_pause(pause_state: Res<CurrentState<PauseState>>) {
+    fn apply_pause(pause_state: Res<NextState<PauseState>>) {
         let pause = pause_state.unwrap().0;
         do_stuff::<bool>(pause);
     }
@@ -69,11 +69,8 @@ mod tests {
         White,
     }
 
-    fn compute_color(
-        level: Res<CurrentState<LevelState>>,
-        mut color: ResMut<NextState<ColorState>>,
-    ) {
-        color.inner = level.inner.as_ref().map(|level| {
+    fn compute_color(level: Res<NextState<LevelState>>, mut color: ResMut<NextState<ColorState>>) {
+        color.inner = level.get().map(|level| {
             if level.x + level.y % 2 == 0 {
                 ColorState::Black
             } else {
@@ -99,40 +96,50 @@ mod tests {
         app.add_plugins(StatePlugin);
 
         // Set up GameState
-        app.init_pyri_state::<GameState>().add_systems(
-            StateFlush,
-            (
-                (LevelState::remove, PauseState::remove)
-                    .run_if(GameState::will_exit(GameState::Playing))
-                    .in_set(GameState::on_exit()),
-                (LevelState::init, PauseState::init)
-                    .run_if(GameState::will_enter(GameState::Playing))
-                    .in_set(GameState::on_enter()),
-            ),
-        );
+        app.init_pyri_state::<GameState>()
+            // TODO: Ordering dependencies should be configured via state settings
+            .configure_sets(
+                StateFlush,
+                (
+                    OnState::<GameState>::Flush,
+                    (OnState::<LevelState>::Flush, OnState::<PauseState>::Flush),
+                )
+                    .chain(),
+            )
+            .add_systems(
+                StateFlush,
+                (
+                    GameState::Playing.on_exit((LevelState::remove, PauseState::remove)),
+                    GameState::Playing.on_enter((LevelState::init, PauseState::init)),
+                ),
+            );
 
         // Set up PauseState
         app.add_pyri_state::<PauseState>()
-            .add_systems(StateFlush, apply_pause.in_set(PauseState::on_transition()));
+            .add_systems(StateFlush, PauseState::on_any_transition(apply_pause));
 
         // Set up LevelState
-        app.add_pyri_state::<LevelState>().add_systems(
-            StateFlush,
-            (
-                exit_level.in_set(LevelState::on_exit()),
-                enter_level.in_set(LevelState::on_enter()),
-                compute_color
-                    .run_if(LevelState::will_change)
-                    .in_set(LevelState::on_transition()),
-            ),
-        );
+        app.add_pyri_state::<LevelState>()
+            // TODO: Ordering dependencies should be configured via state settings
+            .configure_sets(
+                StateFlush,
+                (OnState::<LevelState>::Flush, OnState::<ColorState>::Flush).chain(),
+            )
+            .add_systems(
+                StateFlush,
+                (
+                    LevelState::on_any_exit(exit_level),
+                    LevelState::on_any_enter(enter_level),
+                    LevelState::on_any_change(compute_color),
+                ),
+            );
 
         // Set up ColorState
         app.add_pyri_state::<ColorState>().add_systems(
             StateFlush,
             (
-                exit_color.in_set(ColorState::on_exit()),
-                enter_color.in_set(ColorState::on_enter()),
+                ColorState::on_any_exit(exit_color),
+                ColorState::on_any_enter(enter_color),
             ),
         );
     }

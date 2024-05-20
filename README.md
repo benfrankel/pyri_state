@@ -37,12 +37,7 @@ Using `pyri_state`:
 #[derive(State, Clone, PartialEq, Eq)]
 enum GameState { ... }
 
-app.add_systems(
-    StateFlush,
-    spawn_easter_egg
-        .run_if(GameState::will_transition_and(|current, next| ...))
-        .in_set(GameState::on_transition()),
-);
+app.add_systems(StateFlush, GameState::on_change_and(|old, new| { ... }, spawn_easter_egg));
 ```
 
 # Remaining tasks

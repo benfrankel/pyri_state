@@ -13,14 +13,8 @@ pub struct PreStateFlush;
 
 impl PreStateFlush {
     pub fn register_state<S: State + Eq>(schedule: &mut Schedule) {
-        // TODO: Make flush on change opt-out
-        schedule.add_systems(S::flush(true).run_if(S::will_change));
-        schedule.add_systems(
-            (|mut x: ResMut<NextState<S>>| {
-                x.flush = true;
-            })
-            .run_if(S::will_change),
-        );
+        // TODO: Make "flush on any change" opt-out
+        schedule.add_systems(S::flush(true).run_if(S::will_any_change));
     }
 }
 
@@ -31,14 +25,10 @@ impl StateFlush {
     // TODO: Configure the declared state dependencies
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         schedule.configure_sets((
-            S::on_flush().run_if(|x: Res<NextState<S>>| x.flush),
-            (
-                S::on_exit().run_if(|x: Res<CurrentState<S>>| x.is_present()),
-                S::on_transition().run_if(|x: StateRef<S>| matches!(x.get(), (Some(_), Some(_)))),
-                S::on_enter().run_if(|x: Res<NextState<S>>| x.will_be_present()),
-            )
+            OnState::<S>::Flush,
+            (OnState::<S>::Exit, OnState::<S>::Enter)
                 .chain()
-                .in_set(S::on_flush()),
+                .in_set(OnState::<S>::Flush),
         ));
     }
 }
@@ -48,23 +38,23 @@ pub struct PostStateFlush;
 
 impl PostStateFlush {
     pub fn register_state<S: State>(schedule: &mut Schedule) {
-        // TODO: Make flush event opt-out
+        // TODO: Make "send flush event" opt-out
         schedule.add_systems(
             (
                 (send_flush_event::<S>, apply_flush::<S>).chain(),
                 S::flush(false),
             )
-                .run_if(|x: Res<NextState<S>>| x.flush),
+                .run_if(S::will_any_flush),
         );
     }
 }
 
+// Only used for system ordering; fully orthogonal to run conditions.
 #[derive(SystemSet, Clone, Default)]
 pub enum OnState<S> {
     #[default]
     Flush,
     Exit,
-    Transition,
     Enter,
     _PhantomData(PhantomData<S>, Infallible),
 }
@@ -88,7 +78,6 @@ impl<S> Debug for OnState<S> {
         match self {
             Self::Flush => write!(f, "Flush"),
             Self::Exit => write!(f, "Exit"),
-            Self::Transition => write!(f, "Transition"),
             Self::Enter => write!(f, "Enter"),
             _ => unreachable!(),
         }

@@ -64,7 +64,7 @@ impl AppStateExt for App {
 
         set_up_schedules::<S>(self)
             .init_resource::<CurrentState<S>>()
-            .insert_resource(NextState::new(value))
+            .insert_resource(NextState::present(value))
     }
 
     fn insert_pyri_state<S: State>(&mut self, value: S) -> &mut Self {
@@ -74,6 +74,6 @@ impl AppStateExt for App {
 
         set_up_schedules::<S>(self)
             .init_resource::<CurrentState<S>>()
-            .insert_resource(NextState::new(value))
+            .insert_resource(NextState::present(value))
     }
 }
