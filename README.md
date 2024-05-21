@@ -42,7 +42,8 @@ app.add_systems(StateFlush, GameState::on_change_and(|old, new| { ... }, spawn_e
 
 # Remaining tasks
 
+- [ ] Fix change detection in `PreStateFlush` requiring `Eq`.
 - [ ] Implement per-state settings via the `State` trait and derive macro.
-- [ ] How does flushing states once per frame interact with `FixedUpdate`?
 - [ ] Include a test or example for each mentioned feature.
 - [ ] Write documentation.
+- [ ] How does flushing states once per frame interact with `FixedUpdate`?

@@ -2,9 +2,10 @@ use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
 use bevy_ecs::{schedule::Schedules, world::FromWorld};
 
 use crate::{
+    buffer::{CurrentState, NextState},
     prelude::StateFlushEvent,
     schedule::{PostStateFlush, PreStateFlush, StateFlush},
-    state::{CurrentState, NextState, State},
+    state::State,
 };
 
 pub struct StatePlugin;

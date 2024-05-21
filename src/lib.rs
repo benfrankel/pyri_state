@@ -1,5 +1,6 @@
 #[cfg(feature = "bevy_app")]
 pub mod app;
+pub mod buffer;
 pub mod schedule;
 pub mod state;
 
@@ -9,7 +10,7 @@ pub mod prelude {
     pub use crate::app::*;
 
     #[doc(hidden)]
-    pub use crate::{schedule::*, state::*};
+    pub use crate::{buffer::*, schedule::*, state::*};
 }
 
 #[cfg(test)]
