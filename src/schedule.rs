@@ -1,12 +1,11 @@
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
-    event::{Event, EventWriter},
+    event::Event,
     schedule::{IntoSystemConfigs, IntoSystemSetConfigs, Schedule, ScheduleLabel, SystemSet},
-    system::{Res, ResMut},
 };
 
-use crate::state::{CurrentState, NextState, State, StateExtEq, StateRef};
+use crate::state::{State, StateExtEq};
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct PreStateFlush;
@@ -14,7 +13,7 @@ pub struct PreStateFlush;
 impl PreStateFlush {
     pub fn register_state<S: State + Eq>(schedule: &mut Schedule) {
         // TODO: Make "flush on any change" opt-out
-        schedule.add_systems(S::flush(true).run_if(S::will_any_change));
+        schedule.add_systems(S::set_flush(true).run_if(S::will_any_change));
     }
 }
 
@@ -41,8 +40,8 @@ impl PostStateFlush {
         // TODO: Make "send flush event" opt-out
         schedule.add_systems(
             (
-                (send_flush_event::<S>, apply_flush::<S>).chain(),
-                S::flush(false),
+                (S::send_flush_event, S::apply_flush).chain(),
+                S::set_flush(false),
             )
                 .run_if(S::will_any_flush),
         );
@@ -88,15 +87,4 @@ impl<S> Debug for OnState<S> {
 pub struct StateFlushEvent<S: State> {
     pub before: Option<S>,
     pub after: Option<S>,
-}
-
-fn send_flush_event<S: State>(state: StateRef<S>, mut events: EventWriter<StateFlushEvent<S>>) {
-    events.send(StateFlushEvent {
-        before: state.current.inner.clone(),
-        after: state.next.inner.clone(),
-    });
-}
-
-fn apply_flush<S: State>(mut current: ResMut<CurrentState<S>>, next: Res<NextState<S>>) {
-    current.inner.clone_from(&next.inner);
 }

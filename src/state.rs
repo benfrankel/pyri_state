@@ -1,4 +1,5 @@
 use bevy_ecs::{
+    event::EventWriter,
     schedule::{IntoSystemConfigs, SystemConfigs},
     system::{Res, ResMut, Resource, SystemParam},
 };
@@ -6,7 +7,7 @@ use bevy_ecs::{
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 
-use crate::schedule::OnState;
+use crate::{prelude::StateFlushEvent, schedule::OnState};
 
 pub trait State: 'static + Send + Sync + Clone {
     fn is_absent(state: Res<CurrentState<Self>>) -> bool {
@@ -174,12 +175,6 @@ pub trait State: 'static + Send + Sync + Clone {
             .in_set(OnState::<Self>::Enter)
     }
 
-    fn flush(flush: bool) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
-        move |mut state| {
-            state.flush(flush);
-        }
-    }
-
     fn remove(mut state: ResMut<NextState<Self>>) {
         state.remove();
     }
@@ -201,6 +196,25 @@ pub trait State: 'static + Send + Sync + Clone {
 
     fn refresh(mut state: StateMut<Self>) {
         state.refresh();
+    }
+
+    fn set_flush(flush: bool) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+        move |mut state| {
+            state.set_flush(flush);
+        }
+    }
+
+    // Shouldn't be necessary during normal usage.
+    fn send_flush_event(state: StateRef<Self>, mut events: EventWriter<StateFlushEvent<Self>>) {
+        events.send(StateFlushEvent {
+            before: state.current.inner.clone(),
+            after: state.next.inner.clone(),
+        });
+    }
+
+    // Shouldn't be necessary during normal usage.
+    fn apply_flush(mut current: ResMut<CurrentState<Self>>, next: Res<NextState<Self>>) {
+        current.inner.clone_from(&next.inner);
     }
 }
 
@@ -486,7 +500,7 @@ impl<S: State> NextState<S> {
         self.get().is_some_and(test)
     }
 
-    pub fn flush(&mut self, flush: bool) -> &mut Self {
+    pub fn set_flush(&mut self, flush: bool) -> &mut Self {
         self.flush = flush;
         self
     }
@@ -718,11 +732,6 @@ impl<'w, S: State> StateMut<'w, S> {
         matches!(self.get(), (None, Some(y)) if test(y))
     }
 
-    pub fn flush(&mut self, flush: bool) -> &mut Self {
-        self.next.flush = flush;
-        self
-    }
-
     pub fn remove(&mut self) {
         self.next.remove();
     }
@@ -746,5 +755,10 @@ impl<'w, S: State> StateMut<'w, S> {
         if self.next.will_be_present() {
             self.next.flush = true;
         }
+    }
+
+    pub fn set_flush(&mut self, flush: bool) -> &mut Self {
+        self.next.flush = flush;
+        self
     }
 }
