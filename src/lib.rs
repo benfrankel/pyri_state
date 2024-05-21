@@ -1,6 +1,7 @@
 #[cfg(feature = "bevy_app")]
 pub mod app;
 pub mod buffer;
+pub mod config;
 pub mod schedule;
 pub mod state;
 
@@ -22,13 +23,16 @@ mod tests {
     };
     use pyri_state_macros::State;
 
-    use crate::prelude::*;
+    use crate::{
+        config::{ConfigureState, StateConfig},
+        prelude::*,
+    };
 
     fn do_stuff<T>(x: T) {
         let _ = x;
     }
 
-    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[derive(Clone, PartialEq, Eq, Default)]
     enum GameState {
         #[default]
         MainMenu,
@@ -36,20 +40,38 @@ mod tests {
         EndScreen,
     }
 
-    // TODO: Specify that PauseState depends on GameState
-    #[derive(State, Clone, PartialEq, Eq, Default)]
+    impl State for GameState {
+        fn config() -> impl ConfigureState {
+            StateConfig::<Self>::default()
+        }
+    }
+
+    #[derive(Clone, PartialEq, Eq, Default)]
     struct PauseState(bool);
+
+    impl State for PauseState {
+        fn config() -> impl ConfigureState {
+            // TODO: Specify that PauseState depends on GameState
+            StateConfig::<Self>::default()
+        }
+    }
 
     fn apply_pause(pause_state: Res<NextState<PauseState>>) {
         let pause = pause_state.unwrap().0;
         do_stuff::<bool>(pause);
     }
 
-    // TODO: Specify that LevelState depends on GameState
-    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[derive(Clone, PartialEq, Eq, Default)]
     struct LevelState {
         x: usize,
         y: usize,
+    }
+
+    impl State for LevelState {
+        fn config() -> impl ConfigureState {
+            // TODO: Specify that LevelState depends on GameState
+            StateConfig::<Self>::default()
+        }
     }
 
     fn exit_level(level: Res<CurrentState<LevelState>>) {
@@ -62,11 +84,17 @@ mod tests {
         do_stuff::<&LevelState>(level_state);
     }
 
-    // TODO: Specify that ColorState depends on LevelState
-    #[derive(State, Clone)]
+    #[derive(Clone)]
     enum ColorState {
         Black,
         White,
+    }
+
+    impl State for ColorState {
+        fn config() -> impl ConfigureState {
+            // TODO: Specify that ColorState depends on LevelState
+            StateConfig::<Self>::default()
+        }
     }
 
     fn compute_color(level: Res<NextState<LevelState>>, mut color: ResMut<NextState<ColorState>>) {
@@ -96,7 +124,7 @@ mod tests {
         app.add_plugins(StatePlugin);
 
         // Set up GameState
-        app.init_state_::<GameState>()
+        app.add_state::<GameState>()
             // TODO: Ordering dependencies should be configured via state settings
             .configure_sets(
                 StateFlush,

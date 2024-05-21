@@ -7,7 +7,7 @@
 3. **Partial mutation:** Mutate the next state directly instead of replacing it with an entirely new value.
 4. **Refresh transition:** Trigger a transition from the current state to itself.
 5. **Remove & insert triggers:** Trigger a state to be removed or inserted next frame.
-6. **Per-state settings:** Configure the state transition behavior per state type.
+6. **Per-state configs:** Configure the state flush behavior per state type.
 7. **Ergonomic improvements:** See below.
 
 # Example code
@@ -28,7 +28,9 @@ impl ComputedState for ShouldSpawnEasterEggState {
     fn compute(sources: GameState) -> Option<Self> { ... }
 }
 
-app.add_systems(OnEnter(ShouldSpawnEasterEggState(true)), spawn_easter_egg);
+app.add_state::<GameState>()
+    .add_state::<ShouldSpawnEasterEggState>()
+    .add_systems(OnEnter(ShouldSpawnEasterEggState(true)), spawn_easter_egg);
 ```
 
 Using `pyri_state`:
@@ -37,13 +39,13 @@ Using `pyri_state`:
 #[derive(State, Clone, PartialEq, Eq)]
 enum GameState { ... }
 
-app.add_systems(StateFlush, GameState::on_change_and(|old, new| { ... }, spawn_easter_egg));
+app.add_state::<GameState>()
+    .add_systems(StateFlush, GameState::on_change_and(|old, new| { ... }, spawn_easter_egg));
 ```
 
 # Remaining tasks
 
-- [ ] Fix change detection in `PreStateFlush` requiring `Eq`.
-- [ ] Implement per-state settings via the `State` trait and derive macro.
+- [ ] Implement `State::config()` via derive macro
 - [ ] Include a test or example for each mentioned feature.
 - [ ] Write documentation.
 - [ ] How does flushing states once per frame interact with `FixedUpdate`?

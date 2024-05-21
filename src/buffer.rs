@@ -23,6 +23,17 @@ impl<S: State> Default for CurrentState<S> {
     }
 }
 
+impl<S: State + Eq> CurrentState<S> {
+    pub fn is_in(&self, value: &S) -> bool {
+        self.inner.as_ref() == Some(value)
+    }
+
+    // Alias for `is_in`.
+    pub fn will_exit(&self, value: &S) -> bool {
+        self.is_in(value)
+    }
+}
+
 impl<S: State> CurrentState<S> {
     pub fn new(inner: Option<S>) -> Self {
         Self { inner }
@@ -60,17 +71,6 @@ impl<S: State> CurrentState<S> {
 
     pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
         self.get().is_some_and(test)
-    }
-}
-
-impl<S: State + Eq> CurrentState<S> {
-    pub fn is_in(&self, value: &S) -> bool {
-        self.inner.as_ref() == Some(value)
-    }
-
-    // Alias for `is_in`.
-    pub fn will_exit(&self, value: &S) -> bool {
-        self.is_in(value)
     }
 }
 
@@ -286,6 +286,32 @@ pub struct StateMut<'w, S: State> {
     pub next: ResMut<'w, NextState<S>>,
 }
 
+impl<'w, S: State + Default> StateMut<'w, S> {
+    // Sets the next state to the default state unless there's already a next state.
+    pub fn init(&mut self) -> &mut S {
+        self.next.init()
+    }
+
+    // Sets the next state to the default state.
+    pub fn restart(&mut self) -> &mut S {
+        self.next.restart()
+    }
+}
+
+impl<'w, S: State + Clone> StateMut<'w, S> {
+    // TODO: Rename to `reset`? Or would that be confusing alongside `restart`, `refresh`, and `remove`?
+    pub fn stay(&mut self) {
+        self.next.inner.clone_from(&self.current.inner);
+    }
+
+    pub fn refresh(&mut self) {
+        self.stay();
+        if self.next.will_be_present() {
+            self.next.flush = true;
+        }
+    }
+}
+
 impl<'w, S: State + Eq> StateMut<'w, S> {
     pub fn will_exit(&self, value: &S) -> bool {
         matches!(self.get(), (Some(x), _) if value == x)
@@ -317,18 +343,6 @@ impl<'w, S: State + Eq> StateMut<'w, S> {
 
     pub fn will_refresh_and(&self, test: impl Fn(&S) -> bool) -> bool {
         matches!(self.get(), (Some(x), Some(y)) if x == y && test(y))
-    }
-}
-
-impl<'w, S: State + Default> StateMut<'w, S> {
-    // Sets the next state to the default state unless there's already a next state.
-    pub fn init(&mut self) -> &mut S {
-        self.next.init()
-    }
-
-    // Sets the next state to the default state.
-    pub fn restart(&mut self) -> &mut S {
-        self.next.restart()
     }
 }
 
@@ -401,24 +415,12 @@ impl<'w, S: State> StateMut<'w, S> {
     }
 
     pub fn insert(&mut self, value: S) -> &mut S {
-        self.set(value)
+        self.next.insert(value)
     }
 
     // Alias for `insert`.
     pub fn set(&mut self, value: S) -> &mut S {
         self.insert(value)
-    }
-
-    // TODO: Rename to `reset`? Or would that be confusing alongside `restart`, `refresh`, and `remove`?
-    pub fn stay(&mut self) {
-        self.next.inner.clone_from(&self.current.inner);
-    }
-
-    pub fn refresh(&mut self) {
-        self.stay();
-        if self.next.will_be_present() {
-            self.next.flush = true;
-        }
     }
 
     pub fn set_flush(&mut self, flush: bool) -> &mut Self {

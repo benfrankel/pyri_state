@@ -6,10 +6,13 @@ use bevy_ecs::{
 
 use crate::{
     buffer::{CurrentState, NextState, StateMut, StateRef},
+    config::ConfigureState,
     schedule::{OnState, StateFlushEvent},
 };
 
-pub trait State: 'static + Send + Sync + Clone {
+pub trait State: 'static + Send + Sync + Sized {
+    fn config() -> impl ConfigureState;
+
     fn is_absent(state: Res<CurrentState<Self>>) -> bool {
         state.is_absent()
     }
@@ -179,6 +182,14 @@ pub trait State: 'static + Send + Sync + Clone {
         state.remove();
     }
 
+    fn set_flush(flush: bool) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+        move |mut state| {
+            state.set_flush(flush);
+        }
+    }
+}
+
+pub trait StateExtClone: State + Clone {
     fn insert(self) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
         move |mut state| {
             state.insert(self.clone());
@@ -198,12 +209,6 @@ pub trait State: 'static + Send + Sync + Clone {
         state.refresh();
     }
 
-    fn set_flush(flush: bool) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
-        move |mut state| {
-            state.set_flush(flush);
-        }
-    }
-
     // Shouldn't be necessary during normal usage.
     fn send_flush_event(state: StateRef<Self>, mut events: EventWriter<StateFlushEvent<Self>>) {
         events.send(StateFlushEvent {
@@ -217,6 +222,8 @@ pub trait State: 'static + Send + Sync + Clone {
         current.inner.clone_from(&next.inner);
     }
 }
+
+impl<S: State + Clone> StateExtClone for S {}
 
 pub trait StateExtEq: State + Eq {
     // Equivalent to `will_exit`.
