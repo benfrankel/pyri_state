@@ -22,10 +22,10 @@ impl PreStateFlush {
 pub struct StateFlush;
 
 impl StateFlush {
-    // TODO: Configure the declared state dependencies
+    // TODO: Configure any declared state dependencies
     pub fn register_state<S: State>(schedule: &mut Schedule) {
         schedule.configure_sets((
-            OnState::<S>::Flush,
+            OnState::<S>::Flush.run_if(S::will_any_flush),
             (OnState::<S>::Exit, OnState::<S>::Enter)
                 .chain()
                 .in_set(OnState::<S>::Flush),
@@ -49,7 +49,7 @@ impl PostStateFlush {
     }
 }
 
-// Only used for system ordering; fully orthogonal to run conditions.
+// Used for system ordering relative to other states, and only runs on flush.
 #[derive(SystemSet, Clone, Default)]
 pub enum OnState<S> {
     #[default]
