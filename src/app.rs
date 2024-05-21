@@ -38,15 +38,17 @@ fn set_up_schedules<S: State>(app: &mut App) -> &mut App {
 }
 
 pub trait AppStateExt {
-    fn add_pyri_state<S: State>(&mut self) -> &mut Self;
+    fn add_state<S: State>(&mut self) -> &mut Self;
 
-    fn init_pyri_state<S: State + FromWorld>(&mut self) -> &mut Self;
+    // TODO: Remove _ suffix in bevy 0.14
+    fn init_state_<S: State + FromWorld>(&mut self) -> &mut Self;
 
-    fn insert_pyri_state<S: State>(&mut self, value: S) -> &mut Self;
+    // TODO: Remove _ suffix in bevy 0.14
+    fn insert_state_<S: State>(&mut self, value: S) -> &mut Self;
 }
 
 impl AppStateExt for App {
-    fn add_pyri_state<S: State>(&mut self) -> &mut Self {
+    fn add_state<S: State>(&mut self) -> &mut Self {
         if self.world.contains_resource::<CurrentState<S>>() {
             return self;
         }
@@ -56,7 +58,7 @@ impl AppStateExt for App {
             .init_resource::<NextState<S>>()
     }
 
-    fn init_pyri_state<S: State + FromWorld>(&mut self) -> &mut Self {
+    fn init_state_<S: State + FromWorld>(&mut self) -> &mut Self {
         if self.world.contains_resource::<CurrentState<S>>() {
             return self;
         }
@@ -68,7 +70,7 @@ impl AppStateExt for App {
             .insert_resource(NextState::present(value))
     }
 
-    fn insert_pyri_state<S: State>(&mut self, value: S) -> &mut Self {
+    fn insert_state_<S: State>(&mut self, value: S) -> &mut Self {
         if self.world.contains_resource::<CurrentState<S>>() {
             return self;
         }

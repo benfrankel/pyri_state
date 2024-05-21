@@ -96,7 +96,7 @@ mod tests {
         app.add_plugins(StatePlugin);
 
         // Set up GameState
-        app.init_pyri_state::<GameState>()
+        app.init_state_::<GameState>()
             // TODO: Ordering dependencies should be configured via state settings
             .configure_sets(
                 StateFlush,
@@ -115,11 +115,11 @@ mod tests {
             );
 
         // Set up PauseState
-        app.add_pyri_state::<PauseState>()
+        app.add_state::<PauseState>()
             .add_systems(StateFlush, PauseState::on_any_transition(apply_pause));
 
         // Set up LevelState
-        app.add_pyri_state::<LevelState>()
+        app.add_state::<LevelState>()
             // TODO: Ordering dependencies should be configured via state settings
             .configure_sets(
                 StateFlush,
@@ -135,7 +135,7 @@ mod tests {
             );
 
         // Set up ColorState
-        app.add_pyri_state::<ColorState>().add_systems(
+        app.add_state::<ColorState>().add_systems(
             StateFlush,
             (
                 ColorState::on_any_exit(exit_color),
