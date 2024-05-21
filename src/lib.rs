@@ -8,7 +8,7 @@ pub mod state;
 pub mod prelude {
     #[doc(hidden)]
     #[cfg(feature = "bevy_app")]
-    pub use crate::app::*;
+    pub use crate::app::{AppExtAddState, StatePlugin};
 
     #[doc(hidden)]
     pub use crate::{buffer::*, schedule::*, state::*};
@@ -16,15 +16,16 @@ pub mod prelude {
 
 #[cfg(test)]
 mod tests {
+    use std::marker::PhantomData;
+
     use bevy_app::App;
     use bevy_ecs::{
-        schedule::{IntoSystemConfigs, IntoSystemSetConfigs},
+        schedule::SystemSet,
         system::{Res, ResMut},
     };
-    use pyri_state_macros::State;
 
     use crate::{
-        config::{ConfigureState, StateConfig},
+        app::{ConfigureState, StateConfigAdd, StateConfigInit, StateConfigOnFlush},
         prelude::*,
     };
 
@@ -42,7 +43,10 @@ mod tests {
 
     impl State for GameState {
         fn config() -> impl ConfigureState {
-            StateConfig::<Self>::default()
+            (
+                StateConfigInit::<Self>(PhantomData),
+                StateConfigOnFlush::<Self>(vec![], PhantomData),
+            )
         }
     }
 
@@ -51,8 +55,10 @@ mod tests {
 
     impl State for PauseState {
         fn config() -> impl ConfigureState {
-            // TODO: Specify that PauseState depends on GameState
-            StateConfig::<Self>::default()
+            (
+                StateConfigAdd::<Self>(PhantomData),
+                StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData),
+            )
         }
     }
 
@@ -69,8 +75,10 @@ mod tests {
 
     impl State for LevelState {
         fn config() -> impl ConfigureState {
-            // TODO: Specify that LevelState depends on GameState
-            StateConfig::<Self>::default()
+            (
+                StateConfigAdd::<Self>(PhantomData),
+                StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData),
+            )
         }
     }
 
@@ -92,8 +100,13 @@ mod tests {
 
     impl State for ColorState {
         fn config() -> impl ConfigureState {
-            // TODO: Specify that ColorState depends on LevelState
-            StateConfig::<Self>::default()
+            (
+                StateConfigAdd::<Self>(PhantomData),
+                StateConfigOnFlush::<Self>(
+                    vec![OnState::<LevelState>::Flush.intern()],
+                    PhantomData,
+                ),
+            )
         }
     }
 
@@ -124,43 +137,27 @@ mod tests {
         app.add_plugins(StatePlugin);
 
         // Set up GameState
-        app.add_state::<GameState>()
-            // TODO: Ordering dependencies should be configured via state settings
-            .configure_sets(
-                StateFlush,
-                (
-                    OnState::<GameState>::Flush,
-                    (OnState::<LevelState>::Flush, OnState::<PauseState>::Flush),
-                )
-                    .chain(),
-            )
-            .add_systems(
-                StateFlush,
-                (
-                    GameState::Playing.on_exit((LevelState::remove, PauseState::remove)),
-                    GameState::Playing.on_enter((LevelState::init, PauseState::init)),
-                ),
-            );
+        app.add_state::<GameState>().add_systems(
+            StateFlush,
+            (
+                GameState::Playing.on_exit((LevelState::remove, PauseState::remove)),
+                GameState::Playing.on_enter((LevelState::init, PauseState::init)),
+            ),
+        );
 
         // Set up PauseState
         app.add_state::<PauseState>()
             .add_systems(StateFlush, PauseState::on_any_transition(apply_pause));
 
         // Set up LevelState
-        app.add_state::<LevelState>()
-            // TODO: Ordering dependencies should be configured via state settings
-            .configure_sets(
-                StateFlush,
-                (OnState::<LevelState>::Flush, OnState::<ColorState>::Flush).chain(),
-            )
-            .add_systems(
-                StateFlush,
-                (
-                    LevelState::on_any_exit(exit_level),
-                    LevelState::on_any_enter(enter_level),
-                    LevelState::on_any_change(compute_color),
-                ),
-            );
+        app.add_state::<LevelState>().add_systems(
+            StateFlush,
+            (
+                LevelState::on_any_exit(exit_level),
+                LevelState::on_any_enter(enter_level),
+                LevelState::on_any_change(compute_color),
+            ),
+        );
 
         // Set up ColorState
         app.add_state::<ColorState>().add_systems(
