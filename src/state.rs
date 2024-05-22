@@ -63,9 +63,7 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     fn on_any_exit<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems
-            .run_if(Self::will_any_exit)
-            .in_set(StateFlushSet::<Self>::Exit)
+        systems.in_set(StateFlushSet::<Self>::Exit)
     }
 
     fn will_exit_and(
@@ -88,9 +86,7 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     fn on_any_enter<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems
-            .run_if(Self::will_any_enter)
-            .in_set(StateFlushSet::<Self>::Enter)
+        systems.in_set(StateFlushSet::<Self>::Enter)
     }
 
     fn will_enter_and(
@@ -113,9 +109,7 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     fn on_any_transition<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems
-            .run_if(Self::will_any_transition)
-            .in_set(StateFlushSet::<Self>::Transition)
+        systems.in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn will_transition_and(
@@ -214,7 +208,7 @@ pub trait StateExtClone: State + Clone {
         state.refresh();
     }
 
-    // Shouldn't be necessary during normal usage.
+    // Shouldn't be necessary for normal usage.
     fn send_flush_event(state: StateRef<Self>, mut events: EventWriter<StateFlushEvent<Self>>) {
         events.send(StateFlushEvent {
             before: state.current.inner.clone(),
@@ -222,7 +216,7 @@ pub trait StateExtClone: State + Clone {
         });
     }
 
-    // Shouldn't be necessary during normal usage.
+    // Shouldn't be necessary for normal usage.
     fn apply_flush(mut current: ResMut<CurrentState<Self>>, next: Res<NextState<Self>>) {
         current.inner.clone_from(&next.inner);
     }
@@ -240,7 +234,7 @@ pub trait StateExtEq: State + Eq {
         systems.run_if(self.will_update())
     }
 
-    // Equivalent to `is_in`.
+    // Equivalent to `will_update`.
     fn will_exit(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
         move |state| state.is_in(&self)
     }
