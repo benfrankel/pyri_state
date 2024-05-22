@@ -1,3 +1,6 @@
+// Allow derive macros in unit tests to use `pyri_state` to refer to this crate
+extern crate self as pyri_state;
+
 #[cfg(feature = "bevy_app")]
 pub mod app;
 pub mod buffer;
@@ -18,7 +21,7 @@ pub mod prelude {
 mod tests {
     use bevy_app::App;
     use bevy_ecs::system::{Res, ResMut};
-    use pyri_state_macros::State;
+    use pyri_state_derive::State;
 
     use crate::{config::ConfigureState, prelude::*};
 

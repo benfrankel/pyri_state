@@ -20,8 +20,8 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
 
     let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
-    // TODO: Make this portable
-    let crate_path = parse_str::<Path>("crate").unwrap();
+    // TODO: This is not 100% portable I guess, but probably good enough.
+    let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_config_path = concat(crate_path.clone(), format_ident!("config"));
 
     let resolve_state = {

@@ -1,5 +1,5 @@
 [package]
-name = "pyri_state_macros"
+name = "pyri_state_derive"
 version = "0.1.0"
 edition = "2021"
 description = "Derive macros for `pyri_state`"
