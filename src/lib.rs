@@ -1,13 +1,14 @@
 #[cfg(feature = "bevy_app")]
 pub mod app;
 pub mod buffer;
+pub mod config;
 pub mod schedule;
 pub mod state;
 
 pub mod prelude {
     #[doc(hidden)]
     #[cfg(feature = "bevy_app")]
-    pub use crate::app::{AppExtAddState, StatePlugin};
+    pub use crate::app::*;
 
     #[doc(hidden)]
     pub use crate::{buffer::*, schedule::*, state::*};
@@ -24,7 +25,7 @@ mod tests {
     };
 
     use crate::{
-        app::{ConfigureState, StateConfigOnFlush},
+        config::{ConfigureState, StateConfigOnFlush},
         prelude::*,
     };
 

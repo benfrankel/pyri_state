@@ -5,8 +5,8 @@ use bevy_ecs::{
 };
 
 use crate::{
-    app::ConfigureState,
     buffer::{CurrentState, NextState, StateMut, StateRef},
+    config::ConfigureState,
     schedule::{StateFlushEvent, StateFlushSet},
 };
 
