@@ -36,7 +36,7 @@ app.add_state::<GameState>()
 Using `pyri_state`:
 
 ```rust
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State_, Clone, PartialEq, Eq)]
 enum GameState { ... }
 
 app.add_state_::<GameState>()

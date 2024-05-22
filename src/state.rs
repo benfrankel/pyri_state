@@ -5,12 +5,18 @@ use bevy_ecs::{
 };
 
 use crate::{
-    buffer::{CurrentState, NextState, StateMut, StateRef},
+    buffer::{CurrentState, NextState_, StateMut, StateRef},
     config::ConfigureState,
     schedule::{StateFlushEvent, StateFlushSet},
 };
 
-pub trait State: 'static + Send + Sync + Sized {
+// TODO: Move this to util.rs?
+// Convenient trait alias for defining wrapper states like `StateStack<S: FullState>`.
+pub trait FullState: State_ + Clone + PartialEq + Eq {}
+
+impl<T: State_ + Clone + PartialEq + Eq> FullState for T {}
+
+pub trait State_: 'static + Send + Sync + Sized {
     fn config() -> impl ConfigureState;
 
     fn is_absent(state: Res<CurrentState<Self>>) -> bool {
@@ -81,7 +87,7 @@ pub trait State: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<Self>::Exit)
     }
 
-    fn will_any_enter(state: Res<NextState<Self>>) -> bool {
+    fn will_any_enter(state: Res<NextState_<Self>>) -> bool {
         state.will_be_present()
     }
 
@@ -177,26 +183,26 @@ pub trait State: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<Self>::Enter)
     }
 
-    fn remove(mut state: ResMut<NextState<Self>>) {
+    fn remove(mut state: ResMut<NextState_<Self>>) {
         state.remove();
     }
 
-    fn set_flush(flush: bool) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+    fn set_flush(flush: bool) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
         move |mut state| {
             state.set_flush(flush);
         }
     }
 }
 
-pub trait StateExtClone: State + Clone {
-    fn insert(self) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+pub trait StateExtClone: State_ + Clone {
+    fn insert(self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
         move |mut state| {
             state.insert(self.clone());
         }
     }
 
     // Alias for `insert`.
-    fn set(value: Self) -> impl Fn(ResMut<NextState<Self>>) + 'static + Send + Sync {
+    fn set(value: Self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
         Self::insert(value)
     }
 
@@ -217,14 +223,14 @@ pub trait StateExtClone: State + Clone {
     }
 
     // Shouldn't be necessary for normal usage.
-    fn apply_flush(mut current: ResMut<CurrentState<Self>>, next: Res<NextState<Self>>) {
+    fn apply_flush(mut current: ResMut<CurrentState<Self>>, next: Res<NextState_<Self>>) {
         current.inner.clone_from(&next.inner);
     }
 }
 
-impl<S: State + Clone> StateExtClone for S {}
+impl<S: State_ + Clone> StateExtClone for S {}
 
-pub trait StateExtEq: State + Eq {
+pub trait StateExtEq: State_ + Eq {
     // Equivalent to `will_exit`.
     fn will_update(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
         move |state| state.is_in(&self)
@@ -245,7 +251,7 @@ pub trait StateExtEq: State + Eq {
             .in_set(StateFlushSet::<Self>::Exit)
     }
 
-    fn will_enter(self) -> impl Fn(Res<NextState<Self>>) -> bool + 'static + Send + Sync {
+    fn will_enter(self) -> impl Fn(Res<NextState_<Self>>) -> bool + 'static + Send + Sync {
         move |state| state.will_be_in(&self)
     }
 
@@ -333,16 +339,16 @@ pub trait StateExtEq: State + Eq {
     }
 }
 
-impl<T: State + Eq> StateExtEq for T {}
+impl<T: State_ + Eq> StateExtEq for T {}
 
-pub trait StateExtDefault: State + Default {
-    fn init(mut state: ResMut<NextState<Self>>) {
+pub trait StateExtDefault: State_ + Default {
+    fn init(mut state: ResMut<NextState_<Self>>) {
         state.init();
     }
 
-    fn restart(mut state: ResMut<NextState<Self>>) {
+    fn restart(mut state: ResMut<NextState_<Self>>) {
         state.restart();
     }
 }
 
-impl<T: State + Default> StateExtDefault for T {}
+impl<T: State_ + Default> StateExtDefault for T {}

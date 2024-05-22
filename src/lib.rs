@@ -15,21 +15,23 @@ pub mod prelude {
 
     #[doc(hidden)]
     pub use crate::{buffer::*, schedule::*, state::*};
+
+    #[doc(hidden)]
+    pub use pyri_state_derive::State_;
 }
 
 #[cfg(test)]
 mod tests {
     use bevy_app::App;
     use bevy_ecs::system::{Res, ResMut};
-    use pyri_state_derive::State;
 
-    use crate::{config::ConfigureState, prelude::*};
+    use crate::prelude::*;
 
     fn do_stuff_with<T>(x: T) {
         let _ = x;
     }
 
-    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[derive(State_, Clone, PartialEq, Eq, Default)]
     enum GameState {
         #[default]
         MainMenu,
@@ -37,7 +39,7 @@ mod tests {
         EndScreen,
     }
 
-    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[derive(State_, Clone, PartialEq, Eq, Default)]
     #[state(after(GameState))]
     struct PauseState(bool);
 
@@ -45,7 +47,7 @@ mod tests {
 
     fn pause() {}
 
-    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[derive(State_, Clone, PartialEq, Eq, Default)]
     #[state(after(GameState))]
     struct LevelState {
         x: usize,
@@ -57,19 +59,22 @@ mod tests {
         do_stuff_with::<&LevelState>(level_state);
     }
 
-    fn enter_level(level_state: Res<NextState<LevelState>>) {
+    fn enter_level(level_state: Res<NextState_<LevelState>>) {
         let level_state = level_state.unwrap();
         do_stuff_with::<&LevelState>(level_state);
     }
 
-    #[derive(State, Clone, PartialEq, Eq)]
+    #[derive(State_, Clone, PartialEq, Eq)]
     #[state(after(LevelState))]
     enum ColorState {
         Black,
         White,
     }
 
-    fn compute_color(level: Res<NextState<LevelState>>, mut color: ResMut<NextState<ColorState>>) {
+    fn compute_color(
+        level: Res<NextState_<LevelState>>,
+        mut color: ResMut<NextState_<ColorState>>,
+    ) {
         color.inner = level.get().map(|level| {
             if level.x + level.y % 2 == 0 {
                 ColorState::Black
@@ -84,7 +89,7 @@ mod tests {
         do_stuff_with::<&ColorState>(color_state);
     }
 
-    fn enter_color(color_state: Res<NextState<ColorState>>) {
+    fn enter_color(color_state: Res<NextState_<ColorState>>) {
         let color_state = color_state.unwrap();
         do_stuff_with::<&ColorState>(color_state);
     }

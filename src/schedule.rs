@@ -10,8 +10,8 @@ use bevy_ecs::{
 };
 
 use crate::{
-    buffer::NextState,
-    state::{State, StateExtClone, StateExtEq},
+    buffer::NextState_,
+    state::{StateExtClone, StateExtEq, State_},
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -19,7 +19,7 @@ pub struct StateFlush;
 
 // Provides system ordering for state flush handling systems.
 #[derive(SystemSet)]
-pub enum StateFlushSet<S: State> {
+pub enum StateFlushSet<S: State_> {
     Resolve,
     Trigger,
     Flush,
@@ -29,7 +29,7 @@ pub enum StateFlushSet<S: State> {
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S: State> Clone for StateFlushSet<S> {
+impl<S: State_> Clone for StateFlushSet<S> {
     fn clone(&self) -> Self {
         match self {
             Self::Resolve => Self::Resolve,
@@ -43,21 +43,21 @@ impl<S: State> Clone for StateFlushSet<S> {
     }
 }
 
-impl<S: State> PartialEq for StateFlushSet<S> {
+impl<S: State_> PartialEq for StateFlushSet<S> {
     fn eq(&self, other: &Self) -> bool {
         core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }
 
-impl<S: State> Eq for StateFlushSet<S> {}
+impl<S: State_> Eq for StateFlushSet<S> {}
 
-impl<S: State> Hash for StateFlushSet<S> {
+impl<S: State_> Hash for StateFlushSet<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S: State> Debug for StateFlushSet<S> {
+impl<S: State_> Debug for StateFlushSet<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
@@ -75,16 +75,16 @@ impl<S: State> Debug for StateFlushSet<S> {
 struct ApplyFlushSet;
 
 #[derive(Event)]
-pub struct StateFlushEvent<S: State> {
+pub struct StateFlushEvent<S: State_> {
     pub before: Option<S>,
     pub after: Option<S>,
 }
 
-fn check_flush_flag<S: State>(state: Res<NextState<S>>) -> bool {
+fn check_flush_flag<S: State_>(state: Res<NextState_<S>>) -> bool {
     state.flush
 }
 
-pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
+pub fn schedule_detect_change<S: State_ + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::set_flush(true)
             .run_if(S::will_any_change)
@@ -92,10 +92,17 @@ pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     );
 }
 
-pub fn schedule_resolve_state<S: State>(schedule: &mut Schedule, after: &[InternedSystemSet]) {
+pub fn schedule_resolve_state<S: State_>(
+    schedule: &mut Schedule,
+    after: &[InternedSystemSet],
+    before: &[InternedSystemSet],
+) {
     // External ordering
     for &system_set in after {
         schedule.configure_sets(StateFlushSet::<S>::Resolve.after(system_set));
+    }
+    for &system_set in before {
+        schedule.configure_sets(StateFlushSet::<S>::Resolve.before(system_set));
     }
 
     // Internal ordering
@@ -116,11 +123,11 @@ pub fn schedule_resolve_state<S: State>(schedule: &mut Schedule, after: &[Intern
     ));
 }
 
-pub fn schedule_send_event<S: State + Clone>(schedule: &mut Schedule) {
+pub fn schedule_send_event<S: State_ + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(S::on_any_flush(S::send_flush_event));
 }
 
-pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
+pub fn schedule_apply_flush<S: State_ + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (S::apply_flush, S::set_flush(false))
             .run_if(check_flush_flag::<S>)

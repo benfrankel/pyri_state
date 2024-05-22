@@ -3,7 +3,7 @@ use bevy_ecs::system::{Res, ResMut, Resource, SystemParam};
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 
-use crate::state::State;
+use crate::state::State_;
 
 // The immutable half of the double-buffered state.
 // This should never be accessed mutably during normal usage.
@@ -13,23 +13,23 @@ use crate::state::State;
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct CurrentState<S: State> {
+pub struct CurrentState<S: State_> {
     pub inner: Option<S>,
 }
 
-impl<S: State> Default for CurrentState<S> {
+impl<S: State_> Default for CurrentState<S> {
     fn default() -> Self {
         Self::absent()
     }
 }
 
-impl<S: State + Eq> CurrentState<S> {
+impl<S: State_ + Eq> CurrentState<S> {
     pub fn is_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
     }
 }
 
-impl<S: State> CurrentState<S> {
+impl<S: State_> CurrentState<S> {
     pub fn new(inner: Option<S>) -> Self {
         Self { inner }
     }
@@ -70,18 +70,18 @@ impl<S: State> CurrentState<S> {
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct NextState<S: State> {
+pub struct NextState_<S: State_> {
     pub inner: Option<S>,
     pub flush: bool,
 }
 
-impl<S: State> Default for NextState<S> {
+impl<S: State_> Default for NextState_<S> {
     fn default() -> Self {
         Self::absent()
     }
 }
 
-impl<S: State + Default> NextState<S> {
+impl<S: State_ + Default> NextState_<S> {
     pub fn init(&mut self) -> &mut S {
         self.inner.get_or_insert_with(|| S::default())
     }
@@ -91,13 +91,13 @@ impl<S: State + Default> NextState<S> {
     }
 }
 
-impl<S: State + Eq> NextState<S> {
+impl<S: State_ + Eq> NextState_<S> {
     pub fn will_be_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
     }
 }
 
-impl<S: State> NextState<S> {
+impl<S: State_> NextState_<S> {
     pub fn new(inner: Option<S>) -> Self {
         Self {
             inner,
@@ -161,12 +161,12 @@ impl<S: State> NextState<S> {
 }
 
 #[derive(SystemParam)]
-pub struct StateRef<'w, S: State> {
+pub struct StateRef<'w, S: State_> {
     pub current: Res<'w, CurrentState<S>>,
-    pub next: Res<'w, NextState<S>>,
+    pub next: Res<'w, NextState_<S>>,
 }
 
-impl<'w, S: State + Eq> StateRef<'w, S> {
+impl<'w, S: State_ + Eq> StateRef<'w, S> {
     pub fn will_exit(&self, value: &S) -> bool {
         matches!(self.get(), (Some(x), _) if value == x)
     }
@@ -200,7 +200,7 @@ impl<'w, S: State + Eq> StateRef<'w, S> {
     }
 }
 
-impl<'w, S: State> StateRef<'w, S> {
+impl<'w, S: State_> StateRef<'w, S> {
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
     }
@@ -258,12 +258,12 @@ impl<'w, S: State> StateRef<'w, S> {
 }
 
 #[derive(SystemParam)]
-pub struct StateMut<'w, S: State> {
+pub struct StateMut<'w, S: State_> {
     pub current: Res<'w, CurrentState<S>>,
-    pub next: ResMut<'w, NextState<S>>,
+    pub next: ResMut<'w, NextState_<S>>,
 }
 
-impl<'w, S: State + Default> StateMut<'w, S> {
+impl<'w, S: State_ + Default> StateMut<'w, S> {
     // Sets the next state to the default state unless there's already a next state.
     pub fn init(&mut self) -> &mut S {
         self.next.init()
@@ -275,7 +275,7 @@ impl<'w, S: State + Default> StateMut<'w, S> {
     }
 }
 
-impl<'w, S: State + Clone> StateMut<'w, S> {
+impl<'w, S: State_ + Clone> StateMut<'w, S> {
     // TODO: Rename to `reset`? Or would that be confusing alongside `restart`, `refresh`, and `remove`?
     pub fn stay(&mut self) {
         self.next.inner.clone_from(&self.current.inner);
@@ -287,7 +287,7 @@ impl<'w, S: State + Clone> StateMut<'w, S> {
     }
 }
 
-impl<'w, S: State + Eq> StateMut<'w, S> {
+impl<'w, S: State_ + Eq> StateMut<'w, S> {
     pub fn will_exit(&self, value: &S) -> bool {
         matches!(self.get(), (Some(x), _) if value == x)
     }
@@ -321,7 +321,7 @@ impl<'w, S: State + Eq> StateMut<'w, S> {
     }
 }
 
-impl<'w, S: State> StateMut<'w, S> {
+impl<'w, S: State_> StateMut<'w, S> {
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
     }
