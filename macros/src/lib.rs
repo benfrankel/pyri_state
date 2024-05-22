@@ -1,3 +1,4 @@
+use bevy_macro_utils::BevyManifest;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::{
@@ -19,14 +20,18 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
 
     let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
-    // TODO
-    let base_config_path = parse_str::<Path>("crate::config").unwrap();
-    let base_schedule_path = parse_str::<Path>("crate::schedule").unwrap();
-    let bevy_schedule_path = parse_str::<Path>("bevy_ecs::schedule").unwrap();
+    // TODO: Make this portable
+    let crate_path = parse_str::<Path>("crate").unwrap();
+    let crate_config_path = concat(crate_path.clone(), format_ident!("config"));
 
     let resolve_state = {
-        let state_flush_set = concat(base_schedule_path.clone(), format_ident!("StateFlushSet"));
-        let system_set = concat(bevy_schedule_path.clone(), format_ident!("SystemSet"));
+        let bevy_ecs_path = BevyManifest::default().get_path("bevy_ecs");
+        let bevy_ecs_schedule_path = concat(bevy_ecs_path, format_ident!("schedule"));
+        let system_set = concat(bevy_ecs_schedule_path.clone(), format_ident!("SystemSet"));
+
+        let crate_schedule_path = concat(crate_path.clone(), format_ident!("schedule"));
+        let state_flush_set = concat(crate_schedule_path.clone(), format_ident!("StateFlushSet"));
+
         let after = state_attrs
             .after
             .iter()
@@ -40,7 +45,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
             .collect::<Punctuated<_, Token![,]>>();
 
         let state_config_ty = concat(
-            base_config_path.clone(),
+            crate_config_path.clone(),
             format_ident!("StateConfigResolveState"),
         );
         quote! { #state_config_ty::<Self>::after(vec![#after]), }
@@ -50,7 +55,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
         quote! {}
     } else {
         let state_config_ty = concat(
-            base_config_path.clone(),
+            crate_config_path.clone(),
             format_ident!("StateConfigDetectChange"),
         );
         quote! { #state_config_ty::<Self>::new(), }
@@ -60,7 +65,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
         quote! {}
     } else {
         let state_config_ty = concat(
-            base_config_path.clone(),
+            crate_config_path.clone(),
             format_ident!("StateConfigSendEvent"),
         );
         quote! { #state_config_ty::<Self>::new(), }
@@ -70,7 +75,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
         quote! {}
     } else {
         let state_config_ty = concat(
-            base_config_path.clone(),
+            crate_config_path.clone(),
             format_ident!("StateConfigApplyFlush"),
         );
         quote! { #state_config_ty::<Self>::new(), }
