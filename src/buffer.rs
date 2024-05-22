@@ -203,11 +203,11 @@ impl<'w, S: State + Eq> StateRef<'w, S> {
     }
 
     pub fn will_any_change(&self) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y)
+        matches!(self.get(), (x, y) if x != y)
     }
 
-    pub fn will_change_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y && test(x, y))
+    pub fn will_change_and(&self, test: impl Fn(Option<&S>, Option<&S>) -> bool) -> bool {
+        matches!(self.get(), (x, y) if x != y && test(x, y))
     }
 
     pub fn will_any_refresh(&self) -> bool {
@@ -243,16 +243,16 @@ impl<'w, S: State> StateRef<'w, S> {
         matches!(self.get(), (Some(_), _))
     }
 
-    pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
-        matches!(self.get(), (Some(x), _) if test(x))
+    pub fn will_exit_and(&self, test: impl Fn(&S, Option<&S>) -> bool) -> bool {
+        matches!(self.get(), (Some(x), y) if test(x, y))
     }
 
     pub fn will_any_enter(&self) -> bool {
         matches!(self.get(), (_, Some(_)))
     }
 
-    pub fn will_enter_and(&self, test: impl Fn(&S) -> bool) -> bool {
-        matches!(self.get(), (_, Some(y)) if test(y))
+    pub fn will_enter_and(&self, test: impl Fn(Option<&S>, &S) -> bool) -> bool {
+        matches!(self.get(), (x, Some(y)) if test(x, y))
     }
 
     pub fn will_any_transition(&self) -> bool {
@@ -326,11 +326,11 @@ impl<'w, S: State + Eq> StateMut<'w, S> {
     }
 
     pub fn will_any_change(&self) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y)
+        matches!(self.get(), (x, y) if x != y)
     }
 
-    pub fn will_change_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if x != y && test(x, y))
+    pub fn will_change_and(&self, test: impl Fn(Option<&S>, Option<&S>) -> bool) -> bool {
+        matches!(self.get(), (x, y) if x != y && test(x, y))
     }
 
     pub fn will_any_refresh(&self) -> bool {
@@ -374,16 +374,16 @@ impl<'w, S: State> StateMut<'w, S> {
         matches!(self.get(), (Some(_), _))
     }
 
-    pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
-        matches!(self.get(), (Some(x), _) if test(x))
+    pub fn will_exit_and(&self, test: impl Fn(&S, Option<&S>) -> bool) -> bool {
+        matches!(self.get(), (Some(x), y) if test(x, y))
     }
 
     pub fn will_any_enter(&self) -> bool {
         matches!(self.get(), (_, Some(_)))
     }
 
-    pub fn will_enter_and(&self, test: impl Fn(&S) -> bool) -> bool {
-        matches!(self.get(), (_, Some(y)) if test(y))
+    pub fn will_enter_and(&self, test: impl Fn(Option<&S>, &S) -> bool) -> bool {
+        matches!(self.get(), (x, Some(y)) if test(x, y))
     }
 
     pub fn will_any_transition(&self) -> bool {

@@ -40,7 +40,7 @@ Using `pyri_state`:
 enum GameState { ... }
 
 app.add_state_::<GameState>()
-    .add_systems(StateFlush, GameState::on_change_and(|old, new| { ... }, spawn_easter_egg));
+    .add_systems(StateFlush, GameState::on_enter_and(|old, new| { ... }, spawn_easter_egg));
 ```
 
 # Remaining tasks

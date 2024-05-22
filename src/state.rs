@@ -64,13 +64,13 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     fn will_exit_and(
-        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
-    ) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
+        test: impl Fn(&Self, Option<&Self>) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
         move |state| state.will_exit_and(&test)
     }
 
     fn on_exit_and<M>(
-        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+        test: impl Fn(&Self, Option<&Self>) -> bool + 'static + Send + Sync,
         systems: impl IntoSystemConfigs<M>,
     ) -> SystemConfigs {
         systems
@@ -89,13 +89,13 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     fn will_enter_and(
-        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
-    ) -> impl Fn(Res<NextState<Self>>) -> bool + 'static + Send + Sync {
+        test: impl Fn(Option<&Self>, &Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
         move |state| state.will_enter_and(&test)
     }
 
     fn on_enter_and<M>(
-        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+        test: impl Fn(Option<&Self>, &Self) -> bool + 'static + Send + Sync,
         systems: impl IntoSystemConfigs<M>,
     ) -> SystemConfigs {
         systems
@@ -284,13 +284,13 @@ pub trait StateExtEq: State + Eq {
     }
 
     fn will_change_and(
-        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
+        test: impl Fn(Option<&Self>, Option<&Self>) -> bool + 'static + Send + Sync,
     ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
         move |state| state.will_change_and(&test)
     }
 
     fn on_change_and<M>(
-        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
+        test: impl Fn(Option<&Self>, Option<&Self>) -> bool + 'static + Send + Sync,
         systems: impl IntoSystemConfigs<M>,
     ) -> SystemConfigs {
         systems
