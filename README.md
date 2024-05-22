@@ -45,7 +45,6 @@ app.add_state_::<GameState>()
 
 # Remaining tasks
 
-- [ ] Implement `State::config()` via derive macro
 - [ ] Include a test or example for each mentioned feature.
 - [ ] Write documentation.
 - [ ] How does flushing states once per frame interact with `FixedUpdate`?

@@ -25,7 +25,7 @@ mod tests {
 
     use crate::{config::ConfigureState, prelude::*};
 
-    fn do_stuff<T>(x: T) {
+    fn do_stuff_with<T>(x: T) {
         let _ = x;
     }
 
@@ -54,16 +54,16 @@ mod tests {
 
     fn exit_level(level: Res<CurrentState<LevelState>>) {
         let level_state = level.unwrap();
-        do_stuff::<&LevelState>(level_state);
+        do_stuff_with::<&LevelState>(level_state);
     }
 
     fn enter_level(level_state: Res<NextState<LevelState>>) {
         let level_state = level_state.unwrap();
-        do_stuff::<&LevelState>(level_state);
+        do_stuff_with::<&LevelState>(level_state);
     }
 
-    #[derive(State, Clone)]
-    #[state(after(LevelState), no_detect_change)]
+    #[derive(State, Clone, PartialEq, Eq)]
+    #[state(after(LevelState))]
     enum ColorState {
         Black,
         White,
@@ -81,21 +81,20 @@ mod tests {
 
     fn exit_color(color_state: Res<CurrentState<ColorState>>) {
         let color_state = color_state.unwrap();
-        do_stuff::<&ColorState>(color_state);
+        do_stuff_with::<&ColorState>(color_state);
     }
 
     fn enter_color(color_state: Res<NextState<ColorState>>) {
         let color_state = color_state.unwrap();
-        do_stuff::<&ColorState>(color_state);
+        do_stuff_with::<&ColorState>(color_state);
     }
 
     #[test]
     fn foo() {
         let mut app = App::new();
 
-        app.add_plugins(StatePlugin);
-
-        app.init_state_::<GameState>()
+        app.add_plugins(StatePlugin)
+            .init_state_::<GameState>()
             .add_state_::<PauseState>()
             .add_state_::<LevelState>()
             .add_state_::<ColorState>()
