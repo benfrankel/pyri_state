@@ -39,7 +39,7 @@ Using `pyri_state`:
 #[derive(State, Clone, PartialEq, Eq)]
 enum GameState { ... }
 
-app.add_state::<GameState>()
+app.add_state_::<GameState>()
     .add_systems(StateFlush, GameState::on_change_and(|old, new| { ... }, spawn_easter_egg));
 ```
 

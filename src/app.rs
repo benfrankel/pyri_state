@@ -28,83 +28,63 @@ impl Plugin for StatePlugin {
 }
 
 pub trait AppExtAddState {
-    fn add_state<S: State>(&mut self) -> &mut Self;
+    fn add_state_<S: State>(&mut self) -> &mut Self;
+    fn init_state_<S: State + FromWorld>(&mut self) -> &mut Self;
+    fn insert_state_<S: State>(&mut self, value: S) -> &mut Self;
 }
 
 impl AppExtAddState for App {
-    fn add_state<S: State>(&mut self) -> &mut Self {
-        S::config().configure_inner(self);
+    fn add_state_<S: State>(&mut self) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<S>>() {
+            S::config().configure(self);
+            self.init_resource::<CurrentState<S>>()
+                .init_resource::<NextState<S>>();
+        }
+        self
+    }
+
+    fn init_state_<S: State + FromWorld>(&mut self) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<S>>() {
+            S::config().configure(self);
+            let value = S::from_world(&mut self.world);
+            self.init_resource::<CurrentState<S>>()
+                .insert_resource(NextState::present(value));
+        }
+        self
+    }
+
+    fn insert_state_<S: State>(&mut self, value: S) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<S>>() {
+            S::config().configure(self);
+            self.init_resource::<CurrentState<S>>()
+                .insert_resource(NextState::present(value));
+        }
         self
     }
 }
 
-pub trait ConfigureState: Sized {
-    type Target: State;
-
-    fn configure_inner(self, app: &mut App);
-
-    fn configure(self, app: &mut App) {
-        if !app.world.contains_resource::<CurrentState<Self::Target>>() {
-            self.configure_inner(app);
-        }
-    }
+pub trait ConfigureState {
+    fn configure(self, app: &mut App);
 }
 
 macro_rules! impl_configure_state {
     ($(($param:ident, $value:ident)), *) => {
         impl<$($param: ConfigureState),*> ConfigureState for ($($param,)*) {
-            type Target = T0::Target;
-
-            fn configure_inner(self, app: &mut App) {
+            fn configure(self, app: &mut App) {
                 let ($($value,)*) = self;
                 $($value.configure(app);)*
+                let _ = app;
             }
         }
     };
 }
 
-all_tuples!(impl_configure_state, 1, 5, T, t);
-
-pub struct StateConfigAdd<S: State>(pub PhantomData<S>);
-
-impl<S: State> ConfigureState for StateConfigAdd<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
-        app.init_resource::<CurrentState<S>>()
-            .init_resource::<NextState<S>>();
-    }
-}
-
-pub struct StateConfigInsert<S: State>(pub S);
-
-impl<S: State> ConfigureState for StateConfigInsert<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
-        app.init_resource::<CurrentState<S>>()
-            .insert_resource(NextState::present(self.0));
-    }
-}
-
-pub struct StateConfigInit<S: State + FromWorld>(pub PhantomData<S>);
-
-impl<S: State + FromWorld> ConfigureState for StateConfigInit<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
-        let value = S::from_world(&mut app.world);
-        app.init_resource::<CurrentState<S>>()
-            .insert_resource(NextState::present(value));
-    }
-}
+all_tuples!(impl_configure_state, 0, 4, T, t);
 
 pub struct StateConfigOnFlush<S: State>(pub Vec<InternedSystemSet>, pub PhantomData<S>);
 
 impl<S: State> ConfigureState for StateConfigOnFlush<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
+    fn configure(self, app: &mut App) {
         schedule_on_flush::<S>(app.get_schedule_mut(StateFlush).unwrap(), &self.0);
     }
 }
@@ -112,9 +92,7 @@ impl<S: State> ConfigureState for StateConfigOnFlush<S> {
 pub struct StateConfigSetFlushOnChange<S: State + Eq>(pub PhantomData<S>);
 
 impl<S: State + Eq> ConfigureState for StateConfigSetFlushOnChange<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
+    fn configure(self, app: &mut App) {
         schedule_set_flush_on_change::<S>(app.get_schedule_mut(PreStateFlush).unwrap());
     }
 }
@@ -122,9 +100,7 @@ impl<S: State + Eq> ConfigureState for StateConfigSetFlushOnChange<S> {
 pub struct StateConfigSendEventOnFlush<S: State + Clone>(pub PhantomData<S>);
 
 impl<S: State + Clone> ConfigureState for StateConfigSendEventOnFlush<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
+    fn configure(self, app: &mut App) {
         schedule_send_event_on_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
@@ -132,9 +108,7 @@ impl<S: State + Clone> ConfigureState for StateConfigSendEventOnFlush<S> {
 pub struct StateConfigApplyFlush<S: State + Clone>(pub PhantomData<S>);
 
 impl<S: State + Clone> ConfigureState for StateConfigApplyFlush<S> {
-    type Target = S;
-
-    fn configure_inner(self, app: &mut App) {
+    fn configure(self, app: &mut App) {
         schedule_apply_flush::<S>(app.get_schedule_mut(PostStateFlush).unwrap());
     }
 }

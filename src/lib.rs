@@ -1,7 +1,6 @@
 #[cfg(feature = "bevy_app")]
 pub mod app;
 pub mod buffer;
-pub mod config;
 pub mod schedule;
 pub mod state;
 
@@ -25,7 +24,7 @@ mod tests {
     };
 
     use crate::{
-        app::{ConfigureState, StateConfigAdd, StateConfigInit, StateConfigOnFlush},
+        app::{ConfigureState, StateConfigOnFlush},
         prelude::*,
     };
 
@@ -43,10 +42,7 @@ mod tests {
 
     impl State for GameState {
         fn config() -> impl ConfigureState {
-            (
-                StateConfigInit::<Self>(PhantomData),
-                StateConfigOnFlush::<Self>(vec![], PhantomData),
-            )
+            StateConfigOnFlush::<Self>(vec![], PhantomData)
         }
     }
 
@@ -55,17 +51,13 @@ mod tests {
 
     impl State for PauseState {
         fn config() -> impl ConfigureState {
-            (
-                StateConfigAdd::<Self>(PhantomData),
-                StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData),
-            )
+            StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData)
         }
     }
 
-    fn apply_pause(pause_state: Res<NextState<PauseState>>) {
-        let pause = pause_state.unwrap().0;
-        do_stuff::<bool>(pause);
-    }
+    fn unpause() {}
+
+    fn pause() {}
 
     #[derive(Clone, PartialEq, Eq, Default)]
     struct LevelState {
@@ -75,10 +67,7 @@ mod tests {
 
     impl State for LevelState {
         fn config() -> impl ConfigureState {
-            (
-                StateConfigAdd::<Self>(PhantomData),
-                StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData),
-            )
+            StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData)
         }
     }
 
@@ -100,13 +89,7 @@ mod tests {
 
     impl State for ColorState {
         fn config() -> impl ConfigureState {
-            (
-                StateConfigAdd::<Self>(PhantomData),
-                StateConfigOnFlush::<Self>(
-                    vec![OnState::<LevelState>::Flush.intern()],
-                    PhantomData,
-                ),
-            )
+            StateConfigOnFlush::<Self>(vec![OnState::<LevelState>::Flush.intern()], PhantomData)
         }
     }
 
@@ -136,36 +119,22 @@ mod tests {
 
         app.add_plugins(StatePlugin);
 
-        // Set up GameState
-        app.add_state::<GameState>().add_systems(
-            StateFlush,
-            (
-                GameState::Playing.on_exit((LevelState::remove, PauseState::remove)),
-                GameState::Playing.on_enter((LevelState::init, PauseState::init)),
-            ),
-        );
-
-        // Set up PauseState
-        app.add_state::<PauseState>()
-            .add_systems(StateFlush, PauseState::on_any_transition(apply_pause));
-
-        // Set up LevelState
-        app.add_state::<LevelState>().add_systems(
-            StateFlush,
-            (
-                LevelState::on_any_exit(exit_level),
-                LevelState::on_any_enter(enter_level),
-                LevelState::on_any_change(compute_color),
-            ),
-        );
-
-        // Set up ColorState
-        app.add_state::<ColorState>().add_systems(
-            StateFlush,
-            (
-                ColorState::on_any_exit(exit_color),
-                ColorState::on_any_enter(enter_color),
-            ),
-        );
+        app.init_state_::<GameState>()
+            .add_state_::<PauseState>()
+            .add_state_::<LevelState>()
+            .add_state_::<ColorState>()
+            .add_systems(
+                StateFlush,
+                (
+                    GameState::Playing.on_exit((PauseState::remove, LevelState::remove)),
+                    GameState::Playing.on_enter((PauseState::init, LevelState::init)),
+                    PauseState(true).on_exit(unpause),
+                    PauseState(true).on_enter(pause),
+                    LevelState::on_any_exit(exit_level),
+                    LevelState::on_any_enter((enter_level, compute_color)),
+                    ColorState::on_any_exit(exit_color),
+                    ColorState::on_any_enter(enter_color),
+                ),
+            );
     }
 }
