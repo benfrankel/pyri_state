@@ -27,11 +27,6 @@ impl<S: State + Eq> CurrentState<S> {
     pub fn is_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
     }
-
-    // Alias for `is_in`.
-    pub fn will_exit(&self, value: &S) -> bool {
-        self.is_in(value)
-    }
 }
 
 impl<S: State> CurrentState<S> {
@@ -59,17 +54,11 @@ impl<S: State> CurrentState<S> {
         self.inner.is_none()
     }
 
-    // Equivalent to `will_any_exit`.
     pub fn is_present(&self) -> bool {
         self.inner.is_some()
     }
 
-    // Equivalent to `is_present`.
-    pub fn will_any_exit(&self) -> bool {
-        self.is_present()
-    }
-
-    pub fn will_exit_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn is_present_and(&self, test: impl Fn(&S) -> bool) -> bool {
         self.get().is_some_and(test)
     }
 }
@@ -103,14 +92,8 @@ impl<S: State + Default> NextState<S> {
 }
 
 impl<S: State + Eq> NextState<S> {
-    // Equivalent to `will_enter`.
     pub fn will_be_in(&self, value: &S) -> bool {
         self.inner.as_ref() == Some(value)
-    }
-
-    // Equivalent to `will_be_in`.
-    pub fn will_enter(&self, value: &S) -> bool {
-        self.will_be_in(value)
     }
 }
 
@@ -150,17 +133,11 @@ impl<S: State> NextState<S> {
         self.inner.is_none()
     }
 
-    // Equivalent to `will_any_enter`.
     pub fn will_be_present(&self) -> bool {
         self.inner.is_some()
     }
 
-    // Equivalent to `will_be_present`.
-    pub fn will_any_enter(&self) -> bool {
-        self.will_be_present()
-    }
-
-    pub fn will_enter_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn will_be_present_and(&self, test: impl Fn(&S) -> bool) -> bool {
         self.get().is_some_and(test)
     }
 
@@ -306,9 +283,7 @@ impl<'w, S: State + Clone> StateMut<'w, S> {
 
     pub fn refresh(&mut self) {
         self.stay();
-        if self.next.will_be_present() {
-            self.next.flush = true;
-        }
+        self.next.flush = true;
     }
 }
 

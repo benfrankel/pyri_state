@@ -7,7 +7,7 @@ use crate::{
     buffer::{CurrentState, NextState},
     schedule::{
         schedule_apply_flush, schedule_on_flush, schedule_send_event_on_flush,
-        schedule_set_flush_on_change, PostStateFlush, PreStateFlush, StateFlush,
+        schedule_trigger_flush_on_change, StateFlush,
     },
     state::State,
 };
@@ -16,14 +16,10 @@ pub struct StatePlugin;
 
 impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
-        app.init_schedule(PreStateFlush)
-            .init_schedule(StateFlush)
-            .init_schedule(PostStateFlush);
-
-        let mut order = app.world.resource_mut::<MainScheduleOrder>();
-        order.insert_after(PreUpdate, PreStateFlush);
-        order.insert_after(PreStateFlush, StateFlush);
-        order.insert_after(StateFlush, PostStateFlush);
+        app.init_schedule(StateFlush)
+            .world
+            .resource_mut::<MainScheduleOrder>()
+            .insert_after(PreUpdate, StateFlush);
     }
 }
 
@@ -89,11 +85,11 @@ impl<S: State> ConfigureState for StateConfigOnFlush<S> {
     }
 }
 
-pub struct StateConfigSetFlushOnChange<S: State + Eq>(pub PhantomData<S>);
+pub struct StateConfigTriggerFlushOnChange<S: State + Eq>(pub PhantomData<S>);
 
-impl<S: State + Eq> ConfigureState for StateConfigSetFlushOnChange<S> {
+impl<S: State + Eq> ConfigureState for StateConfigTriggerFlushOnChange<S> {
     fn configure(self, app: &mut App) {
-        schedule_set_flush_on_change::<S>(app.get_schedule_mut(PreStateFlush).unwrap());
+        schedule_trigger_flush_on_change::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
@@ -109,6 +105,6 @@ pub struct StateConfigApplyFlush<S: State + Clone>(pub PhantomData<S>);
 
 impl<S: State + Clone> ConfigureState for StateConfigApplyFlush<S> {
     fn configure(self, app: &mut App) {
-        schedule_apply_flush::<S>(app.get_schedule_mut(PostStateFlush).unwrap());
+        schedule_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }

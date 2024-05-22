@@ -7,7 +7,7 @@ use bevy_ecs::{
 use crate::{
     app::ConfigureState,
     buffer::{CurrentState, NextState, StateMut, StateRef},
-    schedule::{OnState, StateFlushEvent},
+    schedule::{StateFlushEvent, StateFlushSet},
 };
 
 pub trait State: 'static + Send + Sync + Sized {
@@ -17,24 +17,29 @@ pub trait State: 'static + Send + Sync + Sized {
         state.is_absent()
     }
 
-    // Equivalent to `will_any_exit`.
     fn is_present(state: Res<CurrentState<Self>>) -> bool {
         state.is_present()
+    }
+
+    fn is_present_and(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
+        move |state| state.is_present_and(&test)
     }
 
     fn on_any_update<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems.run_if(Self::is_present)
     }
 
-    // NOTE: This is the only `will_xyz` condition that actually checks that the state is set to flush.
-    //       On the other hand, every `on_xyz` does require that the state is set to flush.
-    fn will_any_flush(state: Res<NextState<Self>>) -> bool {
-        state.flush
+    fn on_update_and<M>(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+        systems: impl IntoSystemConfigs<M>,
+    ) -> SystemConfigs {
+        systems.run_if(Self::is_present_and(test))
     }
 
     fn on_any_flush<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        // `will_any_flush` is already implied by the system set `OnState::<Self>::Flush`
-        systems.in_set(OnState::<Self>::Flush)
+        systems.in_set(StateFlushSet::<Self>::Flush)
     }
 
     fn will_flush_and(
@@ -49,18 +54,18 @@ pub trait State: 'static + Send + Sync + Sized {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_flush_and(test))
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Flush)
     }
 
     // Equivalent to `is_present`.
     fn will_any_exit(state: Res<CurrentState<Self>>) -> bool {
-        state.will_any_exit()
+        state.is_present()
     }
 
     fn on_any_exit<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_exit)
-            .in_set(OnState::<Self>::Exit)
+            .in_set(StateFlushSet::<Self>::Exit)
     }
 
     fn will_exit_and(
@@ -75,17 +80,17 @@ pub trait State: 'static + Send + Sync + Sized {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_exit_and(test))
-            .in_set(OnState::<Self>::Exit)
+            .in_set(StateFlushSet::<Self>::Exit)
     }
 
     fn will_any_enter(state: Res<NextState<Self>>) -> bool {
-        state.will_any_enter()
+        state.will_be_present()
     }
 
     fn on_any_enter<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_enter)
-            .in_set(OnState::<Self>::Enter)
+            .in_set(StateFlushSet::<Self>::Enter)
     }
 
     fn will_enter_and(
@@ -100,7 +105,7 @@ pub trait State: 'static + Send + Sync + Sized {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_enter_and(test))
-            .in_set(OnState::<Self>::Enter)
+            .in_set(StateFlushSet::<Self>::Enter)
     }
 
     fn will_any_transition(state: StateRef<Self>) -> bool {
@@ -110,7 +115,7 @@ pub trait State: 'static + Send + Sync + Sized {
     fn on_any_transition<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_transition)
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn will_transition_and(
@@ -125,7 +130,7 @@ pub trait State: 'static + Send + Sync + Sized {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_transition_and(test))
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn will_any_remove(state: StateRef<Self>) -> bool {
@@ -135,7 +140,7 @@ pub trait State: 'static + Send + Sync + Sized {
     fn on_any_remove<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_remove)
-            .in_set(OnState::<Self>::Exit)
+            .in_set(StateFlushSet::<Self>::Exit)
     }
 
     fn will_remove_and(
@@ -150,7 +155,7 @@ pub trait State: 'static + Send + Sync + Sized {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_remove_and(test))
-            .in_set(OnState::<Self>::Exit)
+            .in_set(StateFlushSet::<Self>::Exit)
     }
 
     fn will_any_insert(state: StateRef<Self>) -> bool {
@@ -160,7 +165,7 @@ pub trait State: 'static + Send + Sync + Sized {
     fn on_any_insert<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_insert)
-            .in_set(OnState::<Self>::Enter)
+            .in_set(StateFlushSet::<Self>::Enter)
     }
 
     fn will_insert_and(
@@ -175,7 +180,7 @@ pub trait State: 'static + Send + Sync + Sized {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_insert_and(test))
-            .in_set(OnState::<Self>::Enter)
+            .in_set(StateFlushSet::<Self>::Enter)
     }
 
     fn remove(mut state: ResMut<NextState<Self>>) {
@@ -227,33 +232,33 @@ impl<S: State + Clone> StateExtClone for S {}
 
 pub trait StateExtEq: State + Eq {
     // Equivalent to `will_exit`.
-    fn is_in(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
+    fn will_update(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
         move |state| state.is_in(&self)
     }
 
     fn on_update<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems.run_if(self.is_in())
+        systems.run_if(self.will_update())
     }
 
     // Equivalent to `is_in`.
     fn will_exit(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
-        move |state| state.will_exit(&self)
+        move |state| state.is_in(&self)
     }
 
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_exit())
-            .in_set(OnState::<Self>::Exit)
+            .in_set(StateFlushSet::<Self>::Exit)
     }
 
     fn will_enter(self) -> impl Fn(Res<NextState<Self>>) -> bool + 'static + Send + Sync {
-        move |state| state.will_enter(&self)
+        move |state| state.will_be_in(&self)
     }
 
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_enter())
-            .in_set(OnState::<Self>::Enter)
+            .in_set(StateFlushSet::<Self>::Enter)
     }
 
     fn will_transition(
@@ -270,7 +275,7 @@ pub trait StateExtEq: State + Eq {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_transition(before, after))
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn will_any_change(state: StateRef<Self>) -> bool {
@@ -280,7 +285,7 @@ pub trait StateExtEq: State + Eq {
     fn on_any_change<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_change)
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Flush)
     }
 
     fn will_change_and(
@@ -295,7 +300,7 @@ pub trait StateExtEq: State + Eq {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_change_and(test))
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Flush)
     }
 
     fn will_any_refresh(state: StateRef<Self>) -> bool {
@@ -305,7 +310,7 @@ pub trait StateExtEq: State + Eq {
     fn on_any_refresh<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(Self::will_any_refresh)
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn will_refresh(self) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
@@ -315,7 +320,7 @@ pub trait StateExtEq: State + Eq {
     fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_refresh())
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn will_refresh_and(
@@ -330,7 +335,7 @@ pub trait StateExtEq: State + Eq {
     ) -> SystemConfigs {
         systems
             .run_if(Self::will_refresh_and(test))
-            .in_set(OnState::<Self>::Flush)
+            .in_set(StateFlushSet::<Self>::Transition)
     }
 }
 

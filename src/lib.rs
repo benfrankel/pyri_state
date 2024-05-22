@@ -51,7 +51,7 @@ mod tests {
 
     impl State for PauseState {
         fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData)
+            StateConfigOnFlush::<Self>(vec![StateFlushSet::<GameState>::Resolve.intern()], PhantomData)
         }
     }
 
@@ -67,7 +67,10 @@ mod tests {
 
     impl State for LevelState {
         fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(vec![OnState::<GameState>::Flush.intern()], PhantomData)
+            StateConfigOnFlush::<Self>(
+                vec![StateFlushSet::<GameState>::Resolve.intern()],
+                PhantomData,
+            )
         }
     }
 
@@ -89,7 +92,10 @@ mod tests {
 
     impl State for ColorState {
         fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(vec![OnState::<LevelState>::Flush.intern()], PhantomData)
+            StateConfigOnFlush::<Self>(
+                vec![StateFlushSet::<LevelState>::Resolve.intern()],
+                PhantomData,
+            )
         }
     }
 
