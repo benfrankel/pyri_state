@@ -1,16 +1,137 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use quote::{format_ident, quote};
+use syn::{
+    parse_macro_input, parse_str, punctuated::Punctuated, DeriveInput, Error, Ident, Meta, Path,
+    PathSegment, Result, Token,
+};
 
-#[proc_macro_derive(State)]
+fn concat(mut base_path: Path, suffix: impl Into<PathSegment>) -> Path {
+    base_path.segments.push(suffix.into());
+    base_path
+}
+
+#[proc_macro_derive(State, attributes(state))]
 pub fn derive_state(input: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(input as DeriveInput);
+    let input = parse_macro_input!(input as DeriveInput);
 
-    let (impl_generics, ty_generics, where_clause) = ast.generics.split_for_impl();
-    let ty_name = &ast.ident;
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let ty_name = &input.ident;
+
+    let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
+
+    // TODO
+    let base_config_path = parse_str::<Path>("crate::config").unwrap();
+    let base_schedule_path = parse_str::<Path>("crate::schedule").unwrap();
+    let bevy_schedule_path = parse_str::<Path>("bevy_ecs::schedule").unwrap();
+
+    let resolve_state = {
+        let state_flush_set = concat(base_schedule_path.clone(), format_ident!("StateFlushSet"));
+        let system_set = concat(bevy_schedule_path.clone(), format_ident!("SystemSet"));
+        let after = state_attrs
+            .after
+            .iter()
+            .map(|state| {
+                quote! {
+                    <#state_flush_set::<#state> as #system_set>::intern(
+                        &#state_flush_set::<#state>::Resolve,
+                    )
+                }
+            })
+            .collect::<Punctuated<_, Token![,]>>();
+
+        let state_config_ty = concat(
+            base_config_path.clone(),
+            format_ident!("StateConfigResolveState"),
+        );
+        quote! { #state_config_ty::<Self>::after(vec![#after]), }
+    };
+
+    let detect_change = if state_attrs.no_detect_change {
+        quote! {}
+    } else {
+        let state_config_ty = concat(
+            base_config_path.clone(),
+            format_ident!("StateConfigDetectChange"),
+        );
+        quote! { #state_config_ty::<Self>::new(), }
+    };
+
+    let send_event = if state_attrs.no_send_event {
+        quote! {}
+    } else {
+        let state_config_ty = concat(
+            base_config_path.clone(),
+            format_ident!("StateConfigSendEvent"),
+        );
+        quote! { #state_config_ty::<Self>::new(), }
+    };
+
+    let apply_flush = if state_attrs.no_apply_flush {
+        quote! {}
+    } else {
+        let state_config_ty = concat(
+            base_config_path.clone(),
+            format_ident!("StateConfigApplyFlush"),
+        );
+        quote! { #state_config_ty::<Self>::new(), }
+    };
 
     quote! {
-        impl #impl_generics State for #ty_name #ty_generics #where_clause {}
+        impl #impl_generics State for #ty_name #ty_generics #where_clause {
+            fn config() -> impl ConfigureState {
+                (
+                    #resolve_state
+                    #detect_change
+                    #send_event
+                    #apply_flush
+                )
+            }
+        }
     }
     .into()
+}
+
+#[derive(Default)]
+struct StateAttrs {
+    after: Punctuated<Ident, Token![,]>,
+    no_detect_change: bool,
+    no_send_event: bool,
+    no_apply_flush: bool,
+}
+
+fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
+    let mut state_attrs = StateAttrs::default();
+
+    for attr in &input.attrs {
+        if !attr.path().is_ident("state") {
+            continue;
+        }
+
+        let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
+        for meta in nested {
+            match meta {
+                Meta::List(meta) if meta.path.is_ident("after") => {
+                    state_attrs.after = meta
+                        .parse_args_with(Punctuated::<Ident, Token![,]>::parse_terminated)
+                        .expect("invalid after states");
+                }
+
+                Meta::Path(path) if path.is_ident("no_detect_change") => {
+                    state_attrs.no_detect_change = true;
+                }
+
+                Meta::Path(path) if path.is_ident("no_send_event") => {
+                    state_attrs.no_send_event = true;
+                }
+
+                Meta::Path(path) if path.is_ident("no_apply_flush") => {
+                    state_attrs.no_apply_flush = true;
+                }
+
+                _ => return Err(Error::new_spanned(meta, "unrecognized state attribute")),
+            }
+        }
+    }
+
+    Ok(state_attrs)
 }

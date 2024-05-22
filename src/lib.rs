@@ -16,24 +16,17 @@ pub mod prelude {
 
 #[cfg(test)]
 mod tests {
-    use std::marker::PhantomData;
-
     use bevy_app::App;
-    use bevy_ecs::{
-        schedule::SystemSet,
-        system::{Res, ResMut},
-    };
+    use bevy_ecs::system::{Res, ResMut};
+    use pyri_state_macros::State;
 
-    use crate::{
-        config::{ConfigureState, StateConfigOnFlush},
-        prelude::*,
-    };
+    use crate::{config::ConfigureState, prelude::*};
 
     fn do_stuff<T>(x: T) {
         let _ = x;
     }
 
-    #[derive(Clone, PartialEq, Eq, Default)]
+    #[derive(State, Clone, PartialEq, Eq, Default)]
     enum GameState {
         #[default]
         MainMenu,
@@ -41,38 +34,19 @@ mod tests {
         EndScreen,
     }
 
-    impl State for GameState {
-        fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(vec![], PhantomData)
-        }
-    }
-
-    #[derive(Clone, PartialEq, Eq, Default)]
+    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[state(after(GameState))]
     struct PauseState(bool);
-
-    impl State for PauseState {
-        fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(vec![StateFlushSet::<GameState>::Resolve.intern()], PhantomData)
-        }
-    }
 
     fn unpause() {}
 
     fn pause() {}
 
-    #[derive(Clone, PartialEq, Eq, Default)]
+    #[derive(State, Clone, PartialEq, Eq, Default)]
+    #[state(after(GameState))]
     struct LevelState {
         x: usize,
         y: usize,
-    }
-
-    impl State for LevelState {
-        fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(
-                vec![StateFlushSet::<GameState>::Resolve.intern()],
-                PhantomData,
-            )
-        }
     }
 
     fn exit_level(level: Res<CurrentState<LevelState>>) {
@@ -85,19 +59,11 @@ mod tests {
         do_stuff::<&LevelState>(level_state);
     }
 
-    #[derive(Clone)]
+    #[derive(State, Clone)]
+    #[state(after(LevelState), no_detect_change)]
     enum ColorState {
         Black,
         White,
-    }
-
-    impl State for ColorState {
-        fn config() -> impl ConfigureState {
-            StateConfigOnFlush::<Self>(
-                vec![StateFlushSet::<LevelState>::Resolve.intern()],
-                PhantomData,
-            )
-        }
     }
 
     fn compute_color(level: Res<NextState<LevelState>>, mut color: ResMut<NextState<ColorState>>) {

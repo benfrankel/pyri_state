@@ -84,7 +84,7 @@ fn check_flush_flag<S: State>(state: Res<NextState<S>>) -> bool {
     state.flush
 }
 
-pub fn schedule_trigger_flush_on_change<S: State + Eq>(schedule: &mut Schedule) {
+pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::set_flush(true)
             .run_if(S::will_any_change)
@@ -92,7 +92,7 @@ pub fn schedule_trigger_flush_on_change<S: State + Eq>(schedule: &mut Schedule) 
     );
 }
 
-pub fn schedule_on_flush<S: State>(schedule: &mut Schedule, after: &[InternedSystemSet]) {
+pub fn schedule_resolve_state<S: State>(schedule: &mut Schedule, after: &[InternedSystemSet]) {
     // External ordering
     for &system_set in after {
         schedule.configure_sets(StateFlushSet::<S>::Resolve.after(system_set));
@@ -116,7 +116,7 @@ pub fn schedule_on_flush<S: State>(schedule: &mut Schedule, after: &[InternedSys
     ));
 }
 
-pub fn schedule_send_event_on_flush<S: State + Clone>(schedule: &mut Schedule) {
+pub fn schedule_send_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(S::on_any_flush(S::send_flush_event));
 }
 

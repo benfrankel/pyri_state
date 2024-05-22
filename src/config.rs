@@ -7,8 +7,7 @@ use bevy_ecs::{
 
 use crate::{
     schedule::{
-        schedule_apply_flush, schedule_on_flush, schedule_send_event_on_flush,
-        schedule_trigger_flush_on_change,
+        schedule_apply_flush, schedule_detect_change, schedule_resolve_state, schedule_send_event,
     },
     state::State,
 };
@@ -31,34 +30,65 @@ macro_rules! impl_configure_state {
 
 all_tuples!(impl_configure_state, 0, 4, T, t);
 
-pub struct StateConfigOnFlush<S: State>(pub Vec<InternedSystemSet>, pub PhantomData<S>);
+pub struct StateConfigResolveState<S: State>(Vec<InternedSystemSet>, PhantomData<S>);
 
-impl<S: State> ConfigureState for StateConfigOnFlush<S> {
+impl<S: State> ConfigureState for StateConfigResolveState<S> {
     fn configure(self, schedule: &mut Schedule) {
-        schedule_on_flush::<S>(schedule, &self.0);
+        schedule_resolve_state::<S>(schedule, &self.0);
     }
 }
 
-pub struct StateConfigTriggerFlushOnChange<S: State + Eq>(pub PhantomData<S>);
+impl<S: State> StateConfigResolveState<S> {
+    pub fn new() -> Self {
+        Self(vec![], PhantomData)
+    }
 
-impl<S: State + Eq> ConfigureState for StateConfigTriggerFlushOnChange<S> {
-    fn configure(self, schedule: &mut Schedule) {
-        schedule_trigger_flush_on_change::<S>(schedule);
+    pub fn after(states: Vec<InternedSystemSet>) -> Self {
+        Self(states, PhantomData)
     }
 }
 
-pub struct StateConfigSendEventOnFlush<S: State + Clone>(pub PhantomData<S>);
+#[derive(Default)]
+pub struct StateConfigDetectChange<S: State + Eq>(PhantomData<S>);
 
-impl<S: State + Clone> ConfigureState for StateConfigSendEventOnFlush<S> {
+impl<S: State + Eq> ConfigureState for StateConfigDetectChange<S> {
     fn configure(self, schedule: &mut Schedule) {
-        schedule_send_event_on_flush::<S>(schedule);
+        schedule_detect_change::<S>(schedule);
     }
 }
 
-pub struct StateConfigApplyFlush<S: State + Clone>(pub PhantomData<S>);
+impl<S: State + Eq> StateConfigDetectChange<S> {
+    pub fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+#[derive(Default)]
+pub struct StateConfigSendEvent<S: State + Clone>(PhantomData<S>);
+
+impl<S: State + Clone> ConfigureState for StateConfigSendEvent<S> {
+    fn configure(self, schedule: &mut Schedule) {
+        schedule_send_event::<S>(schedule);
+    }
+}
+
+impl<S: State + Clone> StateConfigSendEvent<S> {
+    pub fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+#[derive(Default)]
+pub struct StateConfigApplyFlush<S: State + Clone>(PhantomData<S>);
 
 impl<S: State + Clone> ConfigureState for StateConfigApplyFlush<S> {
     fn configure(self, schedule: &mut Schedule) {
         schedule_apply_flush::<S>(schedule);
+    }
+}
+
+impl<S: State + Clone> StateConfigApplyFlush<S> {
+    pub fn new() -> Self {
+        Self(PhantomData)
     }
 }
