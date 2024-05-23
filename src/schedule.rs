@@ -3,15 +3,16 @@ use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 use bevy_ecs::{
     event::Event,
     schedule::{
-        InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs, Schedule, ScheduleLabel,
-        SystemSet,
+        InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs, NextState, Schedule,
+        ScheduleLabel, SystemSet,
     },
-    system::Res,
+    system::{Res, ResMut},
 };
 
 use crate::{
     buffer::NextState_,
     state::{StateExtClone, StateExtEq, State_},
+    util::BevyState,
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -119,6 +120,7 @@ pub fn schedule_resolve_state<S: State_>(
             StateFlushSet::<S>::Transition.run_if(S::will_any_transition),
             StateFlushSet::<S>::Enter.run_if(S::will_any_enter),
         )
+            .chain()
             .in_set(StateFlushSet::<S>::Flush),
     ));
 }
@@ -133,4 +135,27 @@ pub fn schedule_apply_flush<S: State_ + Clone>(schedule: &mut Schedule) {
             .run_if(check_flush_flag::<S>)
             .in_set(ApplyFlushSet),
     );
+}
+
+pub fn schedule_bevy_state<S: State_ + Clone + PartialEq + Eq + Hash + Debug>(
+    schedule: &mut Schedule,
+) {
+    let update_bevy_state =
+        |pyri_state: Res<NextState_<S>>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
+            if bevy_state.0.is_none() {
+                bevy_state.set(BevyState(pyri_state.get().cloned()));
+            }
+        };
+
+    let update_pyri_state = |mut pyri_state: ResMut<NextState_<S>>,
+                             bevy_state: Res<NextState<BevyState<S>>>| {
+        if let Some(value) = bevy_state.0.clone() {
+            pyri_state.set_flush(true).inner = value.0;
+        }
+    };
+
+    schedule.add_systems((
+        update_pyri_state.in_set(StateFlushSet::<S>::Trigger),
+        S::on_any_flush(update_bevy_state),
+    ));
 }

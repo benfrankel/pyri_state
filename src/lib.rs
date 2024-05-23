@@ -4,14 +4,14 @@ extern crate self as pyri_state;
 #[cfg(feature = "bevy_app")]
 pub mod app;
 pub mod buffer;
-pub mod config;
 pub mod schedule;
 pub mod state;
+pub mod util;
 
 pub mod prelude {
     #[doc(hidden)]
     #[cfg(feature = "bevy_app")]
-    pub use crate::app::*;
+    pub use crate::app::{AppExtState, StatePlugin};
 
     #[doc(hidden)]
     pub use crate::{buffer::*, schedule::*, state::*};

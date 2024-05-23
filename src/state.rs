@@ -6,19 +6,10 @@ use bevy_ecs::{
 
 use crate::{
     buffer::{CurrentState, NextState_, StateMut, StateRef},
-    config::ConfigureState,
     schedule::{StateFlushEvent, StateFlushSet},
 };
 
-// TODO: Move this to util.rs?
-// Convenient trait alias for defining wrapper states like `StateStack<S: FullState>`.
-pub trait FullState: State_ + Clone + PartialEq + Eq {}
-
-impl<T: State_ + Clone + PartialEq + Eq> FullState for T {}
-
 pub trait State_: 'static + Send + Sync + Sized {
-    fn config() -> impl ConfigureState;
-
     fn is_absent(state: Res<CurrentState<Self>>) -> bool {
         state.is_absent()
     }
