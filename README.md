@@ -8,12 +8,12 @@
 - [Modular configuration](#modular-configuration)
 - [Ecosystem compatibility](#ecosystem-compatibility)
 - [Refresh](#refresh)
-- [Disable & enable](#disable--enable)
+- [Disable, enable, toggle](#disable-enable-toggle)
 - [Computed & substates](#computed--substates)
 
 ## Partial mutation
 
-Mutate the next state directly instead of fully replacing it with a new value:
+Directly update the next state instead of setting an entirely new value:
 
 ```rust
 // Player has different abilities depending on the color mode. For example,
@@ -59,7 +59,7 @@ fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
 
 ## Flexible scheduling
 
-Configure systems to handle arbitrary state transitions using run conditions:
+Harness the full power of bevy ECS to schedule your state transitions:
 
 ```rust
 #[derive(State, Clone, PartialEq, Eq)]
@@ -80,7 +80,7 @@ struct LevelIdx(usize);
 
 ## Modular configuration
 
-Configure the state flush behavior per state type:
+Strip out or add features to your states on a per-type basis:
 
 ```rust
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
@@ -113,7 +113,7 @@ struct MyRawState(i32);
 
 ## Ecosystem compatibility
 
-Opt in to a `BevyState<S>` wrapper for compatibility with ecosystem crates:
+Easily enable an associated `BevyState<S>` wrapper to interact with crates that expect it:
 
 ```rust
 use bevy_asset_loader::prelude::*;
@@ -151,33 +151,33 @@ enum GameState {
 
 ## Refresh
 
-Trigger a transition from the current state to itself:
+Trigger a transition from the current state to itself (e.g. to restart the current level):
 
 ```rust
 #[derive(State, Clone, PartialEq, Eq, Default)]
-struct LevelState(usize);
+struct LevelIdx(usize);
 
-fn tear_down_old_level(level: Res<CurrentState<LevelState>>) { ... }
-fn set_up_new_level(level: Res<NextState_<LevelState>>) { ... }
+fn tear_down_old_level(level: Res<CurrentState<LevelIdx>>) { ... }
+fn set_up_new_level(level: Res<NextState_<LevelIdx>>) { ... }
 
-.init_state_::<LevelState>()
+.init_state_::<LevelIdx>()
 .add_systems(
     StateFlush,
     (
-        LevelState::on_any_exit(tear_down_old_level),
-        LevelState::on_any_enter(set_up_new_level),
+        LevelIdx::on_any_exit(tear_down_old_level),
+        LevelIdx::on_any_enter(set_up_new_level),
     )
 )
 .add_systems(
     Update,
     // Restarts the current level on R press:
-    LevelState::refresh.run_if(input_just_pressed(KeyCode::KeyR)),
+    LevelIdx::refresh.run_if(input_just_pressed(KeyCode::KeyR)),
 );
 ```
 
-## Disable & enable
+## Disable, enable, toggle
 
-States can be disabled, enabled, and even toggled easily:
+Disable or enable any state type on command (great for simple on/off states or substates):
 
 ```rust
 #[derive(State, Clone, PartialEq, Eq, Default)]
@@ -202,7 +202,7 @@ fn toggle_pause() { ... }
 
 ## Computed & substates
 
-Roll your own computed and substates with the full power of bevy systems:
+Roll your own computed and substates with the full power of bevy ECS:
 
 ```rust
 #[derive(State, Clone, PartialEq, Eq)]
