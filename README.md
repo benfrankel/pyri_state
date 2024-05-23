@@ -2,9 +2,14 @@
 
 # Features
 
-## Ergonomics
-
-See example code below.
+- Ergonomics
+- [Partial mutation](#partial-mutation)
+- [Flexible scheduling](#flexible-scheduling)
+- [Modular configuration](#modular-configuration)
+- [Ecosystem compatibility](#ecosystem-compatibility)
+- [Refresh](#refresh)
+- [Disable & enable](#disable--enable)
+- [Computed & substates](#computed--substates)
 
 ## Partial mutation
 
