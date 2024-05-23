@@ -19,7 +19,7 @@ pub struct CurrentState<S: RawState> {
 
 impl<S: RawState> Default for CurrentState<S> {
     fn default() -> Self {
-        Self::absent()
+        Self::disabled()
     }
 }
 
@@ -34,11 +34,11 @@ impl<S: RawState> CurrentState<S> {
         Self { inner }
     }
 
-    pub fn absent() -> Self {
+    pub fn disabled() -> Self {
         Self::new(None)
     }
 
-    pub fn present(value: S) -> Self {
+    pub fn enabled(value: S) -> Self {
         Self::new(Some(value))
     }
 
@@ -50,15 +50,15 @@ impl<S: RawState> CurrentState<S> {
         self.get().unwrap()
     }
 
-    pub fn is_absent(&self) -> bool {
+    pub fn is_disabled(&self) -> bool {
         self.inner.is_none()
     }
 
-    pub fn is_present(&self) -> bool {
+    pub fn is_enabled(&self) -> bool {
         self.inner.is_some()
     }
 
-    pub fn is_present_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn is_enabled_and(&self, test: impl Fn(&S) -> bool) -> bool {
         self.get().is_some_and(test)
     }
 }
@@ -77,17 +77,27 @@ pub struct NextState_<S: RawState> {
 
 impl<S: RawState> Default for NextState_<S> {
     fn default() -> Self {
-        Self::absent()
+        Self::disabled()
     }
 }
 
 impl<S: RawState + Default> NextState_<S> {
-    pub fn init(&mut self) -> &mut S {
+    // Sets the next state to the default state unless there's already a next state.
+    pub fn enable(&mut self) -> &mut S {
         self.inner.get_or_insert_with(|| S::default())
     }
 
+    pub fn toggle(&mut self) {
+        if self.will_be_enabled() {
+            self.disable();
+        } else {
+            self.restart();
+        }
+    }
+
+    // Sets the next state to the default state and enables flush.
     pub fn restart(&mut self) -> &mut S {
-        self.insert(S::default())
+        self.set_flush(true).enter(S::default())
     }
 }
 
@@ -105,11 +115,11 @@ impl<S: RawState> NextState_<S> {
         }
     }
 
-    pub fn absent() -> Self {
+    pub fn disabled() -> Self {
         Self::new(None)
     }
 
-    pub fn present(value: S) -> Self {
+    pub fn enabled(value: S) -> Self {
         Self::new(Some(value))
     }
 
@@ -129,15 +139,15 @@ impl<S: RawState> NextState_<S> {
         self.get_mut().unwrap()
     }
 
-    pub fn will_be_absent(&self) -> bool {
+    pub fn will_be_disabled(&self) -> bool {
         self.inner.is_none()
     }
 
-    pub fn will_be_present(&self) -> bool {
+    pub fn will_be_enabled(&self) -> bool {
         self.inner.is_some()
     }
 
-    pub fn will_be_present_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn will_be_enabled_and(&self, test: impl Fn(&S) -> bool) -> bool {
         self.get().is_some_and(test)
     }
 
@@ -146,17 +156,24 @@ impl<S: RawState> NextState_<S> {
         self
     }
 
-    pub fn remove(&mut self) {
+    pub fn disable(&mut self) {
         self.inner = None;
     }
 
-    pub fn insert(&mut self, value: S) -> &mut S {
-        self.inner.insert(value)
+    pub fn enable_as(&mut self, value: S) -> &mut S {
+        self.inner.get_or_insert(value)
     }
 
-    // Alias for `insert`.
-    pub fn set(&mut self, value: S) -> &mut S {
-        self.insert(value)
+    pub fn toggle_as(&mut self, value: S) {
+        if self.will_be_enabled() {
+            self.disable();
+        } else {
+            self.enter(value);
+        }
+    }
+
+    pub fn enter(&mut self, value: S) -> &mut S {
+        self.inner.insert(value)
     }
 }
 
@@ -240,19 +257,19 @@ impl<'w, S: RawState> StateRef<'w, S> {
         matches!(self.get(), (Some(x), Some(y)) if test(x, y))
     }
 
-    pub fn will_any_remove(&self) -> bool {
+    pub fn will_any_disable(&self) -> bool {
         matches!(self.get(), (Some(_), None))
     }
 
-    pub fn will_remove_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn will_disable_and(&self, test: impl Fn(&S) -> bool) -> bool {
         matches!(self.get(), (Some(x), None) if test(x))
     }
 
-    pub fn will_any_insert(&self) -> bool {
+    pub fn will_any_enable(&self) -> bool {
         matches!(self.get(), (None, Some(_)))
     }
 
-    pub fn will_insert_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn will_enable_and(&self, test: impl Fn(&S) -> bool) -> bool {
         matches!(self.get(), (None, Some(y)) if test(y))
     }
 }
@@ -265,25 +282,35 @@ pub struct StateMut<'w, S: RawState> {
 
 impl<'w, S: RawState + Default> StateMut<'w, S> {
     // Sets the next state to the default state unless there's already a next state.
-    pub fn init(&mut self) -> &mut S {
-        self.next.init()
+    pub fn enable(&mut self) -> &mut S {
+        self.next.enable()
     }
 
-    // Sets the next state to the default state.
+    pub fn toggle(&mut self) {
+        self.next.toggle();
+    }
+
+    // Sets the next state to the default state and enables flush.
     pub fn restart(&mut self) -> &mut S {
         self.next.restart()
     }
 }
 
 impl<'w, S: RawState + Clone> StateMut<'w, S> {
-    // TODO: Rename to `reset`? Or would that be confusing alongside `restart`, `refresh`, and `remove`?
-    pub fn stay(&mut self) {
-        self.next.inner.clone_from(&self.current.inner);
+    // Sets the next state to the current state and disables flush.
+    pub fn reset(&mut self) {
+        self.next
+            .set_flush(false)
+            .inner
+            .clone_from(&self.current.inner);
     }
 
+    // Sets the next state to the current state and enables flush.
     pub fn refresh(&mut self) {
-        self.stay();
-        self.next.flush = true;
+        self.next
+            .set_flush(true)
+            .inner
+            .clone_from(&self.current.inner);
     }
 }
 
@@ -369,33 +396,36 @@ impl<'w, S: RawState> StateMut<'w, S> {
         matches!(self.get(), (Some(x), Some(y)) if test(x, y))
     }
 
-    pub fn will_any_remove(&self) -> bool {
+    pub fn will_any_disable(&self) -> bool {
         matches!(self.get(), (Some(_), None))
     }
 
-    pub fn will_remove_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn will_disable_and(&self, test: impl Fn(&S) -> bool) -> bool {
         matches!(self.get(), (Some(x), None) if test(x))
     }
 
-    pub fn will_any_insert(&self) -> bool {
+    pub fn will_any_enable(&self) -> bool {
         matches!(self.get(), (None, Some(_)))
     }
 
-    pub fn will_insert_and(&self, test: impl Fn(&S) -> bool) -> bool {
+    pub fn will_enable_and(&self, test: impl Fn(&S) -> bool) -> bool {
         matches!(self.get(), (None, Some(y)) if test(y))
     }
 
-    pub fn remove(&mut self) {
-        self.next.remove();
+    pub fn disable(&mut self) {
+        self.next.disable();
     }
 
-    pub fn insert(&mut self, value: S) -> &mut S {
-        self.next.insert(value)
+    pub fn enable_as(&mut self, value: S) -> &mut S {
+        self.next.enable_as(value)
     }
 
-    // Alias for `insert`.
-    pub fn set(&mut self, value: S) -> &mut S {
-        self.insert(value)
+    pub fn toggle_as(&mut self, value: S) {
+        self.next.toggle_as(value);
+    }
+
+    pub fn enter(&mut self, value: S) -> &mut S {
+        self.next.enter(value)
     }
 
     pub fn set_flush(&mut self, flush: bool) -> &mut Self {

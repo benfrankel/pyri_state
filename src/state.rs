@@ -25,29 +25,43 @@ impl<S: State_ + Hash + Debug> Default for BevyState<S> {
 }
 
 pub trait RawState: 'static + Send + Sync + Sized {
-    fn is_absent(state: Res<CurrentState<Self>>) -> bool {
-        state.is_absent()
+    fn is_disabled(state: Res<CurrentState<Self>>) -> bool {
+        state.is_disabled()
     }
 
-    fn is_present(state: Res<CurrentState<Self>>) -> bool {
-        state.is_present()
+    fn is_enabled(state: Res<CurrentState<Self>>) -> bool {
+        state.is_enabled()
     }
 
-    fn is_present_and(
+    fn is_enabled_and(
         test: impl Fn(&Self) -> bool + 'static + Send + Sync,
     ) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
-        move |state| state.is_present_and(&test)
+        move |state| state.is_enabled_and(&test)
+    }
+
+    fn will_be_disabled(state: Res<NextState_<Self>>) -> bool {
+        state.will_be_disabled()
+    }
+
+    fn will_be_enabled(state: Res<NextState_<Self>>) -> bool {
+        state.will_be_enabled()
+    }
+
+    fn will_be_enabled_and(
+        test: impl Fn(&Self) -> bool + 'static + Send + Sync,
+    ) -> impl Fn(Res<NextState_<Self>>) -> bool + 'static + Send + Sync {
+        move |state| state.will_be_enabled_and(&test)
     }
 
     fn on_any_update<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems.run_if(Self::is_present)
+        systems.run_if(Self::is_enabled)
     }
 
     fn on_update_and<M>(
         test: impl Fn(&Self) -> bool + 'static + Send + Sync,
         systems: impl IntoSystemConfigs<M>,
     ) -> SystemConfigs {
-        systems.run_if(Self::is_present_and(test))
+        systems.run_if(Self::is_enabled_and(test))
     }
 
     fn on_any_flush<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -69,9 +83,9 @@ pub trait RawState: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<Self>::Flush)
     }
 
-    // Equivalent to `is_present`.
+    // Equivalent to `is_enabled`.
     fn will_any_exit(state: Res<CurrentState<Self>>) -> bool {
-        state.is_present()
+        Self::is_enabled(state)
     }
 
     fn on_any_exit<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -93,8 +107,9 @@ pub trait RawState: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<Self>::Exit)
     }
 
+    // Equivalent to `will_be_enabled`.
     fn will_any_enter(state: Res<NextState_<Self>>) -> bool {
-        state.will_be_present()
+        Self::will_be_enabled(state)
     }
 
     fn on_any_enter<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -139,58 +154,58 @@ pub trait RawState: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<Self>::Transition)
     }
 
-    fn will_any_remove(state: StateRef<Self>) -> bool {
-        state.will_any_remove()
+    fn will_any_disable(state: StateRef<Self>) -> bool {
+        state.will_any_disable()
     }
 
-    fn on_any_remove<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_any_disable<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(Self::will_any_remove)
+            .run_if(Self::will_any_disable)
             .in_set(StateFlushSet::<Self>::Exit)
     }
 
-    fn will_remove_and(
+    fn will_disable_and(
         test: impl Fn(&Self) -> bool + 'static + Send + Sync,
     ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
-        move |state| state.will_remove_and(&test)
+        move |state| state.will_disable_and(&test)
     }
 
-    fn on_remove_and<M>(
+    fn on_disable_and<M>(
         test: impl Fn(&Self) -> bool + 'static + Send + Sync,
         systems: impl IntoSystemConfigs<M>,
     ) -> SystemConfigs {
         systems
-            .run_if(Self::will_remove_and(test))
+            .run_if(Self::will_disable_and(test))
             .in_set(StateFlushSet::<Self>::Exit)
     }
 
-    fn will_any_insert(state: StateRef<Self>) -> bool {
-        state.will_any_insert()
+    fn will_any_enable(state: StateRef<Self>) -> bool {
+        state.will_any_enable()
     }
 
-    fn on_any_insert<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_any_enable<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(Self::will_any_insert)
+            .run_if(Self::will_any_enable)
             .in_set(StateFlushSet::<Self>::Enter)
     }
 
-    fn will_insert_and(
+    fn will_enable_and(
         test: impl Fn(&Self) -> bool + 'static + Send + Sync,
     ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
-        move |state| state.will_insert_and(&test)
+        move |state| state.will_enable_and(&test)
     }
 
-    fn on_insert_and<M>(
+    fn on_enable_and<M>(
         test: impl Fn(&Self) -> bool + 'static + Send + Sync,
         systems: impl IntoSystemConfigs<M>,
     ) -> SystemConfigs {
         systems
-            .run_if(Self::will_insert_and(test))
+            .run_if(Self::will_enable_and(test))
             .in_set(StateFlushSet::<Self>::Enter)
     }
 
-    fn remove(mut state: ResMut<NextState_<Self>>) {
-        state.remove();
+    fn disable(mut state: ResMut<NextState_<Self>>) {
+        state.disable();
     }
 
     fn set_flush(flush: bool) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
@@ -201,19 +216,24 @@ pub trait RawState: 'static + Send + Sync + Sized {
 }
 
 pub trait RawStateExtClone: RawState + Clone {
-    fn insert(self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
+    fn enable_as(value: Self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
         move |mut state| {
-            state.insert(self.clone());
+            state.enable_as(value.clone());
         }
     }
 
-    // Alias for `insert`.
-    fn set(value: Self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
-        Self::insert(value)
+    fn toggle_as(value: Self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
+        move |mut state| state.toggle_as(value.clone())
     }
 
-    fn stay(mut state: StateMut<Self>) {
-        state.stay();
+    fn enter(self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
+        move |mut state| {
+            state.enter(self.clone());
+        }
+    }
+
+    fn reset(mut state: StateMut<Self>) {
+        state.reset();
     }
 
     fn refresh(mut state: StateMut<Self>) {
@@ -335,8 +355,12 @@ pub trait RawStateExtEq: RawState + Eq {
 impl<T: RawState + Eq> RawStateExtEq for T {}
 
 pub trait RawStateExtDefault: RawState + Default {
-    fn init(mut state: ResMut<NextState_<Self>>) {
-        state.init();
+    fn enable(mut state: ResMut<NextState_<Self>>) {
+        state.enable();
+    }
+
+    fn toggle(mut state: ResMut<NextState_<Self>>) {
+        state.toggle();
     }
 
     fn restart(mut state: ResMut<NextState_<Self>>) {

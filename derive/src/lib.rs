@@ -11,7 +11,7 @@ fn concat(mut base_path: Path, suffix: impl Into<PathSegment>) -> Path {
     base_path
 }
 
-#[proc_macro_derive(State_, attributes(state))]
+#[proc_macro_derive(State, attributes(state))]
 pub fn derive_state(input: TokenStream) -> TokenStream {
     // Construct crate module paths for portability
     // TODO: This is not 100% portable I guess, but probably good enough.

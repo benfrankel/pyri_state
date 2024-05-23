@@ -46,7 +46,7 @@ impl AppExtState for App {
             let value = S::from_world(&mut self.world);
             S::get_config().configure(self);
             self.init_resource::<CurrentState<S>>()
-                .insert_resource(NextState_::present(value));
+                .insert_resource(NextState_::enabled(value));
         }
         self
     }
@@ -55,7 +55,7 @@ impl AppExtState for App {
         if !self.world.contains_resource::<CurrentState<S>>() {
             S::get_config().configure(self);
             self.init_resource::<CurrentState<S>>()
-                .insert_resource(NextState_::present(value));
+                .insert_resource(NextState_::enabled(value));
         }
         self
     }

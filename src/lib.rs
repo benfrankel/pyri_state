@@ -20,7 +20,7 @@ pub mod prelude {
     };
 
     #[doc(hidden)]
-    pub use pyri_state_derive::State_;
+    pub use pyri_state_derive::State;
 }
 
 #[cfg(test)]
@@ -34,67 +34,64 @@ mod tests {
         let _ = x;
     }
 
-    #[derive(State_, Clone, PartialEq, Eq, Default)]
+    #[derive(State, Clone, PartialEq, Eq, Default)]
     enum GameState {
         #[default]
-        MainMenu,
-        Playing,
-        EndScreen,
+        Splash,
+        Title,
+        PlayingGame,
     }
 
-    #[derive(State_, Clone, PartialEq, Eq, Default)]
+    #[derive(State, Clone, PartialEq, Eq, Default)]
     #[state(after(GameState))]
-    struct PauseState(bool);
+    struct Paused;
 
     fn unpause() {}
 
     fn pause() {}
 
-    #[derive(State_, Clone, PartialEq, Eq, Default)]
+    #[derive(State, Clone, PartialEq, Eq, Default)]
     #[state(after(GameState))]
-    struct LevelState {
+    struct LevelIdx {
         x: usize,
         y: usize,
     }
 
-    fn exit_level(level: Res<CurrentState<LevelState>>) {
+    fn exit_level(level: Res<CurrentState<LevelIdx>>) {
         let level_state = level.unwrap();
-        do_stuff_with::<&LevelState>(level_state);
+        do_stuff_with::<&LevelIdx>(level_state);
     }
 
-    fn enter_level(level_state: Res<NextState_<LevelState>>) {
+    fn enter_level(level_state: Res<NextState_<LevelIdx>>) {
         let level_state = level_state.unwrap();
-        do_stuff_with::<&LevelState>(level_state);
+        do_stuff_with::<&LevelIdx>(level_state);
     }
 
-    #[derive(State_, Clone, PartialEq, Eq)]
-    #[state(after(LevelState))]
-    enum ColorState {
+    #[derive(State, Clone, PartialEq, Eq)]
+    #[state(after(LevelIdx))]
+    enum SquareColor {
         Black,
         White,
     }
 
-    fn compute_color(
-        level: Res<NextState_<LevelState>>,
-        mut color: ResMut<NextState_<ColorState>>,
-    ) {
+    fn compute_color(level: Res<NextState_<LevelIdx>>, mut color: ResMut<NextState_<SquareColor>>) {
         color.inner = level.get().map(|level| {
             if level.x + level.y % 2 == 0 {
-                ColorState::Black
+                SquareColor::Black
             } else {
-                ColorState::White
+                SquareColor::White
             }
         });
     }
 
-    fn exit_color(color_state: Res<CurrentState<ColorState>>) {
+    fn exit_color(color_state: Res<CurrentState<SquareColor>>) {
         let color_state = color_state.unwrap();
-        do_stuff_with::<&ColorState>(color_state);
+        do_stuff_with::<&SquareColor>(color_state);
     }
 
-    fn enter_color(color_state: Res<NextState_<ColorState>>) {
+    fn enter_color(color_state: Res<NextState_<SquareColor>>) {
         let color_state = color_state.unwrap();
-        do_stuff_with::<&ColorState>(color_state);
+        do_stuff_with::<&SquareColor>(color_state);
     }
 
     #[test]
@@ -103,20 +100,20 @@ mod tests {
 
         app.add_plugins(StatePlugin)
             .init_state_::<GameState>()
-            .add_state_::<PauseState>()
-            .add_state_::<LevelState>()
-            .add_state_::<ColorState>()
+            .add_state_::<Paused>()
+            .add_state_::<LevelIdx>()
+            .add_state_::<SquareColor>()
             .add_systems(
                 StateFlush,
                 (
-                    GameState::Playing.on_exit((PauseState::remove, LevelState::remove)),
-                    GameState::Playing.on_enter((PauseState::init, LevelState::init)),
-                    PauseState(true).on_exit(unpause),
-                    PauseState(true).on_enter(pause),
-                    LevelState::on_any_exit(exit_level),
-                    LevelState::on_any_enter((enter_level, compute_color)),
-                    ColorState::on_any_exit(exit_color),
-                    ColorState::on_any_enter(enter_color),
+                    GameState::PlayingGame.on_exit((Paused::disable, LevelIdx::disable)),
+                    GameState::PlayingGame.on_enter((Paused::enable, LevelIdx::enable)),
+                    Paused.on_exit(unpause),
+                    Paused.on_enter(pause),
+                    LevelIdx::on_any_exit(exit_level),
+                    LevelIdx::on_any_enter((enter_level, compute_color)),
+                    SquareColor::on_any_exit(exit_color),
+                    SquareColor::on_any_enter(enter_color),
                 ),
             );
     }
