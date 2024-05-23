@@ -7,13 +7,11 @@ use bevy_ecs::{all_tuples, schedule::InternedSystemSet, world::FromWorld};
 
 use crate::{
     buffer::{CurrentState, NextState_},
-    prelude::StateFlushEvent,
     schedule::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_resolve_state,
-        schedule_send_event, StateFlush,
+        schedule_send_event, StateFlush, StateFlushEvent,
     },
-    state::State_,
-    util::BevyState,
+    state::{BevyState, RawState},
 };
 
 pub struct StatePlugin;
@@ -63,7 +61,7 @@ impl AppExtState for App {
     }
 }
 
-pub trait GetStateConfig: State_ {
+pub trait GetStateConfig: RawState {
     fn get_config() -> impl ConfigureState;
 }
 
@@ -85,13 +83,13 @@ macro_rules! impl_configure_state {
 
 all_tuples!(impl_configure_state, 0, 8, T, t);
 
-pub struct StateConfigResolveState<S: State_> {
+pub struct StateConfigResolveState<S: RawState> {
     after: Vec<InternedSystemSet>,
     before: Vec<InternedSystemSet>,
     _phantom: PhantomData<S>,
 }
 
-impl<S: State_> ConfigureState for StateConfigResolveState<S> {
+impl<S: RawState> ConfigureState for StateConfigResolveState<S> {
     fn configure(self, app: &mut App) {
         schedule_resolve_state::<S>(
             app.get_schedule_mut(StateFlush).unwrap(),
@@ -101,7 +99,7 @@ impl<S: State_> ConfigureState for StateConfigResolveState<S> {
     }
 }
 
-impl<S: State_> StateConfigResolveState<S> {
+impl<S: RawState> StateConfigResolveState<S> {
     pub fn new(after: Vec<InternedSystemSet>, before: Vec<InternedSystemSet>) -> Self {
         Self {
             after,
@@ -112,61 +110,65 @@ impl<S: State_> StateConfigResolveState<S> {
 }
 
 #[derive(Default)]
-pub struct StateConfigDetectChange<S: State_ + Eq>(PhantomData<S>);
+pub struct StateConfigDetectChange<S: RawState + Eq>(PhantomData<S>);
 
-impl<S: State_ + Eq> ConfigureState for StateConfigDetectChange<S> {
+impl<S: RawState + Eq> ConfigureState for StateConfigDetectChange<S> {
     fn configure(self, app: &mut App) {
         schedule_detect_change::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Eq> StateConfigDetectChange<S> {
+impl<S: RawState + Eq> StateConfigDetectChange<S> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
 #[derive(Default)]
-pub struct StateConfigSendEvent<S: State_ + Clone>(PhantomData<S>);
+pub struct StateConfigSendEvent<S: RawState + Clone>(PhantomData<S>);
 
-impl<S: State_ + Clone> ConfigureState for StateConfigSendEvent<S> {
+impl<S: RawState + Clone> ConfigureState for StateConfigSendEvent<S> {
     fn configure(self, app: &mut App) {
         app.add_event::<StateFlushEvent<S>>();
         schedule_send_event::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Clone> StateConfigSendEvent<S> {
+impl<S: RawState + Clone> StateConfigSendEvent<S> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
-pub struct StateConfigBevyState<S: State_ + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
+pub struct StateConfigBevyState<S: RawState + Clone + PartialEq + Eq + Hash + Debug>(
+    PhantomData<S>,
+);
 
-impl<S: State_ + Clone + PartialEq + Eq + Hash + Debug> ConfigureState for StateConfigBevyState<S> {
+impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> ConfigureState
+    for StateConfigBevyState<S>
+{
     fn configure(self, app: &mut App) {
         app.init_state::<BevyState<S>>();
         schedule_bevy_state::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Clone + PartialEq + Eq + Hash + Debug> StateConfigBevyState<S> {
+impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> StateConfigBevyState<S> {
     pub fn new() -> Self {
         Self(PhantomData)
     }
 }
 
 #[derive(Default)]
-pub struct StateConfigApplyFlush<S: State_ + Clone>(PhantomData<S>);
+pub struct StateConfigApplyFlush<S: RawState + Clone>(PhantomData<S>);
 
-impl<S: State_ + Clone> ConfigureState for StateConfigApplyFlush<S> {
+impl<S: RawState + Clone> ConfigureState for StateConfigApplyFlush<S> {
     fn configure(self, app: &mut App) {
         schedule_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Clone> StateConfigApplyFlush<S> {
+impl<S: RawState + Clone> StateConfigApplyFlush<S> {
     pub fn new() -> Self {
         Self(PhantomData)
     }

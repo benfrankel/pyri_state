@@ -20,7 +20,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     let crate_state_path = concat(crate_path.clone(), format_ident!("state"));
 
     // Construct trait paths
-    let state_trait = concat(crate_state_path.clone(), format_ident!("State_"));
+    let raw_state_trait = concat(crate_state_path.clone(), format_ident!("RawState"));
     let get_state_config_trait = concat(crate_app_path.clone(), format_ident!("GetStateConfig"));
     let configure_state_trait = concat(crate_app_path.clone(), format_ident!("ConfigureState"));
 
@@ -91,7 +91,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
 
     // Construct trait impls for the decorated type
     quote! {
-        impl #impl_generics #state_trait for #ty_name #ty_generics #where_clause {}
+        impl #impl_generics #raw_state_trait for #ty_name #ty_generics #where_clause {}
 
         impl #impl_generics #get_state_config_trait for #ty_name #ty_generics #where_clause {
             fn get_config() -> impl #configure_state_trait {
@@ -108,26 +108,15 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     .into()
 }
 
+#[derive(Default)]
 struct StateAttrs {
     after: Punctuated<Type, Token![,]>,
     before: Punctuated<Type, Token![,]>,
+    no_defaults: bool,
     detect_change: bool,
     send_event: bool,
     bevy_state: bool,
     apply_flush: bool,
-}
-
-impl Default for StateAttrs {
-    fn default() -> Self {
-        Self {
-            after: Default::default(),
-            before: Default::default(),
-            detect_change: true,
-            send_event: true,
-            bevy_state: false,
-            apply_flush: true,
-        }
-    }
 }
 
 // Parse #[state(...)] attributes
@@ -154,41 +143,31 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                         .expect("invalid before states");
                 }
 
-                Meta::Path(path) if path.is_ident("detect_change") => {
-                    state_attrs.detect_change = true;
+                Meta::Path(path) => {
+                    let Some(ident) = path.get_ident() else {
+                        return Err(Error::new_spanned(path, "invalid state attribute"));
+                    };
+
+                    match ident.to_string().as_str() {
+                        "no_defaults" => state_attrs.no_defaults = true,
+                        "detect_change" => state_attrs.detect_change = true,
+                        "send_event" => state_attrs.send_event = true,
+                        "bevy_state" => state_attrs.bevy_state = true,
+                        "apply_flush" => state_attrs.apply_flush = true,
+                        _ => return Err(Error::new_spanned(ident, "invalid state attribute")),
+                    }
                 }
 
-                Meta::Path(path) if path.is_ident("no_detect_change") => {
-                    state_attrs.detect_change = false;
-                }
-
-                Meta::Path(path) if path.is_ident("send_event") => {
-                    state_attrs.send_event = true;
-                }
-
-                Meta::Path(path) if path.is_ident("no_send_event") => {
-                    state_attrs.send_event = false;
-                }
-
-                Meta::Path(path) if path.is_ident("bevy_state") => {
-                    state_attrs.bevy_state = true;
-                }
-
-                Meta::Path(path) if path.is_ident("no_bevy_state") => {
-                    state_attrs.bevy_state = false;
-                }
-
-                Meta::Path(path) if path.is_ident("apply_flush") => {
-                    state_attrs.apply_flush = true;
-                }
-
-                Meta::Path(path) if path.is_ident("no_apply_flush") => {
-                    state_attrs.apply_flush = false;
-                }
-
-                _ => return Err(Error::new_spanned(meta, "unrecognized state attribute")),
+                _ => return Err(Error::new_spanned(meta, "invalid state attribute")),
             }
         }
+    }
+
+    // Enable defaults
+    if !state_attrs.no_defaults {
+        state_attrs.detect_change = true;
+        state_attrs.send_event = true;
+        state_attrs.apply_flush = true;
     }
 
     Ok(state_attrs)

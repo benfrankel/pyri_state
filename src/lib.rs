@@ -1,4 +1,4 @@
-// Allow derive macros in unit tests to use `pyri_state` to refer to this crate
+// Allows derive macros in unit tests to refer to this crate as `pyri_state`.
 extern crate self as pyri_state;
 
 #[cfg(feature = "bevy_app")]
@@ -6,7 +6,6 @@ pub mod app;
 pub mod buffer;
 pub mod schedule;
 pub mod state;
-pub mod util;
 
 pub mod prelude {
     #[doc(hidden)]
@@ -14,7 +13,11 @@ pub mod prelude {
     pub use crate::app::{AppExtState, StatePlugin};
 
     #[doc(hidden)]
-    pub use crate::{buffer::*, schedule::*, state::*};
+    pub use crate::{
+        buffer::*,
+        schedule::*,
+        state::{RawState, RawStateExtClone, RawStateExtDefault, RawStateExtEq, State_},
+    };
 
     #[doc(hidden)]
     pub use pyri_state_derive::State_;

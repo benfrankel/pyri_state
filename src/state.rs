@@ -1,6 +1,8 @@
+use std::{fmt::Debug, hash::Hash};
+
 use bevy_ecs::{
     event::EventWriter,
-    schedule::{IntoSystemConfigs, SystemConfigs},
+    schedule::{IntoSystemConfigs, States, SystemConfigs},
     system::{Res, ResMut},
 };
 
@@ -9,7 +11,21 @@ use crate::{
     schedule::{StateFlushEvent, StateFlushSet},
 };
 
-pub trait State_: 'static + Send + Sync + Sized {
+pub trait State_: RawState + Clone + PartialEq + Eq {}
+
+impl<T: RawState + Clone + PartialEq + Eq> State_ for T {}
+
+// Wrapper for compatibility with bevy states
+#[derive(States, Clone, PartialEq, Eq, Hash, Debug)]
+pub struct BevyState<S: State_ + Hash + Debug>(pub Option<S>);
+
+impl<S: State_ + Hash + Debug> Default for BevyState<S> {
+    fn default() -> Self {
+        Self(None)
+    }
+}
+
+pub trait RawState: 'static + Send + Sync + Sized {
     fn is_absent(state: Res<CurrentState<Self>>) -> bool {
         state.is_absent()
     }
@@ -185,7 +201,7 @@ pub trait State_: 'static + Send + Sync + Sized {
     }
 }
 
-pub trait StateExtClone: State_ + Clone {
+pub trait RawStateExtClone: RawState + Clone {
     fn insert(self) -> impl Fn(ResMut<NextState_<Self>>) + 'static + Send + Sync {
         move |mut state| {
             state.insert(self.clone());
@@ -219,9 +235,9 @@ pub trait StateExtClone: State_ + Clone {
     }
 }
 
-impl<S: State_ + Clone> StateExtClone for S {}
+impl<S: RawState + Clone> RawStateExtClone for S {}
 
-pub trait StateExtEq: State_ + Eq {
+pub trait RawStateExtEq: RawState + Eq {
     // Equivalent to `will_exit`.
     fn will_update(self) -> impl Fn(Res<CurrentState<Self>>) -> bool + 'static + Send + Sync {
         move |state| state.is_in(&self)
@@ -330,9 +346,9 @@ pub trait StateExtEq: State_ + Eq {
     }
 }
 
-impl<T: State_ + Eq> StateExtEq for T {}
+impl<T: RawState + Eq> RawStateExtEq for T {}
 
-pub trait StateExtDefault: State_ + Default {
+pub trait RawStateExtDefault: RawState + Default {
     fn init(mut state: ResMut<NextState_<Self>>) {
         state.init();
     }
@@ -342,4 +358,4 @@ pub trait StateExtDefault: State_ + Default {
     }
 }
 
-impl<T: State_ + Default> StateExtDefault for T {}
+impl<T: RawState + Default> RawStateExtDefault for T {}
