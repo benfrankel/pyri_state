@@ -86,23 +86,23 @@ Configure the state flush behavior per state type:
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
 #[state(
     // Disable default configs: detect_change, send_event, apply_flush.
-    no_defaults, 
-    // Enable change detection to trigger a flush on any state change.
-    detect_change, 
-    // Send an event on flush.
+    no_defaults,
+    // Enable change detection, which triggers a flush on any state change.
+    detect_change,
+    // Send a flush event on flush.
     send_event,
-    // Add a BevyState wrapper (see the next example).
+    // Include a BevyState wrapper (see Ecosystem compatibility).
     bevy_state,
     // Clone the next state into the current state on flush.
     apply_flush,
-    // Run the on flush systems after some other states.
+    // Run this state's on flush systems after the listed states.
     after(FooState, BarState<i32>),
-    // Run the on flush systems before some other states.
+    // Run this state's on flush systems before the listed states.
     before(QuuxState)
 )]
 struct MyCustomState(i32);
 
-// Extra traits can be omitted if they won't be used:
+// Derived traits can be omitted if they won't be used:
 #[derive(State)]
 #[state(no_defaults)]
 struct MyRawState(i32);
@@ -120,6 +120,7 @@ use bevy_asset_loader::prelude::*;
 use iyes_progress::prelude::*;
 
 #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+// Set up `BevyState<GameState>` by enabling this config:
 #[state(bevy_state)]
 enum GameState {
     #[default]
@@ -169,7 +170,7 @@ fn set_up_new_level(level: Res<NextState_<LevelState>>) { ... }
 )
 .add_systems(
     Update,
-    // Restart the current level on R press:
+    // Restarts the current level on R press:
     LevelState::refresh.run_if(input_just_pressed(KeyCode::KeyR)),
 );
 ```
@@ -215,8 +216,8 @@ enum GameState {
 #[derive(State, Clone, PartialEq, Eq, Default)]
 #[after(GameState)]
 struct CheckerboardSquare {
-    x: u8,
-    y: u8,    
+    row: u8,
+    col: u8,
 }
 
 // Computed from CheckerboardSquare
@@ -232,7 +233,7 @@ fn compute_square_color(
     mut color: ResMut<NextState_<ColorState>>,
 ) {
     color.inner = board.get().map(|board| {
-        if board.x + board.y % 2 == 0 {
+        if board.row + board.col % 2 == 0 {
             SquareColor::Black
         } else {
             SquareColor::White
