@@ -87,7 +87,7 @@ Configure the state flush behavior per state type:
 #[state(
     // Disable default configs: detect_change, send_event, apply_flush.
     no_defaults,
-    // Enable change detection, which triggers a flush on any state change.
+    // Trigger a flush on any state change.
     detect_change,
     // Send a flush event on flush.
     send_event,
@@ -144,7 +144,7 @@ enum GameState {
     Update,
     GameState::Title.on_update(
         // Changes to GameState will propagate to BevyState<GameState>.
-        GameState::LoadingGame.enter.run_if(input_just_pressed(KeyCode::Enter)),
+        GameState::LoadingGame.enter().run_if(input_just_pressed(KeyCode::Enter)),
     ),
 )
 ```
