@@ -1,14 +1,13 @@
 use std::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
-    event::EventWriter,
     schedule::{IntoSystemConfigs, States, SystemConfigs},
     system::{Res, ResMut},
 };
 
 use crate::{
     buffer::{CurrentState, NextState_, StateMut, StateRef},
-    schedule::{StateFlushEvent, StateFlushSet},
+    schedule::StateFlushSet,
 };
 
 pub trait State_: RawState + Clone + PartialEq + Eq {}
@@ -219,19 +218,6 @@ pub trait RawStateExtClone: RawState + Clone {
 
     fn refresh(mut state: StateMut<Self>) {
         state.refresh();
-    }
-
-    // Shouldn't be necessary for normal usage.
-    fn send_flush_event(state: StateRef<Self>, mut events: EventWriter<StateFlushEvent<Self>>) {
-        events.send(StateFlushEvent {
-            before: state.current.inner.clone(),
-            after: state.next.inner.clone(),
-        });
-    }
-
-    // Shouldn't be necessary for normal usage.
-    fn apply_flush(mut current: ResMut<CurrentState<Self>>, next: Res<NextState_<Self>>) {
-        current.inner.clone_from(&next.inner);
     }
 }
 

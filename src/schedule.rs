@@ -1,7 +1,7 @@
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
-    event::Event,
+    event::{Event, EventWriter},
     schedule::{
         InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs, NextState, Schedule,
         ScheduleLabel, SystemSet,
@@ -10,8 +10,8 @@ use bevy_ecs::{
 };
 
 use crate::{
-    buffer::NextState_,
-    state::{BevyState, RawState, RawStateExtClone, RawStateExtEq},
+    buffer::{CurrentState, NextState_, StateRef},
+    state::{BevyState, RawState, RawStateExtEq},
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -84,6 +84,23 @@ fn check_flush_flag<S: RawState>(state: Res<NextState_<S>>) -> bool {
     state.flush
 }
 
+fn send_flush_event<S: RawState + Clone>(
+    state: StateRef<S>,
+    mut events: EventWriter<StateFlushEvent<S>>,
+) {
+    events.send(StateFlushEvent {
+        before: state.current.inner.clone(),
+        after: state.next.inner.clone(),
+    });
+}
+
+fn apply_flush<S: RawState + Clone>(
+    mut current: ResMut<CurrentState<S>>,
+    next: Res<NextState_<S>>,
+) {
+    current.inner.clone_from(&next.inner);
+}
+
 pub fn schedule_detect_change<S: RawState + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::set_flush(true)
@@ -125,12 +142,12 @@ pub fn schedule_resolve_state<S: RawState>(
 }
 
 pub fn schedule_send_event<S: RawState + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(S::on_any_flush(S::send_flush_event));
+    schedule.add_systems(S::on_any_flush(send_flush_event::<S>));
 }
 
 pub fn schedule_apply_flush<S: RawState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
-        (S::apply_flush, S::set_flush(false))
+        (apply_flush::<S>, S::set_flush(false))
             .run_if(check_flush_flag::<S>)
             .in_set(ApplyFlushSet),
     );

@@ -109,7 +109,6 @@ impl<S: RawState> StateConfigResolveState<S> {
     }
 }
 
-#[derive(Default)]
 pub struct StateConfigDetectChange<S: RawState + Eq>(PhantomData<S>);
 
 impl<S: RawState + Eq> ConfigureState for StateConfigDetectChange<S> {
@@ -124,7 +123,6 @@ impl<S: RawState + Eq> StateConfigDetectChange<S> {
     }
 }
 
-#[derive(Default)]
 pub struct StateConfigSendEvent<S: RawState + Clone>(PhantomData<S>);
 
 impl<S: RawState + Clone> ConfigureState for StateConfigSendEvent<S> {
@@ -159,7 +157,6 @@ impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> StateConfigBevyState<S
     }
 }
 
-#[derive(Default)]
 pub struct StateConfigApplyFlush<S: RawState + Clone>(PhantomData<S>);
 
 impl<S: RawState + Clone> ConfigureState for StateConfigApplyFlush<S> {
