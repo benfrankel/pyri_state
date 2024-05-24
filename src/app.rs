@@ -99,6 +99,16 @@ impl<S: RawState> ConfigureState for StateConfigResolveState<S> {
     }
 }
 
+impl<S: RawState> Default for StateConfigResolveState<S> {
+    fn default() -> Self {
+        Self {
+            after: Vec::new(),
+            before: Vec::new(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
 impl<S: RawState> StateConfigResolveState<S> {
     pub fn new(after: Vec<InternedSystemSet>, before: Vec<InternedSystemSet>) -> Self {
         Self {
@@ -117,8 +127,8 @@ impl<S: RawState + Eq> ConfigureState for StateConfigDetectChange<S> {
     }
 }
 
-impl<S: RawState + Eq> StateConfigDetectChange<S> {
-    pub fn new() -> Self {
+impl<S: RawState + Eq> Default for StateConfigDetectChange<S> {
+    fn default() -> Self {
         Self(PhantomData)
     }
 }
@@ -132,8 +142,8 @@ impl<S: RawState + Clone> ConfigureState for StateConfigSendEvent<S> {
     }
 }
 
-impl<S: RawState + Clone> StateConfigSendEvent<S> {
-    pub fn new() -> Self {
+impl<S: RawState + Clone> Default for StateConfigSendEvent<S> {
+    fn default() -> Self {
         Self(PhantomData)
     }
 }
@@ -151,8 +161,8 @@ impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> ConfigureState
     }
 }
 
-impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> StateConfigBevyState<S> {
-    pub fn new() -> Self {
+impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> Default for StateConfigBevyState<S> {
+    fn default() -> Self {
         Self(PhantomData)
     }
 }
@@ -165,8 +175,8 @@ impl<S: RawState + Clone> ConfigureState for StateConfigApplyFlush<S> {
     }
 }
 
-impl<S: RawState + Clone> StateConfigApplyFlush<S> {
-    pub fn new() -> Self {
+impl<S: RawState + Clone> Default for StateConfigApplyFlush<S> {
+    fn default() -> Self {
         Self(PhantomData)
     }
 }

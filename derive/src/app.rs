@@ -8,15 +8,15 @@ pub(crate) fn derive_get_state_config(input: &DeriveInput) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
+    // Parse #[state(...)] attributes
+    let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
+
     // Construct trait paths
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_app_path = concat(crate_path.clone(), format_ident!("app"));
     let get_state_config_trait = concat(crate_app_path.clone(), format_ident!("GetStateConfig"));
     let configure_state_trait = concat(crate_app_path.clone(), format_ident!("ConfigureState"));
-
-    // Parse #[state(...)] attributes
-    let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
     // Construct state configs
     let resolve_state = {
@@ -64,7 +64,7 @@ pub(crate) fn derive_get_state_config(input: &DeriveInput) -> TokenStream {
                 crate_app_path.clone(),
                 format_ident!("StateConfig{ty_suffix}"),
             );
-            quote! { #state_config_ty::<Self>::new(), }
+            quote! { #state_config_ty::<Self>::default(), }
         } else {
             quote! {}
         }

@@ -18,13 +18,17 @@ impl<S: State_> RawState for StateStack<S> {}
 
 impl<S: State_ + FromWorld> FromWorld for StateStack<S> {
     fn from_world(world: &mut World) -> Self {
-        Self(vec![S::from_world(world)])
+        Self::new(S::from_world(world))
     }
 }
 
 impl<S: State_> StateStack<S> {
-    pub fn new() -> Self {
+    pub fn empty() -> Self {
         Self(Vec::new())
+    }
+
+    pub fn new(state: S) -> Self {
+        Self(vec![state])
     }
 }
 
@@ -65,9 +69,9 @@ mod app {
                     vec![],
                     vec![StateFlushSet::<S>::Resolve.intern()],
                 ),
-                StateConfigDetectChange::<Self>::new(),
-                StateConfigApplyFlush::<Self>::new(),
-                StateConfigStack::<Self>::new(),
+                StateConfigDetectChange::<Self>::default(),
+                StateConfigApplyFlush::<Self>::default(),
+                StateConfigStack::<Self>::default(),
             )
         }
     }
@@ -77,13 +81,13 @@ mod app {
     impl<S: State_ + GetStateConfig> ConfigureState for StateConfigStack<StateStack<S>> {
         fn configure(self, app: &mut App) {
             app.add_state_::<S>()
-                .insert_resource(NextState_::enabled(StateStack::<S>::new()));
+                .insert_resource(NextState_::enabled(StateStack::<S>::empty()));
             schedule_stack::<S>(app.get_schedule_mut(StateFlush).unwrap());
         }
     }
 
-    impl<S: RawState> StateConfigStack<S> {
-        fn new() -> Self {
+    impl<S: RawState> Default for StateConfigStack<S> {
+        fn default() -> Self {
             Self(PhantomData)
         }
     }
