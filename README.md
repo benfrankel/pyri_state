@@ -46,11 +46,10 @@ fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
 .init_state_::<ColorMode>()
 .add_systems(
     Update,
+    // These systems might run on the same frame sometimes.
+    // With partial mutation, that's totally fine and expected.
     ColorMode::ANY.on_update(
-        // These systems might run on the same frame sometimes.
-        // With partial mutation, that's totally fine and expected.
-        enable_red.run_if(dealt_damage),
-        disable_red.run_if(took_damage),
+        (disable_red.run_if(took_damage), enable_red.run_if(dealt_damage)).chain(),
         toggle_green.run_if(input_just_pressed(KeyCode::Space)),
         toggle_blue.run_if(on_timer(Duration::from_secs(5))),
     ),
