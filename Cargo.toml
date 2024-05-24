@@ -10,7 +10,7 @@ categories = ["game-engines", "data-structures"]
 
 [features]
 default = ["bevy_app", "bevy_reflect"]
-bevy_app = ["dep:bevy_app"]
+bevy_app = ["dep:bevy_app", "pyri_state_derive/bevy_app"]
 bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
 
 [dependencies]
