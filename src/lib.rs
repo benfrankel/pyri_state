@@ -15,9 +15,9 @@ pub mod prelude {
 
     #[doc(hidden)]
     pub use crate::{
-        buffer::*,
+        buffer::{CurrentState, NextState_, StateMut, StateRef},
         schedule::*,
-        state::{RawState, RawStateExtClone, RawStateExtDefault, RawStateExtEq, State_},
+        state::*,
     };
 
     #[doc(hidden)]
@@ -111,10 +111,11 @@ mod tests {
                     GameState::PlayingGame.on_enter((Paused::enable, LevelIdx::enable)),
                     Paused.on_exit(unpause),
                     Paused.on_enter(pause),
-                    LevelIdx::on_any_exit(exit_level),
-                    LevelIdx::on_any_enter((enter_level, compute_color)),
-                    SquareColor::on_any_exit(exit_color),
-                    SquareColor::on_any_enter(enter_color),
+                    LevelIdx::ANY.on_exit(exit_level),
+                    LevelIdx::ANY.on_enter((enter_level, compute_color)),
+                    SquareColor::ANY.on_exit(exit_color),
+                    SquareColor::ANY.on_enter(enter_color),
+                    LevelIdx::with(|s| s.x > s.y).on_exit(exit_level),
                 ),
             );
     }

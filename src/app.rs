@@ -6,12 +6,12 @@ use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
 use bevy_ecs::{all_tuples, schedule::InternedSystemSet, world::FromWorld};
 
 use crate::{
-    buffer::{CurrentState, NextState_},
+    buffer::{BevyState, CurrentState, NextState_},
     schedule::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_resolve_state,
         schedule_send_event, StateFlush, StateFlushEvent,
     },
-    state::{BevyState, RawState},
+    state::RawState,
 };
 
 pub struct StatePlugin;

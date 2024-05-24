@@ -10,8 +10,8 @@ use bevy_ecs::{
 };
 
 use crate::{
-    buffer::{CurrentState, NextState_, StateRef},
-    state::{BevyState, RawState, RawStateExtEq},
+    buffer::{BevyState, CurrentState, NextState_, StateRef},
+    state::{ContainsState, RawState},
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -104,7 +104,7 @@ fn apply_flush<S: RawState + Clone>(
 pub fn schedule_detect_change<S: RawState + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::set_flush(true)
-            .run_if(S::will_any_change)
+            .run_if(S::will_flush_and(|old, new| old != new))
             .in_set(StateFlushSet::<S>::Trigger),
     );
 }
@@ -132,9 +132,9 @@ pub fn schedule_resolve_state<S: RawState>(
             .chain()
             .in_set(StateFlushSet::<S>::Resolve),
         (
-            StateFlushSet::<S>::Exit.run_if(S::will_any_exit),
-            StateFlushSet::<S>::Transition.run_if(S::will_any_transition),
-            StateFlushSet::<S>::Enter.run_if(S::will_any_enter),
+            StateFlushSet::<S>::Exit.run_if(S::ANY.will_exit()),
+            StateFlushSet::<S>::Transition.run_if(S::will_transition_and(|_, _| true)),
+            StateFlushSet::<S>::Enter.run_if(S::ANY.will_enter()),
         )
             .chain()
             .in_set(StateFlushSet::<S>::Flush),
@@ -142,7 +142,7 @@ pub fn schedule_resolve_state<S: RawState>(
 }
 
 pub fn schedule_send_event<S: RawState + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(S::on_any_flush(send_flush_event::<S>));
+    schedule.add_systems(S::on_flush_and(|_, _| true, send_flush_event::<S>));
 }
 
 pub fn schedule_apply_flush<S: RawState + Clone>(schedule: &mut Schedule) {
@@ -172,6 +172,6 @@ pub fn schedule_bevy_state<S: RawState + Clone + PartialEq + Eq + Hash + Debug>(
 
     schedule.add_systems((
         update_pyri_state.in_set(StateFlushSet::<S>::Trigger),
-        S::on_any_flush(update_bevy_state),
+        S::on_flush_and(|_, _| true, update_bevy_state),
     ));
 }

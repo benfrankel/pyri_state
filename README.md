@@ -46,7 +46,7 @@ fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
 .init_state_::<ColorMode>()
 .add_systems(
     Update,
-    ColorMode::on_any_update(
+    ColorMode::ANY.on_update(
         // These systems might run on the same frame sometimes.
         // With partial mutation, that's totally fine and expected.
         enable_red.run_if(dealt_damage),
@@ -68,10 +68,10 @@ struct LevelIdx(usize);
 .add_state_::<LevelIdx>()
 .add_systems(
     StateFlush,
-    LevelIdx::on_change_and(
+    LevelIdx::on_enter_and(
         |old, new| matches!(
             (old, new),
-            (Some(LevelIdx(x @ 2 | 5..7)), Some(LevelIdx(y))) if x * x > y,
+            (Some(LevelIdx(x @ 2 | 5..7)), LevelIdx(y)) if x * x > y,
         ),
         spawn_easter_egg,
     ),
@@ -164,8 +164,8 @@ fn set_up_new_level(level: Res<NextState_<LevelIdx>>) { ... }
 .add_systems(
     StateFlush,
     (
-        LevelIdx::on_any_exit(tear_down_old_level),
-        LevelIdx::on_any_enter(set_up_new_level),
+        LevelIdx::ANY.on_exit(tear_down_old_level),
+        LevelIdx::ANY.on_enter(set_up_new_level),
     )
 )
 .add_systems(
@@ -183,12 +183,14 @@ Disable or enable any state type on command (great for simple on/off states or s
 #[derive(State, Clone, PartialEq, Eq, Default)]
 struct Paused;
 
-fn toggle_pause() { ... }
+fn unpause() { ... }
+fn pause() { ... }
 
 .add_state_::<Paused>()
 .add_systems(
     StateFlush,
-    Paused.on_any_change(toggle_pause),
+    Paused.on_exit(unpause),
+    Paused.on_enter(pause),
 )
 .add_systems(
     Update,
@@ -249,7 +251,7 @@ fn compute_square_color(
     (
         GameState::Playing.on_exit(CheckerboardSquare::disable),
         GameState::Playing.on_enter(CheckerboardSquare::enable),
-        CheckerboardSquare::on_any_enter(compute_square_color),
+        CheckerboardSquare::ANY.on_enter(compute_square_color),
     )
 );
 ```
