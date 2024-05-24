@@ -37,34 +37,12 @@ pub trait RawState: 'static + Send + Sync + Sized {
         state.will_be_enabled()
     }
 
-    fn will_flush_and(
-        test: impl Fn(Option<&Self>, Option<&Self>) -> bool + 'static + Send + Sync,
-    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
-        move |state| state.will_flush_and(&test)
+    fn on_flush<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems.in_set(StateFlushSet::<Self>::Flush)
     }
 
-    fn on_flush_and<M>(
-        test: impl Fn(Option<&Self>, Option<&Self>) -> bool + 'static + Send + Sync,
-        systems: impl IntoSystemConfigs<M>,
-    ) -> SystemConfigs {
-        systems
-            .run_if(Self::will_flush_and(test))
-            .in_set(StateFlushSet::<Self>::Flush)
-    }
-
-    fn will_transition_and(
-        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
-    ) -> impl Fn(StateRef<Self>) -> bool + 'static + Send + Sync {
-        move |state| state.will_transition_and(&test)
-    }
-
-    fn on_transition_and<M>(
-        test: impl Fn(&Self, &Self) -> bool + 'static + Send + Sync,
-        systems: impl IntoSystemConfigs<M>,
-    ) -> SystemConfigs {
-        systems
-            .run_if(Self::will_transition_and(test))
-            .in_set(StateFlushSet::<Self>::Transition)
+    fn on_transition<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems.in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn disable(mut state: ResMut<NextState_<Self>>) {

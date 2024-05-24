@@ -210,11 +210,6 @@ impl<'w, S: RawState> StateRef<'w, S> {
         )
     }
 
-    // TODO: Delete this? User can just use self.get() themselves
-    pub fn will_flush_and(&self, test: impl Fn(Option<&S>, Option<&S>) -> bool) -> bool {
-        matches!(self.get(), (x, y) if test(x, y))
-    }
-
     pub fn will_exit<C: ContainsState<S>>(&self, set: &C) -> bool {
         matches!(self.get(), (Some(x), _) if set.contains_state(x))
     }
@@ -229,10 +224,6 @@ impl<'w, S: RawState> StateRef<'w, S> {
 
     pub fn will_enable<C: ContainsState<S>>(&self, set: &C) -> bool {
         matches!(self.get(), (None, Some(y)) if set.contains_state(y))
-    }
-
-    pub fn will_transition_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if test(x, y))
     }
 }
 
@@ -306,11 +297,6 @@ impl<'w, S: RawState> StateMut<'w, S> {
         )
     }
 
-    // TODO: Delete this? User can just use self.get() themselves
-    pub fn will_flush_and(&self, test: impl Fn(Option<&S>, Option<&S>) -> bool) -> bool {
-        matches!(self.get(), (x, y) if test(x, y))
-    }
-
     pub fn will_exit<C: ContainsState<S>>(&self, set: &C) -> bool {
         matches!(self.get(), (Some(x), _) if set.contains_state(x))
     }
@@ -325,10 +311,6 @@ impl<'w, S: RawState> StateMut<'w, S> {
 
     pub fn will_enable<C: ContainsState<S>>(&self, set: &C) -> bool {
         matches!(self.get(), (None, Some(y)) if set.contains_state(y))
-    }
-
-    pub fn will_transition_and(&self, test: impl Fn(&S, &S) -> bool) -> bool {
-        matches!(self.get(), (Some(x), Some(y)) if test(x, y))
     }
 
     pub fn disable(&mut self) {

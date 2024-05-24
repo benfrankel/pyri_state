@@ -36,10 +36,7 @@ fn compute_state_from_stack<S: State_>(
 }
 
 pub fn schedule_stack<S: State_>(schedule: &mut Schedule) {
-    schedule.add_systems(StateStack::<S>::on_flush_and(
-        |_, _| true,
-        compute_state_from_stack::<S>,
-    ));
+    schedule.add_systems(StateStack::<S>::on_flush(compute_state_from_stack::<S>));
 }
 
 #[cfg(feature = "bevy_app")]
