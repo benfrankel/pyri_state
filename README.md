@@ -84,7 +84,7 @@ struct Level(usize);
 
 ## Modular configuration
 
-Strip out or add features to your states on a per-type basis:
+Strip out or add features to your state type:
 
 ```rust
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
@@ -117,7 +117,7 @@ struct MyRawState(i32);
 
 ## Ecosystem compatibility
 
-Easily enable an associated `BevyState<S>` wrapper to interact with crates that expect it:
+Enable a `BevyState<S>` wrapper to interact with crates that expect it:
 
 ```rust
 use bevy_asset_loader::prelude::*;
