@@ -4,6 +4,7 @@ extern crate self as pyri_state;
 #[cfg(feature = "bevy_app")]
 pub mod app;
 pub mod buffer;
+pub mod extra;
 pub mod schedule;
 pub mod state;
 
