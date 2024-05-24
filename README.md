@@ -62,18 +62,23 @@ Harness the full power of bevy ECS to schedule your state transitions:
 
 ```rust
 #[derive(State, Clone, PartialEq, Eq)]
-struct LevelIdx(usize);
+struct Level(usize);
 
-.add_state_::<LevelIdx>()
+.add_state_::<Level>()
 .add_systems(
     StateFlush,
-    LevelIdx::on_enter_and(
-        |old, new| matches!(
-            (old, new),
-            (Some(LevelIdx(x @ 2 | 5..7)), LevelIdx(y)) if x * x > y,
-        ),
-        spawn_easter_egg,
-    ),
+    Level::ANY.on_enter((
+        play_boss_music.run_if(Level(10).will_enter()),
+        spawn_tutorial_popup.run_if(Level::with(|level| level.0 < 4).will_enter()),
+        spawn_easter_egg.run_if(|level: StateRef<Level>| matches!(
+            level.get(),
+            (Some(Level(x @ 2 | 5..8)), Some(Level(y))) if x * x > y,
+        )),
+        gen_level.run_if(|level: Res<NextState_<Level>>, meta: Res<LevelMeta>| {
+            !meta.has_been_generated(level.unwrap().0)
+        }),
+        load_level.after(gen_level),
+    )),
 );
 ```
 
