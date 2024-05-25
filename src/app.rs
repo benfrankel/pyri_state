@@ -3,10 +3,14 @@ use std::hash::Hash;
 use std::marker::PhantomData;
 
 use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
-use bevy_ecs::{schedule::InternedSystemSet, world::FromWorld};
+use bevy_ecs::{
+    schedule::{InternedSystemSet, SystemSet},
+    world::FromWorld,
+};
 
 use crate::{
     buffer::{BevyState, CurrentState, NextState_},
+    prelude::StateFlushSet,
     schedule::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_resolve_state,
         schedule_send_event, StateFlush, StateFlushEvent,
@@ -25,14 +29,6 @@ impl Plugin for PyriStatePlugin {
     }
 }
 
-pub trait AppExtState {
-    fn add_state_<S: ConfigureState>(&mut self) -> &mut Self;
-
-    fn init_state_<S: ConfigureState + FromWorld>(&mut self) -> &mut Self;
-
-    fn insert_state_<S: ConfigureState>(&mut self, value: S) -> &mut Self;
-}
-
 fn add_state_helper<S: ConfigureState>(app: &mut App, value: Option<S>) -> &mut App {
     if !app.world.contains_resource::<CurrentState<S>>() {
         app.init_resource::<CurrentState<S>>()
@@ -42,7 +38,15 @@ fn add_state_helper<S: ConfigureState>(app: &mut App, value: Option<S>) -> &mut 
     app
 }
 
-impl AppExtState for App {
+pub trait AppExtPyriState {
+    fn add_state_<S: ConfigureState>(&mut self) -> &mut Self;
+
+    fn init_state_<S: ConfigureState + FromWorld>(&mut self) -> &mut Self;
+
+    fn insert_state_<S: ConfigureState>(&mut self, value: S) -> &mut Self;
+}
+
+impl AppExtPyriState for App {
     fn add_state_<S: ConfigureState>(&mut self) -> &mut Self {
         add_state_helper::<S>(self, None)
     }
@@ -94,6 +98,16 @@ impl<S: RawState> ResolveStatePlugin<S> {
             before,
             _phantom: PhantomData,
         }
+    }
+
+    pub fn after<T: RawState>(mut self) -> Self {
+        self.after.push(StateFlushSet::<T>::Resolve.intern());
+        self
+    }
+
+    pub fn before<T: RawState>(mut self) -> Self {
+        self.before.push(StateFlushSet::<T>::Resolve.intern());
+        self
     }
 }
 

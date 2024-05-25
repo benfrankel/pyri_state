@@ -46,14 +46,14 @@ pub fn schedule_state_stack<S: State_>(schedule: &mut Schedule) {
 #[cfg(feature = "bevy_app")]
 mod app {
     use bevy_app::App;
-    use bevy_ecs::schedule::SystemSet;
 
     use crate::{
         app::{
-            AppExtState, ApplyFlushPlugin, ConfigureState, DetectChangePlugin, ResolveStatePlugin,
+            AppExtPyriState, ApplyFlushPlugin, ConfigureState, DetectChangePlugin,
+            ResolveStatePlugin,
         },
         buffer::NextState_,
-        schedule::{StateFlush, StateFlushSet},
+        schedule::StateFlush,
         state::State_,
     };
 
@@ -62,10 +62,7 @@ mod app {
     impl<S: State_ + ConfigureState> ConfigureState for StateStack<S> {
         fn configure(app: &mut App) {
             app.add_state_::<S>().add_plugins((
-                ResolveStatePlugin::<StateStack<S>>::new(
-                    vec![],
-                    vec![StateFlushSet::<S>::Resolve.intern()],
-                ),
+                ResolveStatePlugin::<StateStack<S>>::default().before::<S>(),
                 DetectChangePlugin::<StateStack<S>>::default(),
                 ApplyFlushPlugin::<StateStack<S>>::default(),
             ));

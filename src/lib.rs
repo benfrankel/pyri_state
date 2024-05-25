@@ -11,7 +11,7 @@ pub mod state;
 pub mod prelude {
     #[doc(hidden)]
     #[cfg(feature = "bevy_app")]
-    pub use crate::app::{AppExtState, PyriStatePlugin};
+    pub use crate::app::{AppExtPyriState, PyriStatePlugin};
 
     #[doc(hidden)]
     pub use crate::{
