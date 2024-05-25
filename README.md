@@ -1,4 +1,4 @@
-`pyri_state` is an experimental 3rd-party alternative to `bevy_state`. In `pyri_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
+`pyri_state` is a flexible 3rd-party alternative to `bevy_state`. In `pyri_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
 # Features
 
@@ -10,6 +10,9 @@
 - [Refresh](#refresh)
 - [Disable, enable, toggle](#disable-enable-toggle)
 - [Computed & substates](#computed--substates)
+- Extras:
+    - [State stack](/src/extra/stack.rs): Store states in a stack so that previous states can be returned to.
+    - [Split state](/src/extra/split.rs): Add new states to a distributed state type from any place in your code.
 
 ## Partial mutation
 
