@@ -8,8 +8,8 @@ use bevy::{
 use pyri_state::prelude::*;
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .init_state_::<ColorMode>()
         .add_systems(
             Update,
@@ -24,7 +24,8 @@ fn main() {
                 toggle_green.run_if(input_just_pressed(KeyCode::Space)),
                 toggle_blue.run_if(on_timer(Duration::from_secs(5))),
             )),
-        );
+        )
+        .run();
 }
 
 // Player has different abilities depending on the color mode. For example,

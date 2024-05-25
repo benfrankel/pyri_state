@@ -4,8 +4,8 @@ use bevy::prelude::*;
 use pyri_state::prelude::*;
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .init_state_::<GameState>()
         .add_state_::<CheckerboardSquare>()
         .add_state_::<SquareColor>()
@@ -18,7 +18,8 @@ fn main() {
                 // Compute SquareColor from CheckerboardSquare.
                 CheckerboardSquare::ANY.on_enter(compute_square_color),
             ),
-        );
+        )
+        .run();
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]

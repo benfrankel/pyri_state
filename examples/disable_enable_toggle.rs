@@ -4,8 +4,8 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .add_state_::<Paused>()
         .add_systems(
             StateFlush,
@@ -18,7 +18,8 @@ fn main() {
                 Paused::disable.run_if(window_gained_focus),
                 Paused::toggle.run_if(input_just_pressed(KeyCode::Escape)),
             ),
-        );
+        )
+        .run();
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]

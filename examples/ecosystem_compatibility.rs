@@ -7,9 +7,10 @@ use bevy_asset_loader::prelude::*;
 use iyes_progress::prelude::*;
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .init_state_::<GameState>()
+        .init_collection::<GameAssets>()
         .add_loading_state(
             LoadingState::new(BevyState(Some(GameState::LoadingGame)))
                 .load_collection::<GameAssets>(),
@@ -27,7 +28,8 @@ fn main() {
                     .enter()
                     .run_if(input_just_pressed(KeyCode::Enter)),
             ),
-        );
+        )
+        .run();
 }
 
 #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
@@ -40,3 +42,6 @@ enum GameState {
     LoadingGame,
     PlayingGame,
 }
+
+#[derive(AssetCollection, Resource, Default)]
+struct GameAssets {}

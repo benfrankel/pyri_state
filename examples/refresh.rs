@@ -4,8 +4,8 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .init_state_::<Level>()
         .add_systems(
             StateFlush,
@@ -18,7 +18,8 @@ fn main() {
             Update,
             // Restart the current level on R press:
             Level::refresh.run_if(input_just_pressed(KeyCode::KeyR)),
-        );
+        )
+        .run();
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]

@@ -10,11 +10,12 @@ use pyri_state::{
 };
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .add_state_::<MyRawState>()
         .add_state_::<MyDerivedState>()
-        .add_state_::<MyCustomState>();
+        .add_state_::<MyCustomState>()
+        .run();
 }
 
 // You can derive State on its own if no other traits are required.

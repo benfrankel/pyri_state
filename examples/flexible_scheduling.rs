@@ -4,8 +4,8 @@ use bevy::prelude::*;
 use pyri_state::{prelude::*, state, will_flush};
 
 fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
         .add_state_::<Level>()
         .init_resource::<LevelMeta>()
         // Upon exiting any level, remove its entities and resources.
@@ -37,7 +37,8 @@ fn main() {
                 // Load the next level after it's been generated.
                 load_level.after(gen_level),
             )),
-        );
+        )
+        .run();
 }
 
 #[derive(State, Clone, PartialEq, Eq)]
