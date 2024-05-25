@@ -39,56 +39,47 @@ fn compute_state_from_stack<S: State_>(
     state.set_flush(true).inner = stack.get().and_then(|stack| stack.0.last().cloned());
 }
 
-pub fn schedule_stack<S: State_>(schedule: &mut Schedule) {
+pub fn schedule_state_stack<S: State_>(schedule: &mut Schedule) {
     schedule.add_systems(StateStack::<S>::on_flush(compute_state_from_stack::<S>));
 }
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::marker::PhantomData;
-
     use bevy_app::App;
     use bevy_ecs::schedule::SystemSet;
 
     use crate::{
         app::{
-            AppExtState, ConfigureState, GetStateConfig, StateConfigApplyFlush,
-            StateConfigDetectChange, StateConfigResolveState,
+            AppExtState, ApplyFlushPlugin, ConfigureState, DetectChangePlugin, ResolveStatePlugin,
         },
         buffer::NextState_,
         schedule::{StateFlush, StateFlushSet},
-        state::{RawState, State_},
+        state::State_,
     };
 
-    use super::{schedule_stack, StateStack};
+    use super::{schedule_state_stack, StateStack};
 
-    impl<S: State_ + GetStateConfig> GetStateConfig for StateStack<S> {
-        fn get_config() -> impl ConfigureState {
-            (
-                StateConfigResolveState::<Self>::new(
+    impl<S: State_ + ConfigureState> ConfigureState for StateStack<S> {
+        fn configure(app: &mut App) {
+            app.add_state_::<S>().add_plugins((
+                ResolveStatePlugin::<StateStack<S>>::new(
                     vec![],
                     vec![StateFlushSet::<S>::Resolve.intern()],
                 ),
-                StateConfigDetectChange::<Self>::default(),
-                StateConfigApplyFlush::<Self>::default(),
-                StateConfigStack::<Self>::default(),
-            )
-        }
-    }
+                DetectChangePlugin::<StateStack<S>>::default(),
+                ApplyFlushPlugin::<StateStack<S>>::default(),
+            ));
 
-    struct StateConfigStack<S: RawState>(PhantomData<S>);
+            // Replace `None` with `StateStack(vec![])`.
+            if app
+                .world
+                .get_resource::<NextState_<StateStack<S>>>()
+                .is_some_and(|x| x.will_be_disabled())
+            {
+                app.insert_resource(NextState_::enabled(StateStack::<S>::empty()));
+            }
 
-    impl<S: State_ + GetStateConfig> ConfigureState for StateConfigStack<StateStack<S>> {
-        fn configure(self, app: &mut App) {
-            app.add_state_::<S>()
-                .insert_resource(NextState_::enabled(StateStack::<S>::empty()));
-            schedule_stack::<S>(app.get_schedule_mut(StateFlush).unwrap());
-        }
-    }
-
-    impl<S: RawState> Default for StateConfigStack<S> {
-        fn default() -> Self {
-            Self(PhantomData)
+            schedule_state_stack::<S>(app.get_schedule_mut(StateFlush).unwrap());
         }
     }
 }

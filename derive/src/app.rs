@@ -1,10 +1,11 @@
+use bevy_macro_utils::BevyManifest;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use syn::{parse_str, punctuated::Punctuated, DeriveInput, Error, Meta, Path, Result, Token, Type};
 
 use crate::util::concat;
 
-pub(crate) fn derive_get_state_config(input: &DeriveInput) -> TokenStream {
+pub(crate) fn derive_configure_state(input: &DeriveInput) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
@@ -12,10 +13,11 @@ pub(crate) fn derive_get_state_config(input: &DeriveInput) -> TokenStream {
     let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
     // Construct trait paths
+    let bevy_app_path = BevyManifest::default().get_path("bevy_app");
+    let app_ty = concat(bevy_app_path.clone(), format_ident!("App"));
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_app_path = concat(crate_path.clone(), format_ident!("app"));
-    let get_state_config_trait = concat(crate_app_path.clone(), format_ident!("GetStateConfig"));
     let configure_state_trait = concat(crate_app_path.clone(), format_ident!("ConfigureState"));
 
     // Construct state configs
@@ -51,40 +53,35 @@ pub(crate) fn derive_get_state_config(input: &DeriveInput) -> TokenStream {
             })
             .collect::<Punctuated<_, Token![,]>>();
 
-        let state_config_ty = concat(
-            crate_app_path.clone(),
-            format_ident!("StateConfigResolveState"),
-        );
-        quote! { #state_config_ty::<Self>::new(vec![#after], vec![#before]), }
+        let state_plugin_ty = concat(crate_app_path.clone(), format_ident!("ResolveStatePlugin"));
+        quote! { #state_plugin_ty::<Self>::new(vec![#after], vec![#before]), }
     };
 
-    let simple_flag = |ty_suffix: &str, enable: bool| {
+    let simple_flag = |ty_prefix: &str, enable: bool| {
         if enable {
-            let state_config_ty = concat(
-                crate_app_path.clone(),
-                format_ident!("StateConfig{ty_suffix}"),
-            );
-            quote! { #state_config_ty::<Self>::default(), }
+            let state_plugin_ty =
+                concat(crate_app_path.clone(), format_ident!("{ty_prefix}Plugin"));
+            quote! { #state_plugin_ty::<Self>::default(), }
         } else {
             quote! {}
         }
     };
 
     let detect_change = simple_flag("DetectChange", state_attrs.detect_change);
-    let send_event = simple_flag("SendEvent", state_attrs.send_event);
+    let flush_event = simple_flag("FlushEvent", state_attrs.flush_event);
     let bevy_state = simple_flag("BevyState", state_attrs.bevy_state);
     let apply_flush = simple_flag("ApplyFlush", state_attrs.apply_flush);
 
     quote! {
-        impl #impl_generics #get_state_config_trait for #ty_name #ty_generics #where_clause {
-            fn get_config() -> impl #configure_state_trait {
-                (
+        impl #impl_generics #configure_state_trait for #ty_name #ty_generics #where_clause {
+            fn configure(app: &mut #app_ty) {
+                app.add_plugins((
                     #resolve_state
                     #detect_change
-                    #send_event
+                    #flush_event
                     #bevy_state
                     #apply_flush
-                )
+                ));
             }
         }
     }
@@ -97,7 +94,7 @@ struct StateAttrs {
     before: Punctuated<Type, Token![,]>,
     no_defaults: bool,
     detect_change: bool,
-    send_event: bool,
+    flush_event: bool,
     bevy_state: bool,
     apply_flush: bool,
 }
@@ -134,7 +131,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                     match ident.to_string().as_str() {
                         "no_defaults" => state_attrs.no_defaults = true,
                         "detect_change" => state_attrs.detect_change = true,
-                        "send_event" => state_attrs.send_event = true,
+                        "flush_event" => state_attrs.flush_event = true,
                         "bevy_state" => state_attrs.bevy_state = true,
                         "apply_flush" => state_attrs.apply_flush = true,
                         _ => return Err(Error::new_spanned(ident, "invalid state attribute")),
@@ -149,7 +146,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
     // Enable defaults
     if !state_attrs.no_defaults {
         state_attrs.detect_change = true;
-        state_attrs.send_event = true;
+        state_attrs.flush_event = true;
         state_attrs.apply_flush = true;
     }
 

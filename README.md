@@ -3,159 +3,16 @@
 # Features
 
 - Ergonomics
-- [Partial mutation](#partial-mutation)
-- [Flexible scheduling](#flexible-scheduling)
-- [Modular configuration](#modular-configuration)
-- [Ecosystem compatibility](#ecosystem-compatibility)
 - [Refresh](#refresh)
 - [Disable, enable, toggle](#disable-enable-toggle)
 - [Computed & substates](#computed--substates)
+- [Flexible scheduling](#flexible-scheduling)
+- [Partial mutation](#partial-mutation)
+- [Modular configuration](#modular-configuration)
+- [Ecosystem compatibility](#ecosystem-compatibility)
 - Extras:
     - [State stack](/src/extra/stack.rs): Store states in a stack so that previous states can be returned to.
     - [Split state](/src/extra/split.rs): Add new states to a distributed state type from any place in your code.
-
-## Partial mutation
-
-Directly update the next state instead of setting an entirely new value:
-
-```rust
-// Player has different abilities depending on the color mode. For example,
-// yellow mode is its own thing, not just red and green modes at the same time.
-#[derive(State, Clone, PartialEq, Eq, Default)]
-struct ColorMode {
-    r: bool,
-    g: bool,
-    b: bool,
-}
-
-fn enable_red(mut color: ResMut<NextState_<ColorMode>>) {
-    color.unwrap_mut().r = true;
-}
-
-fn disable_red(mut color: ResMut<NextState_<ColorMode>>) {
-    color.unwrap_mut().r = false;
-}
-
-fn toggle_green(mut color: ResMut<NextState_<ColorMode>>) {
-    let color = color.unwrap_mut();
-    color.g = !color.g;
-}
-
-fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
-    let color = color.unwrap_mut();
-    color.b = !color.b;
-}
-
-.init_state_::<ColorMode>()
-.add_systems(
-    Update,
-    // These systems might run on the same frame sometimes.
-    // With partial mutation, that's totally fine and expected.
-    ColorMode::ANY.on_update(
-        (disable_red.run_if(took_damage), enable_red.run_if(dealt_damage)).chain(),
-        toggle_green.run_if(input_just_pressed(KeyCode::Space)),
-        toggle_blue.run_if(on_timer(Duration::from_secs(5))),
-    ),
-)
-```
-
-## Flexible scheduling
-
-Harness the full power of bevy ECS to schedule your state transitions:
-
-```rust
-#[derive(State, Clone, PartialEq, Eq)]
-struct Level(usize);
-
-.add_state_::<Level>()
-.add_systems(
-    StateFlush,
-    Level::ANY.on_enter((
-        play_boss_music.run_if(Level(10).will_enter()),
-        save_progress.run_if(state!(Level(4 | 7 | 10)).will_enter())
-        spawn_tutorial_popup.run_if(Level::with(|x| x.0 < 4).will_enter()),
-        spawn_easter_egg.run_if(|level: StateRef<Level>| matches!(
-            level.get(),
-            (Some(Level(x @ 2 | 5..=8)), Some(Level(y))) if x * x > y,
-        )),
-        gen_level.run_if(|level: Res<NextState_<Level>>, meta: Res<LevelMeta>| {
-            !meta.has_been_generated(level.unwrap().0)
-        }),
-        load_level.after(gen_level),
-    )),
-);
-```
-
-## Modular configuration
-
-Strip out or add features to your state type:
-
-```rust
-#[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
-#[state(
-    // Disable default configs: detect_change, send_event, apply_flush.
-    no_defaults,
-    // Trigger a flush on any state change.
-    detect_change,
-    // Send a flush event on flush.
-    send_event,
-    // Include a BevyState wrapper (see Ecosystem compatibility).
-    bevy_state,
-    // Clone the next state into the current state on flush.
-    apply_flush,
-    // Run this state's on flush systems after the listed states.
-    after(FooState, BarState<i32>),
-    // Run this state's on flush systems before the listed states.
-    before(QuuxState)
-)]
-struct MyCustomState(i32);
-
-// Derived traits can be omitted if they won't be used:
-#[derive(State)]
-#[state(no_defaults)]
-struct MyRawState(i32);
-
-.add_state_::<MyCustomState>()
-.add_state_::<MyRawState>()
-```
-
-## Ecosystem compatibility
-
-Enable a `BevyState<S>` wrapper to interact with crates that expect it:
-
-```rust
-use bevy_asset_loader::prelude::*;
-use iyes_progress::prelude::*;
-
-#[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
-// Set up `BevyState<GameState>` by enabling this config:
-#[state(bevy_state)]
-enum GameState {
-    #[default]
-    Splash,
-    Title,
-    LoadingGame,
-    PlayingGame,
-}
-
-.init_state_::<GameState>()
-.add_loading_state(
-    LoadingState::new(BevyState(Some(GameState::LoadingGame)))
-        .load_collection::<GameAssets>(),
-)
-.add_plugins(
-    ProgressPlugin::new(BevyState(Some(GameState::LoadingGame)))
-        // Changes to BevyState<GameState> will propagate to GameState.
-        .continue_to(Some(GameState::PlayingGame)),
-)
-.add_systems(
-    Update,
-    GameState::Title.on_update(
-        // Changes to GameState will propagate to BevyState<GameState>.
-        GameState::LoadingGame.enter().run_if(input_just_pressed(KeyCode::Enter)),
-    ),
-)
-```
 
 ## Refresh
 
@@ -262,6 +119,149 @@ fn compute_square_color(
         CheckerboardSquare::ANY.on_enter(compute_square_color),
     )
 );
+```
+
+## Flexible scheduling
+
+Harness the full power of bevy ECS to schedule your state transitions:
+
+```rust
+#[derive(State, Clone, PartialEq, Eq)]
+struct Level(usize);
+
+.add_state_::<Level>()
+.add_systems(
+    StateFlush,
+    Level::ANY.on_enter((
+        play_boss_music.run_if(Level(10).will_enter()),
+        save_progress.run_if(state!(Level(4 | 7 | 10)).will_enter())
+        spawn_tutorial_popup.run_if(Level::with(|x| x.0 < 4).will_enter()),
+        spawn_easter_egg.run_if(|level: StateRef<Level>| matches!(
+            level.get(),
+            (Some(Level(x @ 2 | 5..=8)), Some(Level(y))) if x * x > y,
+        )),
+        gen_level.run_if(|level: Res<NextState_<Level>>, meta: Res<LevelMeta>| {
+            !meta.has_been_generated(level.unwrap().0)
+        }),
+        load_level.after(gen_level),
+    )),
+);
+```
+
+## Partial mutation
+
+Directly update the next state instead of setting an entirely new value:
+
+```rust
+// Player has different abilities depending on the color mode. For example,
+// yellow mode is its own thing, not just red and green modes at the same time.
+#[derive(State, Clone, PartialEq, Eq, Default)]
+struct ColorMode {
+    r: bool,
+    g: bool,
+    b: bool,
+}
+
+fn enable_red(mut color: ResMut<NextState_<ColorMode>>) {
+    color.unwrap_mut().r = true;
+}
+
+fn disable_red(mut color: ResMut<NextState_<ColorMode>>) {
+    color.unwrap_mut().r = false;
+}
+
+fn toggle_green(mut color: ResMut<NextState_<ColorMode>>) {
+    let color = color.unwrap_mut();
+    color.g = !color.g;
+}
+
+fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
+    let color = color.unwrap_mut();
+    color.b = !color.b;
+}
+
+.init_state_::<ColorMode>()
+.add_systems(
+    Update,
+    // These systems might run on the same frame sometimes.
+    // With partial mutation, that's totally fine and expected.
+    ColorMode::ANY.on_update(
+        (disable_red.run_if(took_damage), enable_red.run_if(dealt_damage)).chain(),
+        toggle_green.run_if(input_just_pressed(KeyCode::Space)),
+        toggle_blue.run_if(on_timer(Duration::from_secs(5))),
+    ),
+)
+```
+
+## Modular configuration
+
+Strip out or add plugins to your state type:
+
+```rust
+#[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
+#[state(
+    // Disable default plugins: detect_change, flush_event, apply_flush.
+    no_defaults,
+    // Trigger a flush on any state change.
+    detect_change,
+    // Send an event on flush.
+    flush_event,
+    // Include a BevyState wrapper (see Ecosystem compatibility).
+    bevy_state,
+    // Clone the next state into the current state on flush.
+    apply_flush,
+    // Run this state's on flush systems after the listed states.
+    after(FooState, BarState<i32>),
+    // Run this state's on flush systems before the listed states.
+    before(QuuxState)
+)]
+struct MyCustomState(i32);
+
+// Derived traits can be omitted if they won't be used:
+#[derive(State)]
+#[state(no_defaults)]
+struct MyRawState(i32);
+
+.add_state_::<MyCustomState>()
+.add_state_::<MyRawState>()
+```
+
+## Ecosystem compatibility
+
+Enable a `BevyState<S>` wrapper to interact with crates that expect it:
+
+```rust
+use bevy_asset_loader::prelude::*;
+use iyes_progress::prelude::*;
+
+#[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+// Enable the `bevy_state` plugin to set up `BevyState<GameState>`:
+#[state(bevy_state)]
+enum GameState {
+    #[default]
+    Splash,
+    Title,
+    LoadingGame,
+    PlayingGame,
+}
+
+.init_state_::<GameState>()
+.add_loading_state(
+    LoadingState::new(BevyState(Some(GameState::LoadingGame)))
+        .load_collection::<GameAssets>(),
+)
+.add_plugins(
+    ProgressPlugin::new(BevyState(Some(GameState::LoadingGame)))
+        // Changes to BevyState<GameState> will propagate to GameState.
+        .continue_to(Some(GameState::PlayingGame)),
+)
+.add_systems(
+    Update,
+    GameState::Title.on_update(
+        // Changes to GameState will propagate to BevyState<GameState>.
+        GameState::LoadingGame.enter().run_if(input_just_pressed(KeyCode::Enter)),
+    ),
+)
 ```
 
 # Remaining tasks

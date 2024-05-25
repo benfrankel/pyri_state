@@ -22,18 +22,18 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     let raw_state_trait = concat(crate_state_path.clone(), format_ident!("RawState"));
 
     // Construct trait impls for the decorated type
-    let raw_state_impl = quote! {
+    let impl_raw_state = quote! {
         impl #impl_generics #raw_state_trait for #ty_name #ty_generics #where_clause {}
     };
 
     #[cfg(not(feature = "bevy_app"))]
-    let get_state_config_impl = quote! {};
+    let impl_configure_state = quote! {};
     #[cfg(feature = "bevy_app")]
-    let get_state_config_impl = app::derive_get_state_config(&input);
+    let impl_configure_state = app::derive_configure_state(&input);
 
     quote! {
-        #raw_state_impl
-        #get_state_config_impl
+        #impl_raw_state
+        #impl_configure_state
     }
     .into()
 }

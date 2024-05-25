@@ -11,7 +11,7 @@ pub mod state;
 pub mod prelude {
     #[doc(hidden)]
     #[cfg(feature = "bevy_app")]
-    pub use crate::app::{AppExtState, StatePlugin};
+    pub use crate::app::{AppExtState, PyriStatePlugin};
 
     #[doc(hidden)]
     pub use crate::{
@@ -99,7 +99,7 @@ mod tests {
     fn foo() {
         let mut app = App::new();
 
-        app.add_plugins(StatePlugin)
+        app.add_plugins(PyriStatePlugin)
             .init_state_::<GameState>()
             .add_state_::<Paused>()
             .add_state_::<Level>()
