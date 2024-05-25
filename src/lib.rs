@@ -17,7 +17,6 @@ pub mod prelude {
     pub use crate::{
         buffer::{CurrentState, NextState_, StateMut, StateRef},
         schedule::*,
-        state,
         state::*,
     };
 
@@ -30,7 +29,7 @@ mod tests {
     use bevy_app::App;
     use bevy_ecs::system::{Res, ResMut};
 
-    use crate::prelude::*;
+    use crate::{prelude::*, state};
 
     fn do_stuff_with<T>(x: T) {
         let _ = x;
