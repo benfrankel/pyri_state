@@ -5,7 +5,7 @@ use syn::{parse_str, punctuated::Punctuated, DeriveInput, Error, Meta, Path, Res
 
 use crate::util::concat;
 
-pub(crate) fn derive_configure_state(input: &DeriveInput) -> TokenStream {
+pub(crate) fn derive_configure_state_helper(input: &DeriveInput) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 

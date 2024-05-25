@@ -188,7 +188,7 @@ impl<S: RawState, F: Fn(&S) -> bool + 'static + Send + Sync> ContainsState<S>
     }
 }
 
-// Pattern matching helper macro
+// Helper macro for building a pattern matching state set.
 #[macro_export]
 macro_rules! state {
     ($pattern:pat $(if $guard:expr)? $(,)?) => {

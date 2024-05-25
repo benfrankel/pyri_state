@@ -227,6 +227,14 @@ impl<'w, S: RawState> StateRef<'w, S> {
     }
 }
 
+// Helper macro for building a pattern matching flush run condition.
+#[macro_export]
+macro_rules! will_flush {
+    ($pattern:pat $(if $guard:expr)? $(,)?) => {
+        (|state: StateRef<_>| matches!(state.get(), $pattern $(if $guard)?))
+    };
+}
+
 #[derive(SystemParam)]
 pub struct StateMut<'w, S: RawState> {
     pub current: Res<'w, CurrentState<S>>,

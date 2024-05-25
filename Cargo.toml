@@ -18,3 +18,8 @@ bevy_app = { version = "0.13", default-features = false, optional = true }
 bevy_ecs = { version = "0.13", default-features = false }
 bevy_reflect = { version = "0.13", optional = true }
 pyri_state_derive = { version = "0.1", path = "derive" }
+
+[dev-dependencies]
+bevy = "0.13"
+bevy_asset_loader = "0.20"
+iyes_progress = "0.11"
