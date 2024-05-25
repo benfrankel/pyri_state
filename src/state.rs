@@ -188,6 +188,17 @@ impl<S: RawState, F: Fn(&S) -> bool + 'static + Send + Sync> ContainsState<S>
     }
 }
 
+// Pattern matching helper macro
+#[macro_export]
+macro_rules! state {
+    ($pattern:pat) => {
+        pyri_state::state::FunctionalStateSet(
+            |state| matches!(state, $pattern),
+            std::marker::PhantomData,
+        )
+    };
+}
+
 pub struct UniversalStateSet<S: RawState>(pub PhantomData<S>);
 
 impl<S: RawState> ContainsState<S> for UniversalStateSet<S> {

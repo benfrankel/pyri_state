@@ -72,10 +72,11 @@ struct Level(usize);
     StateFlush,
     Level::ANY.on_enter((
         play_boss_music.run_if(Level(10).will_enter()),
-        spawn_tutorial_popup.run_if(Level::with(|level| level.0 < 4).will_enter()),
+        save_progress.run_if(state!(Level(4 | 7 | 10)).will_enter())
+        spawn_tutorial_popup.run_if(Level::with(|x| x.0 < 4).will_enter()),
         spawn_easter_egg.run_if(|level: StateRef<Level>| matches!(
             level.get(),
-            (Some(Level(x @ 2 | 5..8)), Some(Level(y))) if x * x > y,
+            (Some(Level(x @ 2 | 5..=8)), Some(Level(y))) if x * x > y,
         )),
         gen_level.run_if(|level: Res<NextState_<Level>>, meta: Res<LevelMeta>| {
             !meta.has_been_generated(level.unwrap().0)

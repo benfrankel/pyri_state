@@ -17,6 +17,7 @@ pub mod prelude {
     pub use crate::{
         buffer::{CurrentState, NextState_, StateMut, StateRef},
         schedule::*,
+        state,
         state::*,
     };
 
@@ -53,29 +54,29 @@ mod tests {
 
     #[derive(State, Clone, PartialEq, Eq, Default)]
     #[state(after(GameState))]
-    struct LevelIdx {
+    struct Level {
         x: usize,
         y: usize,
     }
 
-    fn exit_level(level: Res<CurrentState<LevelIdx>>) {
+    fn exit_level(level: Res<CurrentState<Level>>) {
         let level_state = level.unwrap();
-        do_stuff_with::<&LevelIdx>(level_state);
+        do_stuff_with::<&Level>(level_state);
     }
 
-    fn enter_level(level_state: Res<NextState_<LevelIdx>>) {
+    fn enter_level(level_state: Res<NextState_<Level>>) {
         let level_state = level_state.unwrap();
-        do_stuff_with::<&LevelIdx>(level_state);
+        do_stuff_with::<&Level>(level_state);
     }
 
     #[derive(State, Clone, PartialEq, Eq)]
-    #[state(after(LevelIdx))]
+    #[state(after(Level))]
     enum SquareColor {
         Black,
         White,
     }
 
-    fn compute_color(level: Res<NextState_<LevelIdx>>, mut color: ResMut<NextState_<SquareColor>>) {
+    fn compute_color(level: Res<NextState_<Level>>, mut color: ResMut<NextState_<SquareColor>>) {
         color.inner = level.get().map(|level| {
             if level.x + level.y % 2 == 0 {
                 SquareColor::Black
@@ -102,20 +103,21 @@ mod tests {
         app.add_plugins(StatePlugin)
             .init_state_::<GameState>()
             .add_state_::<Paused>()
-            .add_state_::<LevelIdx>()
+            .add_state_::<Level>()
             .add_state_::<SquareColor>()
             .add_systems(
                 StateFlush,
                 (
-                    GameState::PlayingGame.on_exit((Paused::disable, LevelIdx::disable)),
-                    GameState::PlayingGame.on_enter((Paused::enable, LevelIdx::enable)),
+                    GameState::PlayingGame.on_exit((Paused::disable, Level::disable)),
+                    GameState::PlayingGame.on_enter((Paused::enable, Level::enable)),
                     Paused.on_exit(unpause),
                     Paused.on_enter(pause),
-                    LevelIdx::ANY.on_exit(exit_level),
-                    LevelIdx::ANY.on_enter((enter_level, compute_color)),
+                    Level::ANY.on_exit(exit_level),
+                    Level::ANY.on_enter((enter_level, compute_color)),
                     SquareColor::ANY.on_exit(exit_color),
                     SquareColor::ANY.on_enter(enter_color),
-                    LevelIdx::with(|s| s.x > s.y).on_exit(exit_level),
+                    state!(Level { x: 3..=8, .. }).on_exit(exit_level),
+                    Level::with(|s| s.x > s.y).on_exit(exit_level),
                 ),
             );
     }
