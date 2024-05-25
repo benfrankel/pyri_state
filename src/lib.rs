@@ -116,7 +116,7 @@ mod tests {
                     Level::ANY.on_enter((enter_level, compute_color)),
                     SquareColor::ANY.on_exit(exit_color),
                     SquareColor::ANY.on_enter(enter_color),
-                    state!(Level { x: 3..=8, .. }).on_exit(exit_level),
+                    state!(Level { x: x @ 3..=8, y } if *y == x + 2).on_exit(exit_level),
                     Level::with(|s| s.x > s.y).on_exit(exit_level),
                 ),
             );

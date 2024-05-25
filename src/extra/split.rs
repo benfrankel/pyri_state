@@ -16,7 +16,7 @@ pub type SplitState = &'static str;
 
 #[macro_export]
 macro_rules! add_to_split_state {
-    ($ty:ident, $($val:ident),* $(,)*) => {
+    ($ty:ident, $($val:ident),* $(,)?) => {
         #[allow(non_upper_case_globals)]
         impl $ty {
             $(const $val: $ty = $ty(stringify!($val));)*

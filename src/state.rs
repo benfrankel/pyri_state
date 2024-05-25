@@ -191,9 +191,9 @@ impl<S: RawState, F: Fn(&S) -> bool + 'static + Send + Sync> ContainsState<S>
 // Pattern matching helper macro
 #[macro_export]
 macro_rules! state {
-    ($pattern:pat) => {
+    ($pattern:pat $(if $guard:expr)? $(,)?) => {
         pyri_state::state::FunctionalStateSet(
-            |state| matches!(state, $pattern),
+            |state| matches!(state, $pattern $(if $guard)?),
             std::marker::PhantomData,
         )
     };
