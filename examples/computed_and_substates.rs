@@ -3,6 +3,24 @@
 use bevy::prelude::*;
 use pyri_state::prelude::*;
 
+fn main() {
+    let mut app = App::new();
+    app.add_plugins(PyriStatePlugin)
+        .init_state_::<GameState>()
+        .add_state_::<CheckerboardSquare>()
+        .add_state_::<SquareColor>()
+        .add_systems(
+            StateFlush,
+            (
+                // Enable CheckerboardSquare only during GameState::Playing.
+                GameState::Playing.on_exit(CheckerboardSquare::disable),
+                GameState::Playing.on_enter(CheckerboardSquare::enable),
+                // Compute SquareColor from CheckerboardSquare.
+                CheckerboardSquare::ANY.on_enter(compute_square_color),
+            ),
+        );
+}
+
 #[derive(State, Clone, PartialEq, Eq, Default)]
 enum GameState {
     #[default]
@@ -26,7 +44,6 @@ enum SquareColor {
     White,
 }
 
-// Systems:
 fn compute_square_color(
     board: Res<NextState_<CheckerboardSquare>>,
     mut color: ResMut<NextState_<SquareColor>>,
@@ -38,20 +55,4 @@ fn compute_square_color(
             SquareColor::White
         }
     });
-}
-
-fn main() {
-    let mut app = App::new();
-    app.add_plugins(PyriStatePlugin)
-        .init_state_::<GameState>()
-        .add_state_::<CheckerboardSquare>()
-        .add_state_::<SquareColor>()
-        .add_systems(
-            StateFlush,
-            (
-                GameState::Playing.on_exit(CheckerboardSquare::disable),
-                GameState::Playing.on_enter(CheckerboardSquare::enable),
-                CheckerboardSquare::ANY.on_enter(compute_square_color),
-            ),
-        );
 }

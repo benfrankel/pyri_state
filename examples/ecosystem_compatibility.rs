@@ -6,17 +6,6 @@ use pyri_state::{buffer::BevyState, prelude::*};
 use bevy_asset_loader::prelude::*;
 use iyes_progress::prelude::*;
 
-#[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
-// Enable the `bevy_state` plugin to set up `BevyState<GameState>`:
-#[state(bevy_state)]
-enum GameState {
-    #[default]
-    Splash,
-    Title,
-    LoadingGame,
-    PlayingGame,
-}
-
 fn main() {
     let mut app = App::new();
     app.add_plugins(PyriStatePlugin)
@@ -39,4 +28,15 @@ fn main() {
                     .run_if(input_just_pressed(KeyCode::Enter)),
             ),
         );
+}
+
+#[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+// Enable the `bevy_state` plugin to set up `BevyState<GameState>`:
+#[state(bevy_state)]
+enum GameState {
+    #[default]
+    Splash,
+    Title,
+    LoadingGame,
+    PlayingGame,
 }

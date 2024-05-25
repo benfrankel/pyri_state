@@ -3,19 +3,6 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
-struct Paused;
-
-// Systems:
-fn unpause() {}
-fn pause() {}
-fn window_lost_focus() -> bool {
-    unimplemented!()
-}
-fn window_gained_focus() -> bool {
-    unimplemented!()
-}
-
 fn main() {
     let mut app = App::new();
     app.add_plugins(PyriStatePlugin)
@@ -32,4 +19,17 @@ fn main() {
                 Paused::toggle.run_if(input_just_pressed(KeyCode::Escape)),
             ),
         );
+}
+
+#[derive(State, Clone, PartialEq, Eq, Default)]
+struct Paused;
+
+// Dummy systems:
+fn unpause() {}
+fn pause() {}
+fn window_lost_focus() -> bool {
+    unimplemented!()
+}
+fn window_gained_focus() -> bool {
+    unimplemented!()
 }

@@ -3,13 +3,6 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
-struct Level(usize);
-
-// Systems:
-fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}
-fn set_up_new_level(_level: Res<NextState_<Level>>) {}
-
 fn main() {
     let mut app = App::new();
     app.add_plugins(PyriStatePlugin)
@@ -27,3 +20,10 @@ fn main() {
             Level::refresh.run_if(input_just_pressed(KeyCode::KeyR)),
         );
 }
+
+#[derive(State, Clone, PartialEq, Eq, Default)]
+struct Level(usize);
+
+// Dummy systems:
+fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}
+fn set_up_new_level(_level: Res<NextState_<Level>>) {}

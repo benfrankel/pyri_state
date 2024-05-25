@@ -3,23 +3,6 @@
 use bevy::prelude::*;
 use pyri_state::{prelude::*, state, will_flush};
 
-#[derive(State, Clone, PartialEq, Eq)]
-struct Level(usize);
-
-#[derive(Resource, Default)]
-struct LevelMeta {
-    generated: Vec<bool>,
-}
-
-// Systems:
-fn tear_down_level(_level: Res<CurrentState<Level>>) {}
-fn play_boss_music() {}
-fn save_progress() {}
-fn spawn_tutorial_popup() {}
-fn spawn_easter_egg() {}
-fn gen_level(_level: Res<NextState_<Level>>) {}
-fn load_level(_level: Res<NextState_<Level>>) {}
-
 fn main() {
     let mut app = App::new();
     app.add_plugins(PyriStatePlugin)
@@ -56,3 +39,20 @@ fn main() {
             )),
         );
 }
+
+#[derive(State, Clone, PartialEq, Eq)]
+struct Level(usize);
+
+#[derive(Resource, Default)]
+struct LevelMeta {
+    generated: Vec<bool>,
+}
+
+// Dummy systems:
+fn tear_down_level(_level: Res<CurrentState<Level>>) {}
+fn play_boss_music() {}
+fn save_progress() {}
+fn spawn_tutorial_popup() {}
+fn spawn_easter_egg() {}
+fn gen_level(_level: Res<NextState_<Level>>) {}
+fn load_level(_level: Res<NextState_<Level>>) {}
