@@ -21,7 +21,7 @@ impl<S: State_ + Hash + Debug> Default for BevyState<S> {
 }
 
 // The immutable half of the double-buffered state.
-// This should never be accessed mutably during normal usage.
+// This should not be accessed mutably during normal usage.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",

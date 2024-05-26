@@ -28,31 +28,31 @@ fn main() {
         .run();
 }
 
-// Player has different abilities depending on the color mode. For example,
-// yellow mode is its own thing, not just red and green modes at the same time.
+// The player has different abilities depending on the color mode.
+// Yellow mode is its own thing, for example; not just red and green at the same time.
 #[derive(State, Clone, PartialEq, Eq, Default)]
 struct ColorMode {
-    r: bool,
-    g: bool,
-    b: bool,
+    red: bool,
+    green: bool,
+    blue: bool,
 }
 
 fn enable_red(mut color: ResMut<NextState_<ColorMode>>) {
-    color.unwrap_mut().r = true;
+    color.unwrap_mut().red = true;
 }
 
 fn disable_red(mut color: ResMut<NextState_<ColorMode>>) {
-    color.unwrap_mut().r = false;
+    color.unwrap_mut().red = false;
 }
 
 fn toggle_green(mut color: ResMut<NextState_<ColorMode>>) {
     let color = color.unwrap_mut();
-    color.g = !color.g;
+    color.green = !color.green;
 }
 
 fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
     let color = color.unwrap_mut();
-    color.b = !color.b;
+    color.blue = !color.blue;
 }
 
 fn took_damage() -> bool {
