@@ -76,8 +76,8 @@ struct ApplyFlushSet;
 
 #[derive(Event)]
 pub struct StateFlushEvent<S: RawState> {
-    pub before: Option<S>,
-    pub after: Option<S>,
+    pub old: Option<S>,
+    pub new: Option<S>,
 }
 
 fn check_flush_flag<S: RawState>(state: Res<NextState_<S>>) -> bool {
@@ -88,9 +88,10 @@ fn send_flush_event<S: RawState + Clone>(
     state: StateRef<S>,
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
+    let (old, new) = state.get();
     events.send(StateFlushEvent {
-        before: state.current.inner.clone(),
-        after: state.next.inner.clone(),
+        old: old.cloned(),
+        new: new.cloned(),
     });
 }
 
