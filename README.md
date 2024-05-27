@@ -1,10 +1,46 @@
-`pyri_state` is a flexible 3rd-party alternative to `bevy_state`. In `pyri_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
+# Flexible game states
 
-# Ergonomics
+`pyri_state` is a flexible alternative to `bevy_state`. In `pyri_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
-TODO: Sample code here.
+# Showcase
+
+```rust
+use bevy::prelude::*;
+use pyri_state::{prelude::*, state};
+
+#[derive(State, Clone, PartialEq, Eq, Default)]
+enum GameState {
+    #[default]
+    Menu,
+    Playing,
+}
+
+#[derive(State, Clone, PartialEq, Eq, Default)]
+struct Level(usize);
+
+fn main() {
+    App::new()
+        .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .init_state_::<GameState>()
+        .add_state_::<Level>()
+        .add_systems(
+            StateFlush,
+            (
+                GameState::Playing.on_exit(Level::disable),
+                GameState::Playing.on_enter(Level::enable),
+                Level::ANY.on_exit(tear_down_old_level),
+                Level::ANY.on_enter(set_up_new_level),
+                Level(10).on_enter(play_boss_music),
+                state!(Level(4 | 7 | 10)).on_enter(save_progress),
+                Level::with(|x| x.0 < 4).on_enter(spawn_tutorial_popup),
+            ),
+        );
+}
+```
 
 # Features
+
+Click on a feature to view example code:
 
 - [Refresh](/examples/refresh.rs)
 - [Disable, enable, toggle](/examples/disable_enable_toggle.rs)
@@ -27,7 +63,7 @@ And more:
 
 # Remaining tasks
 
-- [ ] Unit tests
 - [ ] Documentation
+- [ ] Unit tests
 - [ ] How does flushing states once per frame interact with `FixedUpdate`?
 - [ ] Component states?
