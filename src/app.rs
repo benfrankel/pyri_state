@@ -9,7 +9,7 @@ use bevy_ecs::{
 };
 
 use crate::{
-    buffer::{BevyState, CurrentState, NextState_},
+    buffer::{BevyState, CurrentState},
     prelude::StateFlushSet,
     schedule::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_resolve_state,
@@ -29,40 +29,40 @@ impl Plugin for PyriStatePlugin {
     }
 }
 
-fn add_state_helper<S: ConfigureState>(app: &mut App, value: Option<S>) -> &mut App {
-    if !app.world.contains_resource::<CurrentState<S>>() {
-        app.init_resource::<CurrentState<S>>()
-            .insert_resource(NextState_::new(value));
-        S::configure(app);
-    }
-    app
-}
-
 pub trait AppExtPyriState {
-    fn add_state_<S: ConfigureState>(&mut self) -> &mut Self;
+    fn add_state_<S: AddState>(&mut self) -> &mut Self;
 
-    fn init_state_<S: ConfigureState + FromWorld>(&mut self) -> &mut Self;
+    fn init_state_<S: AddState + FromWorld>(&mut self) -> &mut Self;
 
-    fn insert_state_<S: ConfigureState>(&mut self, value: S) -> &mut Self;
+    fn insert_state_<S: AddState>(&mut self, value: S) -> &mut Self;
 }
 
 impl AppExtPyriState for App {
-    fn add_state_<S: ConfigureState>(&mut self) -> &mut Self {
-        add_state_helper::<S>(self, None)
+    fn add_state_<S: AddState>(&mut self) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<S>>() {
+            S::add_state(self, None);
+        }
+        self
     }
 
-    fn init_state_<S: ConfigureState + FromWorld>(&mut self) -> &mut Self {
-        let value = S::from_world(&mut self.world);
-        add_state_helper(self, Some(value))
+    fn init_state_<S: AddState + FromWorld>(&mut self) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<S>>() {
+            let value = S::from_world(&mut self.world);
+            S::add_state(self, Some(value));
+        }
+        self
     }
 
-    fn insert_state_<S: ConfigureState>(&mut self, value: S) -> &mut Self {
-        add_state_helper(self, Some(value))
+    fn insert_state_<S: AddState>(&mut self, value: S) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<S>>() {
+            S::add_state(self, Some(value));
+        }
+        self
     }
 }
 
-pub trait ConfigureState: RawState {
-    fn configure(app: &mut App);
+pub trait AddState: RawState {
+    fn add_state(app: &mut App, value: Option<Self>);
 }
 
 pub struct ResolveStatePlugin<S: RawState> {

@@ -49,32 +49,28 @@ mod app {
 
     use crate::{
         app::{
-            AppExtPyriState, ApplyFlushPlugin, ConfigureState, DetectChangePlugin,
-            ResolveStatePlugin,
+            AddState, AppExtPyriState, ApplyFlushPlugin, DetectChangePlugin, ResolveStatePlugin,
         },
-        buffer::NextState_,
+        buffer::{CurrentState, NextState_},
         schedule::StateFlush,
         state::State_,
     };
 
     use super::{schedule_state_stack, StateStack};
 
-    impl<S: State_ + ConfigureState> ConfigureState for StateStack<S> {
-        fn configure(app: &mut App) {
-            app.add_state_::<S>().add_plugins((
-                ResolveStatePlugin::<StateStack<S>>::default().before::<S>(),
-                DetectChangePlugin::<StateStack<S>>::default(),
-                ApplyFlushPlugin::<StateStack<S>>::default(),
-            ));
-
+    impl<S: State_ + AddState> AddState for StateStack<S> {
+        fn add_state(app: &mut App, value: Option<Self>) {
             // Replace `None` with `StateStack(vec![])`.
-            if app
-                .world
-                .get_resource::<NextState_<StateStack<S>>>()
-                .is_some_and(|x| x.will_be_disabled())
-            {
-                app.insert_resource(NextState_::enabled(StateStack::<S>::empty()));
-            }
+            let value = value.unwrap_or_else(Self::empty);
+
+            app.add_state_::<S>()
+                .init_resource::<CurrentState<Self>>()
+                .insert_resource(NextState_::enabled(value))
+                .add_plugins((
+                    ResolveStatePlugin::<Self>::default().before::<S>(),
+                    DetectChangePlugin::<Self>::default(),
+                    ApplyFlushPlugin::<Self>::default(),
+                ));
 
             schedule_state_stack::<S>(app.get_schedule_mut(StateFlush).unwrap());
         }

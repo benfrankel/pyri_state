@@ -5,22 +5,25 @@ use syn::{parse_str, punctuated::Punctuated, DeriveInput, Error, Meta, Path, Res
 
 use crate::util::concat;
 
-pub(crate) fn derive_configure_state_helper(input: &DeriveInput) -> TokenStream {
+pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
     // Parse #[state(...)] attributes
     let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
-    // Construct trait paths
+    // Construct paths
     let bevy_app_path = BevyManifest::default().get_path("bevy_app");
     let app_ty = concat(bevy_app_path.clone(), format_ident!("App"));
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_app_path = concat(crate_path.clone(), format_ident!("app"));
-    let configure_state_trait = concat(crate_app_path.clone(), format_ident!("ConfigureState"));
+    let add_state_trait = concat(crate_app_path.clone(), format_ident!("AddState"));
+    let crate_buffer_path = concat(crate_path.clone(), format_ident!("buffer"));
+    let current_state_ty = concat(crate_buffer_path.clone(), format_ident!("CurrentState"));
+    let next_state_ty = concat(crate_buffer_path.clone(), format_ident!("NextState_"));
 
-    // Construct state configs
+    // Construct state plugins
     let resolve_state = {
         let bevy_ecs_path = bevy_macro_utils::BevyManifest::default().get_path("bevy_ecs");
         let bevy_ecs_schedule_path = concat(bevy_ecs_path, format_ident!("schedule"));
@@ -73,15 +76,17 @@ pub(crate) fn derive_configure_state_helper(input: &DeriveInput) -> TokenStream 
     let apply_flush = simple_flag("ApplyFlush", state_attrs.apply_flush);
 
     quote! {
-        impl #impl_generics #configure_state_trait for #ty_name #ty_generics #where_clause {
-            fn configure(app: &mut #app_ty) {
-                app.add_plugins((
-                    #resolve_state
-                    #detect_change
-                    #flush_event
-                    #bevy_state
-                    #apply_flush
-                ));
+        impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {
+            fn add_state(app: &mut #app_ty, value: Option<Self>) {
+                app.init_resource::<#current_state_ty<Self>>()
+                    .insert_resource(#next_state_ty::new(value))
+                    .add_plugins((
+                        #resolve_state
+                        #detect_change
+                        #flush_event
+                        #bevy_state
+                        #apply_flush
+                    ));
             }
         }
     }

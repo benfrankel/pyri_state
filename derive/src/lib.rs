@@ -12,7 +12,7 @@ fn derive_raw_state_helper(input: &DeriveInput) -> proc_macro2::TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
-    // Construct trait paths
+    // Construct paths
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_state_path = concat(crate_path.clone(), format_ident!("state"));
@@ -39,11 +39,11 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     #[cfg(not(feature = "bevy_app"))]
     let impl_configure_state = quote! {};
     #[cfg(feature = "bevy_app")]
-    let impl_configure_state = app::derive_configure_state_helper(&input);
+    let impl_add_state = app::derive_add_state_helper(&input);
 
     quote! {
         #impl_raw_state
-        #impl_configure_state
+        #impl_add_state
     }
     .into()
 }
