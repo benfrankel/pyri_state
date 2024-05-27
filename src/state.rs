@@ -178,7 +178,7 @@ impl<S: RawState + Eq> ContainsState<S> for S {
     }
 }
 
-pub struct FunctionalStateSet<S: RawState, F: Fn(&S) -> bool>(pub F, pub PhantomData<S>);
+pub struct FunctionalStateSet<S: RawState, F: Fn(&S) -> bool>(F, PhantomData<S>);
 
 impl<S: RawState, F: Fn(&S) -> bool + 'static + Send + Sync> ContainsState<S>
     for FunctionalStateSet<S, F>
@@ -188,18 +188,23 @@ impl<S: RawState, F: Fn(&S) -> bool + 'static + Send + Sync> ContainsState<S>
     }
 }
 
+impl<S: RawState, F: Fn(&S) -> bool> FunctionalStateSet<S, F> {
+    pub fn new(f: F) -> Self {
+        Self(f, PhantomData)
+    }
+}
+
 // Helper macro for building a pattern matching state set.
 #[macro_export]
 macro_rules! state {
     ($pattern:pat $(if $guard:expr)? $(,)?) => {
-        pyri_state::state::FunctionalStateSet(
+        pyri_state::state::FunctionalStateSet::new(
             |state| matches!(*state, $pattern $(if $guard)?),
-            std::marker::PhantomData,
         )
     };
 }
 
-pub struct UniversalStateSet<S: RawState>(pub PhantomData<S>);
+pub struct UniversalStateSet<S: RawState>(PhantomData<S>);
 
 impl<S: RawState> ContainsState<S> for UniversalStateSet<S> {
     fn contains_state(&self, _state: &S) -> bool {
