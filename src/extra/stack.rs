@@ -3,18 +3,16 @@ use bevy_ecs::{
     system::{Res, ResMut},
     world::{FromWorld, World},
 };
+use pyri_state_derive::RawState;
 
 use crate::{
     buffer::NextState_,
     state::{RawState, State_},
 };
 
-// TODO: StateStack::<S>::pop, etc. as systems
-// A state stack with the current state on top
-#[derive(PartialEq, Eq, Clone)]
+// A state stack with the current state on top.
+#[derive(RawState, PartialEq, Eq, Clone)]
 pub struct StateStack<S: State_>(pub Vec<S>);
-
-impl<S: State_> RawState for StateStack<S> {}
 
 impl<S: State_ + FromWorld> FromWorld for StateStack<S> {
     fn from_world(world: &mut World) -> Self {
@@ -29,6 +27,44 @@ impl<S: State_> StateStack<S> {
 
     pub fn new(state: S) -> Self {
         Self(vec![state])
+    }
+
+    pub fn clear(mut state: ResMut<NextState_<Self>>) {
+        if let Some(state) = state.get_mut() {
+            state.0.clear();
+        }
+    }
+
+    pub fn pop(mut state: ResMut<NextState_<Self>>) {
+        if let Some(state) = state.get_mut() {
+            state.0.pop();
+        }
+    }
+
+    pub fn push(value: S) -> impl Fn(ResMut<NextState_<Self>>) {
+        move |mut state| {
+            if let Some(state) = state.get_mut() {
+                state.0.push(value.clone());
+            }
+        }
+    }
+
+    pub fn clear_push(value: S) -> impl Fn(ResMut<NextState_<Self>>) {
+        move |mut state| {
+            if let Some(state) = state.get_mut() {
+                state.0.clear();
+                state.0.push(value.clone());
+            }
+        }
+    }
+
+    pub fn pop_push(value: S) -> impl Fn(ResMut<NextState_<Self>>) {
+        move |mut state| {
+            if let Some(state) = state.get_mut() {
+                state.0.pop();
+                state.0.push(value.clone());
+            }
+        }
     }
 }
 
