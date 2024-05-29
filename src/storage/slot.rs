@@ -43,7 +43,7 @@ impl<S: RawState> SetStateStorage<S> for StateSlot<S> {
         param.0.as_mut()
     }
 
-    fn set_state<'s>(param: &'s mut SystemParamItem<Self::Param>, state: Option<S>) {
+    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>) {
         param.0 = state;
     }
 }

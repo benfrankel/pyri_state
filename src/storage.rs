@@ -33,7 +33,7 @@ pub trait SetStateStorage<S: RawState> {
 
     fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut S>;
 
-    fn set_state<'s>(param: &'s mut SystemParamItem<Self::Param>, state: Option<S>);
+    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>);
 }
 
 // A state is `SetState` if its storage is `SetStateStorage`.
@@ -51,7 +51,7 @@ where
         S::Storage::get_state_mut(param)
     }
 
-    fn set_state<'s>(param: &'s mut SystemParamItem<Self::Param>, state: Option<Self>) {
+    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<Self>) {
         S::Storage::set_state(param, state)
     }
 }

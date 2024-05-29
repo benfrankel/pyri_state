@@ -42,7 +42,7 @@ impl<S: RawState> SetStateStorage<S> for StateStack<S> {
         param.0.last_mut()
     }
 
-    fn set_state<'s>(param: &'s mut SystemParamItem<Self::Param>, state: Option<S>) {
+    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>) {
         match state {
             Some(value) => {
                 param.0.pop();

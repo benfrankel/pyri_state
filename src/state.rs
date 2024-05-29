@@ -60,11 +60,11 @@ pub trait GetState: RawState {
 
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self>;
 
-    fn will_be_disabled<'w>(next: NextStateRef<Self>) -> bool {
+    fn will_be_disabled(next: NextStateRef<Self>) -> bool {
         next.get().is_none()
     }
 
-    fn will_be_enabled<'w>(next: NextStateRef<Self>) -> bool {
+    fn will_be_enabled(next: NextStateRef<Self>) -> bool {
         next.get().is_some()
     }
 }
@@ -77,7 +77,7 @@ pub trait SetState: RawState {
 
     fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut Self>;
 
-    fn set_state<'s>(param: &'s mut SystemParamItem<Self::Param>, state: Option<Self>);
+    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<Self>);
 
     fn disable(mut state: NextStateMut<Self>) {
         state.set(None);
