@@ -14,7 +14,7 @@ fn main() {
             (
                 // Enable CheckerboardSquare only during GameState::Playing.
                 GameState::Playing.on_exit(CheckerboardSquare::disable),
-                GameState::Playing.on_enter(CheckerboardSquare::enable),
+                GameState::Playing.on_enter(CheckerboardSquare::enable_default),
                 // Compute SquareColor from CheckerboardSquare.
                 CheckerboardSquare::ANY.on_enter(compute_square_color),
             ),
@@ -46,14 +46,14 @@ enum SquareColor {
 }
 
 fn compute_square_color(
-    board: Res<NextState_<CheckerboardSquare>>,
-    mut color: ResMut<NextState_<SquareColor>>,
+    board: NextStateRef<CheckerboardSquare>,
+    mut color: NextStateMut<SquareColor>,
 ) {
-    color.inner = board.get().map(|board| {
+    color.set(board.get().map(|board| {
         if board.row + board.col % 2 == 0 {
             SquareColor::Black
         } else {
             SquareColor::White
         }
-    });
+    }));
 }

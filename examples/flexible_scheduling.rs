@@ -25,7 +25,7 @@ fn main() {
                     (Some(Level(x @ (2 | 5..=8))), Some(&Level(y))) if y == 10 - x,
                 )),
                 // Levels are randomly generated, but they should only be generated once.
-                gen_level.run_if(|level: Res<NextState_<Level>>, meta: Res<LevelMeta>| {
+                gen_level.run_if(|level: NextStateRef<Level>, meta: Res<LevelMeta>| {
                     !meta.generated[level.unwrap().0]
                 }),
                 // Load the next level after it's been generated.
@@ -49,5 +49,5 @@ fn play_boss_music() {}
 fn save_progress() {}
 fn spawn_tutorial_popup() {}
 fn spawn_easter_egg() {}
-fn gen_level(_level: Res<NextState_<Level>>) {}
-fn load_level(_level: Res<NextState_<Level>>) {}
+fn gen_level(_level: NextStateRef<Level>) {}
+fn load_level(_level: NextStateRef<Level>) {}

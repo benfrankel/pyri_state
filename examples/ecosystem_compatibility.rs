@@ -1,7 +1,7 @@
 // Enable a `BevyState<S>` wrapper to interact with crates that expect it.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use pyri_state::{buffer::BevyState, prelude::*};
+use pyri_state::{prelude::*, state::BevyState};
 
 use bevy_asset_loader::prelude::*;
 use iyes_progress::prelude::*;

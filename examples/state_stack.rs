@@ -3,10 +3,11 @@
 
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
-use pyri_state::extra::stack::StateStack;
-use pyri_state::{prelude::*, state};
+use pyri_state::{prelude::*, state, storage::stack::*};
 
 #[derive(State, Clone, PartialEq, Eq, Default)]
+// Configure Menu to use a StateStack instead of a StateSlot as its storage.
+#[state(storage(StateStack<Self>))]
 enum Menu {
     #[default]
     Main,
@@ -27,30 +28,34 @@ fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
         // Add Menu as a state stack, starting with `vec![Menu::MainMenu]`.
-        // (this adds both `StateStack<Menu>` and `Menu` itself as states)
-        .init_state_::<StateStack<Menu>>()
+        .init_state_::<Menu>()
         .init_state_::<GameState>()
         .add_systems(
             Update,
             (
                 // Open the in-game menu overlay on Escape press if there is no menu open.
                 GameState::PlayingGame.on_update(
-                    StateStack::push(Menu::MainOverlay)
+                    Menu::MainOverlay
+                        .push()
                         .run_if(Menu::is_disabled.and_then(input_just_pressed(KeyCode::Escape))),
                 ),
                 // Enter settings from main menu on S press.
                 state!(Menu::Main | Menu::MainOverlay).on_update(
-                    StateStack::push(Menu::Settings).run_if(input_just_pressed(KeyCode::KeyS)),
+                    Menu::Settings
+                        .push()
+                        .run_if(input_just_pressed(KeyCode::KeyS)),
                 ),
                 // Enter settings sub-menus from settings on A or G press.
                 Menu::Settings.on_update((
-                    StateStack::push(Menu::SettingsAudio).run_if(input_just_pressed(KeyCode::KeyA)),
-                    StateStack::push(Menu::SettingsGraphics)
+                    Menu::SettingsAudio
+                        .push()
+                        .run_if(input_just_pressed(KeyCode::KeyA)),
+                    Menu::SettingsGraphics
+                        .push()
                         .run_if(input_just_pressed(KeyCode::KeyG)),
                 )),
                 // Go back to the previous menu on Escape press.
-                Menu::ANY
-                    .on_update(StateStack::<Menu>::pop.run_if(input_just_pressed(KeyCode::Escape))),
+                Menu::ANY.on_update(Menu::pop.run_if(input_just_pressed(KeyCode::Escape))),
             ),
         )
         .run();

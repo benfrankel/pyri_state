@@ -37,20 +37,20 @@ struct ColorMode {
     blue: bool,
 }
 
-fn enable_red(mut color: ResMut<NextState_<ColorMode>>) {
+fn enable_red(mut color: NextStateMut<ColorMode>) {
     color.unwrap_mut().red = true;
 }
 
-fn disable_red(mut color: ResMut<NextState_<ColorMode>>) {
+fn disable_red(mut color: NextStateMut<ColorMode>) {
     color.unwrap_mut().red = false;
 }
 
-fn toggle_green(mut color: ResMut<NextState_<ColorMode>>) {
+fn toggle_green(mut color: NextStateMut<ColorMode>) {
     let color = color.unwrap_mut();
     color.green = !color.green;
 }
 
-fn toggle_blue(mut color: ResMut<NextState_<ColorMode>>) {
+fn toggle_blue(mut color: NextStateMut<ColorMode>) {
     let color = color.unwrap_mut();
     color.blue = !color.blue;
 }

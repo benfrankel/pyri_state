@@ -14,15 +14,15 @@ fn main() {
         .add_systems(
             Update,
             (
-                Paused::enable.run_if(window_lost_focus),
+                Paused.enable().run_if(window_lost_focus),
                 Paused::disable.run_if(window_gained_focus),
-                Paused::toggle.run_if(input_just_pressed(KeyCode::Escape)),
+                Paused.toggle().run_if(input_just_pressed(KeyCode::Escape)),
             ),
         )
         .run();
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Clone, PartialEq, Eq)]
 struct Paused;
 
 // Dummy systems:

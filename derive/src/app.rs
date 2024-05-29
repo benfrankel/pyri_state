@@ -1,29 +1,27 @@
 use bevy_macro_utils::BevyManifest;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{parse_str, punctuated::Punctuated, DeriveInput, Error, Meta, Path, Result, Token, Type};
+use syn::{parse_str, punctuated::Punctuated, DeriveInput, Path, Token};
 
-use crate::util::concat;
+use crate::{util::concat, StateAttrs};
 
-pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
+pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
-    // Parse #[state(...)] attributes
-    let state_attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
-
-    // Construct paths
+    // Construct paths.
     let bevy_app_path = BevyManifest::default().get_path("bevy_app");
     let app_ty = concat(bevy_app_path.clone(), format_ident!("App"));
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_app_path = concat(crate_path.clone(), format_ident!("app"));
     let add_state_trait = concat(crate_app_path.clone(), format_ident!("AddState"));
-    let crate_buffer_path = concat(crate_path.clone(), format_ident!("buffer"));
-    let current_state_ty = concat(crate_buffer_path.clone(), format_ident!("CurrentState"));
-    let next_state_ty = concat(crate_buffer_path.clone(), format_ident!("NextState_"));
+    let add_state_storage_trait = concat(crate_app_path.clone(), format_ident!("AddStateStorage"));
+    let crate_state_path = concat(crate_path.clone(), format_ident!("state"));
+    let current_state_ty = concat(crate_state_path.clone(), format_ident!("CurrentState"));
+    let flush_state_ty = concat(crate_state_path.clone(), format_ident!("FlushState"));
 
-    // Construct state plugins
+    // Construct resolve state plugin.
     let resolve_state = {
         let bevy_ecs_path = bevy_macro_utils::BevyManifest::default().get_path("bevy_ecs");
         let bevy_ecs_schedule_path = concat(bevy_ecs_path, format_ident!("schedule"));
@@ -32,7 +30,7 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
         let crate_schedule_path = concat(crate_path.clone(), format_ident!("schedule"));
         let state_flush_set = concat(crate_schedule_path.clone(), format_ident!("StateFlushSet"));
 
-        let after = state_attrs
+        let after = attrs
             .after
             .iter()
             .map(|state| {
@@ -44,7 +42,7 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
             })
             .collect::<Punctuated<_, Token![,]>>();
 
-        let before = state_attrs
+        let before = attrs
             .before
             .iter()
             .map(|state| {
@@ -60,7 +58,8 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
         quote! { #state_plugin_ty::<Self>::new(vec![#after], vec![#before]), }
     };
 
-    let simple_flag = |ty_prefix: &str, enable: bool| {
+    // Construct simple plugins.
+    let simple_plugin = |ty_prefix: &str, enable: bool| {
         if enable {
             let state_plugin_ty =
                 concat(crate_app_path.clone(), format_ident!("{ty_prefix}Plugin"));
@@ -69,17 +68,17 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
             quote! {}
         }
     };
-
-    let detect_change = simple_flag("DetectChange", state_attrs.detect_change);
-    let flush_event = simple_flag("FlushEvent", state_attrs.flush_event);
-    let bevy_state = simple_flag("BevyState", state_attrs.bevy_state);
-    let apply_flush = simple_flag("ApplyFlush", state_attrs.apply_flush);
+    let detect_change = simple_plugin("DetectChange", attrs.detect_change);
+    let flush_event = simple_plugin("FlushEvent", attrs.flush_event);
+    let bevy_state = simple_plugin("BevyState", attrs.bevy_state);
+    let apply_flush = simple_plugin("ApplyFlush", attrs.apply_flush);
 
     quote! {
         impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {
-            fn add_state(app: &mut #app_ty, value: Option<Self>) {
+            fn add_state(app: &mut #app_ty, state: Option<Self>) {
+                <Self::Storage as #add_state_storage_trait<Self>>::add_state_storage(app, state);
                 app.init_resource::<#current_state_ty<Self>>()
-                    .insert_resource(#next_state_ty::new(value))
+                    .init_resource::<#flush_state_ty<Self>>()
                     .add_plugins((
                         #resolve_state
                         #detect_change
@@ -91,69 +90,4 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput) -> TokenStream {
         }
     }
     .into()
-}
-
-#[derive(Default)]
-struct StateAttrs {
-    after: Punctuated<Type, Token![,]>,
-    before: Punctuated<Type, Token![,]>,
-    no_defaults: bool,
-    detect_change: bool,
-    flush_event: bool,
-    bevy_state: bool,
-    apply_flush: bool,
-}
-
-// Parse #[state(...)] attributes
-fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
-    let mut state_attrs = StateAttrs::default();
-
-    for attr in &input.attrs {
-        if !attr.path().is_ident("state") {
-            continue;
-        }
-
-        let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)?;
-        for meta in nested {
-            match meta {
-                Meta::List(meta) if meta.path.is_ident("after") => {
-                    state_attrs.after = meta
-                        .parse_args_with(Punctuated::<Type, Token![,]>::parse_terminated)
-                        .expect("invalid after states");
-                }
-
-                Meta::List(meta) if meta.path.is_ident("before") => {
-                    state_attrs.before = meta
-                        .parse_args_with(Punctuated::<Type, Token![,]>::parse_terminated)
-                        .expect("invalid before states");
-                }
-
-                Meta::Path(path) => {
-                    let Some(ident) = path.get_ident() else {
-                        return Err(Error::new_spanned(path, "invalid state attribute"));
-                    };
-
-                    match ident.to_string().as_str() {
-                        "no_defaults" => state_attrs.no_defaults = true,
-                        "detect_change" => state_attrs.detect_change = true,
-                        "flush_event" => state_attrs.flush_event = true,
-                        "bevy_state" => state_attrs.bevy_state = true,
-                        "apply_flush" => state_attrs.apply_flush = true,
-                        _ => return Err(Error::new_spanned(ident, "invalid state attribute")),
-                    }
-                }
-
-                _ => return Err(Error::new_spanned(meta, "invalid state attribute")),
-            }
-        }
-    }
-
-    // Enable defaults
-    if !state_attrs.no_defaults {
-        state_attrs.detect_change = true;
-        state_attrs.flush_event = true;
-        state_attrs.apply_flush = true;
-    }
-
-    Ok(state_attrs)
 }

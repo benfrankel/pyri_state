@@ -3,8 +3,8 @@
 use bevy::prelude::*;
 use pyri_state::{
     app::{
-        AddState, ApplyFlushPlugin, BevyStatePlugin, DetectChangePlugin, FlushEventPlugin,
-        ResolveStatePlugin,
+        AddState, AddStateStorage, ApplyFlushPlugin, BevyStatePlugin, DetectChangePlugin,
+        FlushEventPlugin, ResolveStatePlugin,
     },
     prelude::*,
 };
@@ -52,18 +52,17 @@ struct MyCustomState;
 // This will be called from `app.add_state_`, `init_state_`, and `insert_state_`.
 impl AddState for MyCustomState {
     fn add_state(app: &mut App, value: Option<Self>) {
-        app.init_resource::<CurrentState<Self>>()
-            .insert_resource(NextState_::new(value))
-            .add_plugins((
-                ResolveStatePlugin::<Self>::default()
-                    .after::<MyRawState>()
-                    .after::<MyDerivedState>()
-                    .before::<DummyState>(),
-                DetectChangePlugin::<Self>::default(),
-                FlushEventPlugin::<Self>::default(),
-                BevyStatePlugin::<Self>::default(),
-                ApplyFlushPlugin::<Self>::default(),
-            ));
+        Self::Storage::add_state_storage(app, value);
+        app.init_resource::<CurrentState<Self>>().add_plugins((
+            ResolveStatePlugin::<Self>::default()
+                .after::<MyRawState>()
+                .after::<MyDerivedState>()
+                .before::<DummyState>(),
+            DetectChangePlugin::<Self>::default(),
+            FlushEventPlugin::<Self>::default(),
+            BevyStatePlugin::<Self>::default(),
+            ApplyFlushPlugin::<Self>::default(),
+        ));
 
         // ... some more custom configuration on app ...
     }

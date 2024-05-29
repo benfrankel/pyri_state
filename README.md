@@ -1,6 +1,6 @@
 # Flexible game states
 
-`pyri_state` is a flexible alternative to `bevy_state`. In `pyri_state`, states are simple double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
+`pyri_state` is a flexible alternative to `bevy_state`. In `pyri_state`, states are double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
 # Showcase
 
@@ -27,7 +27,7 @@ fn main() {
             StateFlush,
             (
                 GameState::Playing.on_exit(Level::disable),
-                GameState::Playing.on_enter(Level::enable),
+                GameState::Playing.on_enter(Level::enable_default),
                 Level::ANY.on_exit(tear_down_old_level),
                 Level::ANY.on_enter(set_up_new_level),
                 Level(10).on_enter(play_boss_music),
@@ -44,15 +44,16 @@ Click on a feature to view example code:
 
 - [Refresh](/examples/refresh.rs)
 - [Disable, enable, toggle](/examples/disable_enable_toggle.rs)
+- [Partial mutation](/examples/partial_mutation.rs)
 - [Computed & substates](/examples/computed_and_substates.rs)
 - [Flexible scheduling](/examples/flexible_scheduling.rs)
-- [Partial mutation](/examples/partial_mutation.rs)
 - [Modular configuration](/examples/modular_configuration.rs)
 - [Ecosystem compatibility](/examples/ecosystem_compatibility.rs)
+- Custom storage (TODO: Example)
+    - [State stack](/examples/state_stack.rs)
     
-And more:
+And some extra features as a treat:
 
-- [State stack](/examples/state_stack.rs)
 - [Split state](/examples/split_state.rs)
 
 # Bevy version compatibility

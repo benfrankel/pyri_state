@@ -9,9 +9,9 @@ use bevy_ecs::{
     system::{Res, ResMut},
 };
 
-use crate::{
-    buffer::{BevyState, CurrentState, NextState_, StateRef},
-    state::RawState,
+use crate::state::{
+    BevyState, CurrentState, FlushState, GetState, NextStateMut, NextStateRef, RawState, SetState,
+    StateRef,
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -80,11 +80,11 @@ pub struct StateFlushEvent<S: RawState> {
     pub new: Option<S>,
 }
 
-fn check_flush_flag<S: RawState>(state: Res<NextState_<S>>) -> bool {
-    state.flush
+fn check_flush_flag<S: RawState>(flush: Res<FlushState<S>>) -> bool {
+    flush.0
 }
 
-fn send_flush_event<S: RawState + Clone>(
+fn send_flush_event<S: GetState + Clone>(
     state: StateRef<S>,
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
@@ -95,14 +95,11 @@ fn send_flush_event<S: RawState + Clone>(
     });
 }
 
-fn apply_flush<S: RawState + Clone>(
-    mut current: ResMut<CurrentState<S>>,
-    next: Res<NextState_<S>>,
-) {
-    current.inner.clone_from(&next.inner);
+fn apply_flush<S: GetState + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
+    current.0 = next.get().cloned();
 }
 
-pub fn schedule_detect_change<S: RawState + Eq>(schedule: &mut Schedule) {
+pub fn schedule_detect_change<S: GetState + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::set_flush(true)
             .run_if(|state: StateRef<S>| matches!(state.get(), (x, y) if x != y))
@@ -142,11 +139,11 @@ pub fn schedule_resolve_state<S: RawState>(
     ));
 }
 
-pub fn schedule_send_event<S: RawState + Clone>(schedule: &mut Schedule) {
+pub fn schedule_send_event<S: GetState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(S::on_flush(send_flush_event::<S>));
 }
 
-pub fn schedule_apply_flush<S: RawState + Clone>(schedule: &mut Schedule) {
+pub fn schedule_apply_flush<S: GetState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::set_flush(false))
             .run_if(check_flush_flag::<S>)
@@ -154,20 +151,20 @@ pub fn schedule_apply_flush<S: RawState + Clone>(schedule: &mut Schedule) {
     );
 }
 
-pub fn schedule_bevy_state<S: RawState + Clone + PartialEq + Eq + Hash + Debug>(
+pub fn schedule_bevy_state<S: GetState + SetState + Clone + PartialEq + Eq + Hash + Debug>(
     schedule: &mut Schedule,
 ) {
     let update_bevy_state =
-        |pyri_state: Res<NextState_<S>>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
+        |pyri_state: NextStateRef<S>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
             if bevy_state.0.is_none() {
                 bevy_state.set(BevyState(pyri_state.get().cloned()));
             }
         };
 
-    let update_pyri_state = |mut pyri_state: ResMut<NextState_<S>>,
+    let update_pyri_state = |mut pyri_state: NextStateMut<S>,
                              bevy_state: Res<NextState<BevyState<S>>>| {
         if let Some(value) = bevy_state.0.clone() {
-            pyri_state.set_flush(true).inner = value.0;
+            pyri_state.set_flush(true).set(value.0);
         }
     };
 

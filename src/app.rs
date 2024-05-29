@@ -9,13 +9,12 @@ use bevy_ecs::{
 };
 
 use crate::{
-    buffer::{BevyState, CurrentState},
-    prelude::StateFlushSet,
     schedule::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_resolve_state,
-        schedule_send_event, StateFlush, StateFlushEvent,
+        schedule_send_event, StateFlush, StateFlushEvent, StateFlushSet,
     },
-    state::RawState,
+    state::{BevyState, CurrentState, GetState, RawState, SetState},
+    storage::StateStorage,
 };
 
 pub struct PyriStatePlugin;
@@ -61,8 +60,12 @@ impl AppExtPyriState for App {
     }
 }
 
+pub trait AddStateStorage<S: RawState>: StateStorage<S> {
+    fn add_state_storage(app: &mut App, state: Option<S>);
+}
+
 pub trait AddState: RawState {
-    fn add_state(app: &mut App, value: Option<Self>);
+    fn add_state(app: &mut App, state: Option<Self>);
 }
 
 pub struct ResolveStatePlugin<S: RawState> {
@@ -111,59 +114,63 @@ impl<S: RawState> ResolveStatePlugin<S> {
     }
 }
 
-pub struct DetectChangePlugin<S: RawState + Eq>(PhantomData<S>);
+pub struct DetectChangePlugin<S: GetState + Eq>(PhantomData<S>);
 
-impl<S: RawState + Eq> Plugin for DetectChangePlugin<S> {
+impl<S: GetState + Eq> Plugin for DetectChangePlugin<S> {
     fn build(&self, app: &mut App) {
         schedule_detect_change::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: RawState + Eq> Default for DetectChangePlugin<S> {
+impl<S: GetState + Eq> Default for DetectChangePlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
-pub struct FlushEventPlugin<S: RawState + Clone>(PhantomData<S>);
+pub struct FlushEventPlugin<S: GetState + Clone>(PhantomData<S>);
 
-impl<S: RawState + Clone> Plugin for FlushEventPlugin<S> {
+impl<S: GetState + Clone> Plugin for FlushEventPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_event::<StateFlushEvent<S>>();
         schedule_send_event::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: RawState + Clone> Default for FlushEventPlugin<S> {
+impl<S: GetState + Clone> Default for FlushEventPlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
-pub struct BevyStatePlugin<S: RawState + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
+pub struct BevyStatePlugin<S: GetState + SetState + Clone + PartialEq + Eq + Hash + Debug>(
+    PhantomData<S>,
+);
 
-impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {
+impl<S: GetState + SetState + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {
     fn build(&self, app: &mut App) {
         app.init_state::<BevyState<S>>();
         schedule_bevy_state::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> Default for BevyStatePlugin<S> {
+impl<S: GetState + SetState + Clone + PartialEq + Eq + Hash + Debug> Default
+    for BevyStatePlugin<S>
+{
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
-pub struct ApplyFlushPlugin<S: RawState + Clone>(PhantomData<S>);
+pub struct ApplyFlushPlugin<S: GetState + Clone>(PhantomData<S>);
 
-impl<S: RawState + Clone> Plugin for ApplyFlushPlugin<S> {
+impl<S: GetState + Clone> Plugin for ApplyFlushPlugin<S> {
     fn build(&self, app: &mut App) {
         schedule_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: RawState + Clone> Default for ApplyFlushPlugin<S> {
+impl<S: GetState + Clone> Default for ApplyFlushPlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }

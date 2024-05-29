@@ -27,4 +27,4 @@ struct Level(usize);
 
 // Dummy systems:
 fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}
-fn set_up_new_level(_level: Res<NextState_<Level>>) {}
+fn set_up_new_level(_level: NextStateRef<Level>) {}
