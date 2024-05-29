@@ -1,4 +1,4 @@
-// Harness the full power of bevy ECS to schedule your state transitions.
+// Harness the full power of Bevy ECS to schedule your state transitions.
 
 use bevy::prelude::*;
 use pyri_state::{prelude::*, state, will_flush};

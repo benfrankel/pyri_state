@@ -1,4 +1,4 @@
-// Roll your own computed and substates with the full power of bevy ECS.
+// Roll your own computed and substates with the full power of Bevy ECS.
 
 use bevy::prelude::*;
 use pyri_state::prelude::*;

@@ -1,4 +1,4 @@
-// Disable or enable any state type on command (great for simple on/off states or substates).
+// Disable or enable any state on command (great for toggle states and substates).
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;

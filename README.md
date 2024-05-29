@@ -40,21 +40,21 @@ fn main() {
 
 # Features
 
-Click on a feature to view example code:
+Click on a feature for example code.
 
-- [Refresh](/examples/refresh.rs)
-- [Disable, enable, toggle](/examples/disable_enable_toggle.rs)
-- [Partial mutation](/examples/partial_mutation.rs)
-- [Computed & substates](/examples/computed_and_substates.rs)
-- [Flexible scheduling](/examples/flexible_scheduling.rs)
-- [Modular configuration](/examples/modular_configuration.rs)
-- [Ecosystem compatibility](/examples/ecosystem_compatibility.rs)
-- Custom storage (TODO: Example)
-    - [State stack](/examples/state_stack.rs)
+- **[Refresh](/examples/refresh.rs):** Trigger a transition from the current state to itself (e.g. to restart the current level).
+- **[Disable, enable, toggle](/examples/disable_enable_toggle.rs):** Disable or enable any state on command (great for toggle states and substates).
+- **[Partial mutation](/examples/partial_mutation.rs):** Directly update the next state instead of setting an entirely new value.
+- **[Computed & substates](/examples/computed_and_substates.rs):** Roll your own computed and substates with the full power of Bevy ECS.
+- **[Flexible scheduling](/examples/flexible_scheduling.rs):** Harness the full power of Bevy ECS to schedule your state transitions.
+- **[Modular configuration](/examples/modular_configuration.rs):** Strip out or add plugins to your state type via derive macro.
+- **[Ecosystem compatibility](/examples/ecosystem_compatibility.rs):** Enable a `BevyState<S>` wrapper to interact with crates that expect it.
+- **[Custom storage](/examples/custom_storage.rs):** TODO example
+    - **[State stack](/examples/state_stack.rs):** Keep track of a state's history (e.g. for a UI "go back" feature).
     
-And some extra features as a treat:
+And some extra features:
 
-- [Split state](/examples/split_state.rs)
+- **[Split state](/examples/split_state.rs):** Split a basic enum of states between the modules of your crate.
 
 # Bevy version compatibility
 

@@ -1,4 +1,4 @@
-// Strip out or add plugins to your state type.
+// Strip out or add plugins to your state type via derive macro.
 
 use bevy::prelude::*;
 use pyri_state::{
@@ -7,6 +7,8 @@ use pyri_state::{
         FlushEventPlugin, ResolveStatePlugin,
     },
     prelude::*,
+    state::FlushState,
+    storage::stack::StateStack,
 };
 
 fn main() {
@@ -33,10 +35,13 @@ struct MyRawState;
     // Send an event on flush (requires Clone).
     flush_event,
     // Include a BevyState wrapper (requires Clone, PartialEq, Eq, Hash, Debug).
-    // See ecosystem_compatibility example for more information.
+    // (see `ecosystem_compatibility` example for more information)
     bevy_state,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
+    // Swap out the default `StateSlot<Self>` with a custom storage type.
+    // (see `custom_storage` example for more information)
+    storage(StateStack<Self>),
     // Run this state's on flush systems after the listed states.
     after(MyRawState),
     // Run this state's on flush systems before the listed states.
@@ -44,7 +49,7 @@ struct MyRawState;
 )]
 struct MyDerivedState;
 
-// Deriving RawState instead of State allows you to impl ConfigureState yourself,
+// Deriving RawState instead of State allows you to impl AddState yourself,
 // allowing for fully custom state configuration (see below).
 #[derive(RawState, Clone, PartialEq, Eq, Hash, Debug)]
 struct MyCustomState;
@@ -53,16 +58,18 @@ struct MyCustomState;
 impl AddState for MyCustomState {
     fn add_state(app: &mut App, value: Option<Self>) {
         Self::Storage::add_state_storage(app, value);
-        app.init_resource::<CurrentState<Self>>().add_plugins((
-            ResolveStatePlugin::<Self>::default()
-                .after::<MyRawState>()
-                .after::<MyDerivedState>()
-                .before::<DummyState>(),
-            DetectChangePlugin::<Self>::default(),
-            FlushEventPlugin::<Self>::default(),
-            BevyStatePlugin::<Self>::default(),
-            ApplyFlushPlugin::<Self>::default(),
-        ));
+        app.init_resource::<CurrentState<Self>>()
+            .init_resource::<FlushState<Self>>()
+            .add_plugins((
+                ResolveStatePlugin::<Self>::default()
+                    .after::<MyRawState>()
+                    .after::<MyDerivedState>()
+                    .before::<DummyState>(),
+                DetectChangePlugin::<Self>::default(),
+                FlushEventPlugin::<Self>::default(),
+                BevyStatePlugin::<Self>::default(),
+                ApplyFlushPlugin::<Self>::default(),
+            ));
 
         // ... some more custom configuration on app ...
     }
