@@ -7,8 +7,8 @@ use pyri_state::{prelude::*, state, storage::stack::*};
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
-        // Add `Menu` as a state stack, starting with `vec![Menu::MainMenu]`.
-        .init_state_::<Menu>()
+        // Add the `Menu` state with `Menu::Main` as the fixed base of the stack.
+        .insert_state_(StateStack::with_base(Menu::Main))
         .init_state_::<GameState>()
         .add_systems(
             Update,
@@ -41,11 +41,10 @@ fn main() {
         .run();
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
-// Configure `Menu` to use `StateStack` instead of `StateSlot` as storage.
-#[state(storage(StateStack<Self>))]
+#[derive(State, Clone, PartialEq, Eq, Debug)]
+// Configure `Menu` to use `StateStack` instead of `StateSlot` for storage.
+#[state(log_flush, storage(StateStack<Self>))]
 enum Menu {
-    #[default]
     Main,
     MainOverlay,
     Settings,

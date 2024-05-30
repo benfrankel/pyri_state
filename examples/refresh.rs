@@ -16,14 +16,39 @@ fn main() {
         )
         .add_systems(
             Update,
-            // Restart the current level on R press:
-            Level::refresh.run_if(input_just_pressed(KeyCode::KeyR)),
+            (
+                // Restart the current level on up arrow press.
+                Level::refresh.run_if(input_just_pressed(KeyCode::ArrowUp)),
+                // Enter the previous level on left arrow press.
+                go_to_prev_level.run_if(input_just_pressed(KeyCode::ArrowLeft)),
+                // Enter the next level on right arrow press.
+                go_to_next_level.run_if(input_just_pressed(KeyCode::ArrowRight)),
+            ),
         )
         .run();
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
-struct Level(usize);
+#[derive(State, Clone, PartialEq, Eq, Debug, Default)]
+#[state(log_flush)]
+struct Level(isize);
+
+impl Level {
+    fn prev(&mut self) {
+        self.0 -= 1;
+    }
+
+    fn next(&mut self) {
+        self.0 += 1;
+    }
+}
+
+fn go_to_prev_level(mut level: NextStateMut<Level>) {
+    level.unwrap_mut().prev();
+}
+
+fn go_to_next_level(mut level: NextStateMut<Level>) {
+    level.unwrap_mut().next();
+}
 
 // Dummy systems:
 fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}

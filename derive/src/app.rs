@@ -69,6 +69,10 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     };
     let detect_change = simple_plugin("DetectChange", attrs.detect_change);
     let flush_event = simple_plugin("FlushEvent", attrs.flush_event);
+    #[cfg(not(feature = "debug"))]
+    let log_flush = quote! {};
+    #[cfg(feature = "debug")]
+    let log_flush = simple_plugin("LogFlush", attrs.log_flush);
     let bevy_state = simple_plugin("BevyState", attrs.bevy_state);
     let apply_flush = simple_plugin("ApplyFlush", attrs.apply_flush);
 
@@ -83,6 +87,7 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
                         #resolve_state
                         #detect_change
                         #flush_event
+                        #log_flush
                         #bevy_state
                         #apply_flush
                     ));

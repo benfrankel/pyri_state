@@ -17,8 +17,8 @@ fn main() {
         .init_state_::<MySlottedState>()
         .init_state_::<MyStackedState>()
         .insert_state_(StateSwap([
-            Some(MySwappedState::A),
-            Some(MySwappedState::B),
+            Some(MySwappedState::X),
+            Some(MySwappedState::Y),
         ]))
         .add_systems(
             Update,
@@ -41,9 +41,9 @@ fn main() {
 //#[state(storage(StateSlot<Self>))]
 struct MySlottedState;
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Clone, PartialEq, Eq, Debug, Default)]
 // You can easily swap in a `StateStack<Self>` instead (newtyped `Vec<Self>`).
-#[state(storage(StateStack<Self>))]
+#[state(log_flush, storage(StateStack<Self>))]
 enum MyStackedState {
     #[default]
     A,
@@ -112,10 +112,10 @@ pub trait StateSwapMut: RawState {
 // Blanket impl the trait.
 impl<S: RawState<Storage = StateSwap<S>>> StateSwapMut for S {}
 
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State, Clone, PartialEq, Eq, Debug)]
 // Now you can use `StateSwap<Self>` as a first-class custom storage type!
-#[state(storage(StateSwap<Self>))]
+#[state(log_flush, storage(StateSwap<Self>))]
 enum MySwappedState {
-    A,
-    B,
+    X,
+    Y,
 }

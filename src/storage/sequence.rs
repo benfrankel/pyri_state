@@ -24,7 +24,7 @@ impl<S: RawState> GetStateStorage<S> for StateSequence<S> {
     type Param = SRes<Self>;
 
     fn get_state<'a>(param: &'a SystemParamItem<Self::Param>) -> Option<&'a S> {
-        param.sequence[param.index].as_ref()
+        param.get()
     }
 }
 
@@ -55,6 +55,10 @@ impl<S: RawState> StateSequence<S> {
     pub fn at(mut self, index: isize) -> Self {
         self.seek(index);
         self
+    }
+
+    pub fn get(&self) -> Option<&S> {
+        self.sequence[self.index].as_ref()
     }
 
     pub fn seek(&mut self, to: isize) {

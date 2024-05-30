@@ -34,6 +34,8 @@ struct MyRawState;
     detect_change,
     // Send an event on flush (requires Clone).
     flush_event,
+    // Log on exit, transition, and enter (requires Debug).
+    log_flush,
     // Include a BevyState wrapper (requires Clone, PartialEq, Eq, Hash, Debug).
     // (see `ecosystem_compatibility` example for more information)
     bevy_state,

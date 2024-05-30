@@ -143,6 +143,42 @@ pub fn schedule_send_event<S: GetState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(S::on_flush(send_flush_event::<S>));
 }
 
+#[cfg(feature = "debug")]
+pub fn schedule_log_flush<S: GetState + Debug>(schedule: &mut Schedule) {
+    use bevy_core::FrameCount;
+    use bevy_ecs::schedule::Condition;
+    use bevy_log::info;
+
+    use crate::pattern::{StatePattern, StatePatternExtGet};
+
+    fn log_state_exit<S: GetState + Debug>(frame: Res<FrameCount>, old: Res<CurrentState<S>>) {
+        let frame = frame.0;
+        let old = old.unwrap();
+        info!("[Frame {frame}] Exit: {old:?}");
+    }
+
+    fn log_state_transition<S: GetState + Debug>(frame: Res<FrameCount>, state: StateRef<S>) {
+        let frame = frame.0;
+        let (old, new) = state.unwrap();
+        info!("[Frame {frame}] Transition: {old:?} -> {new:?}");
+    }
+
+    fn log_state_enter<S: GetState + Debug>(frame: Res<FrameCount>, new: NextStateRef<S>) {
+        let frame = frame.0;
+        let new = new.unwrap();
+        info!("[Frame {frame}] Enter: {new:?}");
+    }
+
+    schedule.add_systems((
+        S::ANY.on_exit(log_state_exit::<S>),
+        // TODO: The story for flush / transition handling is not great right now.
+        S::on_transition(
+            log_state_transition::<S>.run_if(S::ANY.will_exit().and_then(S::ANY.will_enter())),
+        ),
+        S::ANY.on_enter(log_state_enter::<S>),
+    ));
+}
+
 pub fn schedule_apply_flush<S: GetState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::set_flush(false))

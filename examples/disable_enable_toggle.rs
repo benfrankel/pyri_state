@@ -29,8 +29,10 @@ struct Paused;
 fn unpause() {}
 fn pause() {}
 fn window_lost_focus() -> bool {
-    unimplemented!()
+    // Not implemented in this example.
+    false
 }
 fn window_gained_focus() -> bool {
-    unimplemented!()
+    // Not implemented in this example.
+    false
 }

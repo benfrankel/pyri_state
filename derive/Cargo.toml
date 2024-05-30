@@ -9,6 +9,7 @@ keywords = ["ecs", "game", "bevy"]
 categories = ["game-engines", "data-structures"]
 
 [features]
+debug = []
 bevy_app = ["dep:bevy_macro_utils"]
 
 [lib]

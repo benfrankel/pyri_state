@@ -1,6 +1,6 @@
 // Directly update the next state instead of setting an entirely new value.
 
-use std::time::Duration;
+use std::{fmt::Debug, time::Duration};
 
 use bevy::{
     input::common_conditions::input_just_pressed, prelude::*, time::common_conditions::on_timer,
@@ -16,12 +16,15 @@ fn main() {
             // These systems might run on the same frame sometimes.
             // With partial mutation, that's totally fine and expected.
             ColorMode::ANY.on_update((
+                // Toggle red on damage events.
                 (
                     disable_red.run_if(took_damage),
                     enable_red.run_if(dealt_damage),
                 )
                     .chain(),
+                // Toggle green on Space press.
                 toggle_green.run_if(input_just_pressed(KeyCode::Space)),
+                // Toggle blue every 5 seconds.
                 toggle_blue.run_if(on_timer(Duration::from_secs(5))),
             )),
         )
@@ -31,10 +34,27 @@ fn main() {
 // The player has different abilities depending on the color mode.
 // Yellow mode is its own thing, for example; not just red and green at the same time.
 #[derive(State, Clone, PartialEq, Eq, Default)]
+#[state(log_flush)]
 struct ColorMode {
     red: bool,
     green: bool,
     blue: bool,
+}
+
+impl Debug for ColorMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match (self.red as u8, self.green as u8, self.blue as u8) {
+            (0, 0, 0) => "Black",
+            (0, 0, 1) => "Blue",
+            (0, 1, 0) => "Green",
+            (0, 1, 1) => "Cyan",
+            (1, 0, 0) => "Red",
+            (1, 0, 1) => "Magenta",
+            (1, 1, 0) => "Yellow",
+            (1, 1, 1) => "White",
+            _ => unreachable!(),
+        })
+    }
 }
 
 fn enable_red(mut color: NextStateMut<ColorMode>) {
@@ -56,9 +76,11 @@ fn toggle_blue(mut color: NextStateMut<ColorMode>) {
 }
 
 fn took_damage() -> bool {
-    unimplemented!()
+    // Not implemented in this example.
+    false
 }
 
 fn dealt_damage() -> bool {
-    unimplemented!()
+    // Not implemented in this example.
+    false
 }

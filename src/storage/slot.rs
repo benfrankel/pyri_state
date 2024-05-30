@@ -29,7 +29,7 @@ impl<S: RawState> GetStateStorage<S> for StateSlot<S> {
     type Param = SRes<Self>;
 
     fn get_state<'a>(param: &'a SystemParamItem<Self::Param>) -> Option<&'a S> {
-        param.0.as_ref()
+        param.get()
     }
 }
 
@@ -37,15 +37,15 @@ impl<S: RawState> SetStateStorage<S> for StateSlot<S> {
     type Param = SResMut<Self>;
 
     fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
-        param.0.as_ref()
+        param.get()
     }
 
     fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut S> {
-        param.0.as_mut()
+        param.get_mut()
     }
 
     fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>) {
-        param.0 = state;
+        param.set(state);
     }
 }
 
@@ -79,6 +79,10 @@ impl<S: RawState> StateSlot<S> {
 
     pub fn get_mut(&mut self) -> Option<&mut S> {
         self.0.as_mut()
+    }
+
+    pub fn set(&mut self, state: Option<S>) {
+        self.0 = state;
     }
 
     pub fn unwrap(&self) -> &S {
