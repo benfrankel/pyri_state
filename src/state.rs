@@ -2,9 +2,7 @@ use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
     schedule::{IntoSystemConfigs, States, SystemConfigs},
-    system::{
-        ReadOnlySystemParam, Res, ResMut, Resource, StaticSystemParam, SystemParam, SystemParamItem,
-    },
+    system::{Res, ResMut, Resource, StaticSystemParam, SystemParam},
 };
 
 #[cfg(feature = "bevy_reflect")]
@@ -13,7 +11,7 @@ use bevy_ecs::reflect::ReflectResource;
 use crate::{
     pattern::{AnyStatePattern, FnStatePattern, StatePattern},
     schedule::StateFlushSet,
-    storage::StateStorage,
+    storage::{GetStateStorage, SetStateStorage, StateStorage},
 };
 
 pub trait RawState: 'static + Send + Sync + Sized {
@@ -56,9 +54,7 @@ pub trait State_: RawState + Clone + PartialEq + Eq {}
 impl<T: RawState + Clone + PartialEq + Eq> State_ for T {}
 
 pub trait GetState: RawState {
-    type Param: ReadOnlySystemParam;
-
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self>;
+    type GetStorage: GetStateStorage<Self>;
 
     fn will_be_disabled(next: NextStateRef<Self>) -> bool {
         next.get().is_none()
@@ -69,15 +65,8 @@ pub trait GetState: RawState {
     }
 }
 
-// TODO: Do these methods really need to be duplicated?
 pub trait SetState: RawState {
-    type Param: SystemParam;
-
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self>;
-
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut Self>;
-
-    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<Self>);
+    type SetStorage: SetStateStorage<Self>;
 
     fn disable(mut state: NextStateMut<Self>) {
         state.set(None);
@@ -202,11 +191,13 @@ impl<S: RawState> Default for FlushState<S> {
 }
 
 #[derive(SystemParam)]
-pub struct NextStateRef<'w, 's, S: GetState>(StaticSystemParam<'w, 's, <S as GetState>::Param>);
+pub struct NextStateRef<'w, 's, S: GetState>(
+    StaticSystemParam<'w, 's, <<S as GetState>::GetStorage as GetStateStorage<S>>::Param>,
+);
 
 impl<'w, 's, S: GetState> NextStateRef<'w, 's, S> {
     pub fn get(&self) -> Option<&S> {
-        S::get_state(&self.0)
+        S::GetStorage::get_state(&self.0)
     }
 
     pub fn unwrap(&self) -> &S {
@@ -228,7 +219,7 @@ impl<'w, 's, S: GetState> NextStateRef<'w, 's, S> {
 
 #[derive(SystemParam)]
 pub struct NextStateMut<'w, 's, S: SetState> {
-    next: StaticSystemParam<'w, 's, <S as SetState>::Param>,
+    next: StaticSystemParam<'w, 's, <<S as SetState>::SetStorage as SetStateStorage<S>>::Param>,
     flush: ResMut<'w, FlushState<S>>,
 }
 
@@ -257,15 +248,15 @@ impl<'w, 's, S: SetState + Default> NextStateMut<'w, 's, S> {
 
 impl<'w, 's, S: SetState> NextStateMut<'w, 's, S> {
     pub fn get(&self) -> Option<&S> {
-        S::get_state_from_mut(&self.next)
+        S::SetStorage::get_state_from_mut(&self.next)
     }
 
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        S::get_state_mut(&mut self.next)
+        S::SetStorage::get_state_mut(&mut self.next)
     }
 
     pub fn set(&mut self, state: Option<S>) {
-        S::set_state(&mut self.next, state)
+        S::SetStorage::set_state(&mut self.next, state)
     }
 
     pub fn unwrap(&self) -> &S {
