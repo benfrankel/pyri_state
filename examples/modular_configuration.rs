@@ -1,4 +1,4 @@
-// Strip out or add plugins to your state type via derive macro.
+// Strip out or add plugins to your state type using the derive macro.
 
 use bevy::prelude::*;
 use pyri_state::{
@@ -25,8 +25,8 @@ fn main() {
 #[state(no_defaults)]
 struct MyRawState;
 
+// The built-in state plugins are fully customizable:
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
-// State plugins are fully customizable per state type:
 #[state(
     // Disable default plugins: detect_change, flush_event, apply_flush.
     no_defaults,
@@ -45,12 +45,12 @@ struct MyRawState;
     // Run this state's on flush systems after the listed states.
     after(MyRawState),
     // Run this state's on flush systems before the listed states.
-    before(MyCustomState, DummyState)
+    before(MyCustomState, UselessState)
 )]
 struct MyDerivedState;
 
 // Deriving RawState instead of State allows you to impl AddState yourself,
-// allowing for fully custom state configuration (see below).
+// for fully custom state configuration (see below).
 #[derive(RawState, Clone, PartialEq, Eq, Hash, Debug)]
 struct MyCustomState;
 
@@ -64,7 +64,7 @@ impl AddState for MyCustomState {
                 ResolveStatePlugin::<Self>::default()
                     .after::<MyRawState>()
                     .after::<MyDerivedState>()
-                    .before::<DummyState>(),
+                    .before::<UselessState>(),
                 DetectChangePlugin::<Self>::default(),
                 FlushEventPlugin::<Self>::default(),
                 BevyStatePlugin::<Self>::default(),
@@ -75,5 +75,6 @@ impl AddState for MyCustomState {
     }
 }
 
+// A fully stripped down state type that does nothing.
 #[derive(RawState)]
-struct DummyState;
+struct UselessState;

@@ -40,21 +40,22 @@ fn main() {
 
 # Features
 
-Click on a feature for example code.
+Click a feature to see example code.
 
 - **[Refresh](/examples/refresh.rs):** Trigger a transition from the current state to itself (e.g. to restart the current level).
 - **[Disable, enable, toggle](/examples/disable_enable_toggle.rs):** Disable or enable any state on command (great for toggle states and substates).
 - **[Partial mutation](/examples/partial_mutation.rs):** Directly update the next state instead of setting an entirely new value.
 - **[Computed & substates](/examples/computed_and_substates.rs):** Roll your own computed and substates with the full power of Bevy ECS.
 - **[Flexible scheduling](/examples/flexible_scheduling.rs):** Harness the full power of Bevy ECS to schedule your state transitions.
-- **[Modular configuration](/examples/modular_configuration.rs):** Strip out or add plugins to your state type via derive macro.
+- **[Custom storage](/examples/custom_storage.rs):** Swap out or define your own state storage type.
+    - **Slot:** Only store the next state. This is the default storage type.
+    - **[Stack](/examples/stack_storage.rs):** Keep track of a state's history (e.g. for a UI "go back" feature).
 - **[Ecosystem compatibility](/examples/ecosystem_compatibility.rs):** Enable a `BevyState<S>` wrapper to interact with crates that expect it.
-- **[Custom storage](/examples/custom_storage.rs):** TODO example
-    - **[State stack](/examples/state_stack.rs):** Keep track of a state's history (e.g. for a UI "go back" feature).
+- **[Modular configuration](/examples/modular_configuration.rs):** Strip out or add plugins to your state type using the derive macro.
     
 And some extra features:
 
-- **[Split state](/examples/split_state.rs):** Split a basic enum of states between the modules of your crate.
+- **[Split state](/examples/split_state.rs):** Split the definition of a basic state enum between the modules of your crate.
 
 # Bevy version compatibility
 
