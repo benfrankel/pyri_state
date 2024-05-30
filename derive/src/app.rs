@@ -16,7 +16,6 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_app_path = concat(crate_path.clone(), format_ident!("app"));
     let add_state_trait = concat(crate_app_path.clone(), format_ident!("AddState"));
-    let add_state_storage_trait = concat(crate_app_path.clone(), format_ident!("AddStateStorage"));
     let crate_state_path = concat(crate_path.clone(), format_ident!("state"));
     let current_state_ty = concat(crate_state_path.clone(), format_ident!("CurrentState"));
     let flush_state_ty = concat(crate_state_path.clone(), format_ident!("FlushState"));
@@ -75,8 +74,9 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
 
     quote! {
         impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {
-            fn add_state(app: &mut #app_ty, state: Option<Self>) {
-                <Self::Storage as #add_state_storage_trait<Self>>::add_state_storage(app, state);
+            type AddStorage = Self::Storage;
+
+            fn add_state(app: &mut #app_ty) {
                 app.init_resource::<#current_state_ty<Self>>()
                     .init_resource::<#flush_state_ty<Self>>()
                     .add_plugins((

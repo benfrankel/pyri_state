@@ -1,10 +1,10 @@
-use bevy_ecs::system::{
-    lifetimeless::{SRes, SResMut},
-    Resource, SystemParamItem,
+use bevy_ecs::{
+    system::{
+        lifetimeless::{SRes, SResMut},
+        Resource, SystemParamItem,
+    },
+    world::{FromWorld, World},
 };
-
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::StatePattern,
@@ -18,11 +18,12 @@ use crate::{
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
-    reflect(Resource)
+    // TODO: In bevy 0.14 this will be possible.
+    //reflect(Resource)
 )]
 pub struct StateSlot<S: RawState>(pub Option<S>);
 
-impl<S: RawState> StateStorage<S> for StateSlot<S> {}
+impl<S: RawState> StateStorage for StateSlot<S> {}
 
 impl<S: RawState> GetStateStorage<S> for StateSlot<S> {
     type Param = SRes<Self>;
@@ -49,15 +50,17 @@ impl<S: RawState> SetStateStorage<S> for StateSlot<S> {
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: RawState> crate::app::AddStateStorage<S> for StateSlot<S> {
-    fn add_state_storage(app: &mut bevy_app::App, state: Option<S>) {
-        app.insert_resource(Self(state));
+impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateSlot<S> {
+    type AddState = S;
+
+    fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
+        app.insert_resource(storage.unwrap_or_else(StateSlot::disabled));
     }
 }
 
-impl<S: RawState> Default for StateSlot<S> {
-    fn default() -> Self {
-        Self::disabled()
+impl<S: RawState + FromWorld> FromWorld for StateSlot<S> {
+    fn from_world(world: &mut World) -> Self {
+        Self::enabled(S::from_world(world))
     }
 }
 

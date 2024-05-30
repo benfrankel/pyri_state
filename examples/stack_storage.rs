@@ -1,32 +1,13 @@
-// Keep track of a state's history (e.g. for a UI "go back" feature).
+// Keep track of a state's history in a stack (e.g. back button).
 
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use pyri_state::{prelude::*, state, storage::stack::*};
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
-// Configure Menu to use StateStack instead of StateSlot as its storage.
-#[state(storage(StateStack<Self>))]
-enum Menu {
-    #[default]
-    Main,
-    MainOverlay,
-    Settings,
-    SettingsAudio,
-    SettingsGraphics,
-}
-
-#[derive(State, Clone, PartialEq, Eq, Default)]
-enum GameState {
-    #[default]
-    Title,
-    PlayingGame,
-}
-
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
-        // Add Menu as a state stack, starting with `vec![Menu::MainMenu]`.
+        // Add `Menu` as a state stack, starting with `vec![Menu::MainMenu]`.
         .init_state_::<Menu>()
         .init_state_::<GameState>()
         .add_systems(
@@ -58,4 +39,23 @@ fn main() {
             ),
         )
         .run();
+}
+
+#[derive(State, Clone, PartialEq, Eq, Default)]
+// Configure `Menu` to use `StateStack` instead of `StateSlot` as storage.
+#[state(storage(StateStack<Self>))]
+enum Menu {
+    #[default]
+    Main,
+    MainOverlay,
+    Settings,
+    SettingsAudio,
+    SettingsGraphics,
+}
+
+#[derive(State, Clone, PartialEq, Eq, Default)]
+enum GameState {
+    #[default]
+    Title,
+    PlayingGame,
 }

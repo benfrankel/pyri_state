@@ -3,7 +3,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;
-use pyri_state::{prelude::*, state};
+use pyri_state::{prelude::*, state, storage::slot::StateSlot};
 
 mod input {
     use pyri_state::extra::split::SplitState;
@@ -33,7 +33,7 @@ mod ui {
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
-        .insert_state_(InputMode::Move)
+        .insert_state_(StateSlot::enabled(InputMode::Move))
         .add_systems(
             Update,
             // Every state added to InputMode can be accessed normally.

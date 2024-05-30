@@ -3,8 +3,8 @@
 use bevy::prelude::*;
 use pyri_state::{
     app::{
-        AddState, AddStateStorage, ApplyFlushPlugin, BevyStatePlugin, DetectChangePlugin,
-        FlushEventPlugin, ResolveStatePlugin,
+        AddState, ApplyFlushPlugin, BevyStatePlugin, DetectChangePlugin, FlushEventPlugin,
+        ResolveStatePlugin,
     },
     prelude::*,
     state::FlushState,
@@ -56,8 +56,9 @@ struct MyCustomState;
 
 // This will be called from `app.add_state_`, `init_state_`, and `insert_state_`.
 impl AddState for MyCustomState {
-    fn add_state(app: &mut App, value: Option<Self>) {
-        Self::Storage::add_state_storage(app, value);
+    type AddStorage = Self::Storage;
+
+    fn add_state(app: &mut App) {
         app.init_resource::<CurrentState<Self>>()
             .init_resource::<FlushState<Self>>()
             .add_plugins((

@@ -3,7 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ecs::system::lifetimeless::{SRes, SResMut};
 use pyri_state::{
-    app::AddStateStorage,
+    app::{AddState, AddStateStorage},
     prelude::*,
     storage::{
         stack::{StateStack, StateStackMut, StateStackMutExtClone},
@@ -16,7 +16,10 @@ fn main() {
         .add_plugins((DefaultPlugins, PyriStatePlugin))
         .init_state_::<MySlottedState>()
         .init_state_::<MyStackedState>()
-        .init_state_::<MySwappedState>()
+        .insert_state_(StateSwap([
+            Some(MySwappedState::A),
+            Some(MySwappedState::B),
+        ]))
         .add_systems(
             Update,
             (
@@ -52,7 +55,7 @@ enum MyStackedState {
 pub struct StateSwap<S: RawState>([Option<S>; 2]);
 
 // Impl `StateStorage<S>` to mark your type as a valid state storage type.
-impl<S: RawState> StateStorage<S> for StateSwap<S> {}
+impl<S: RawState> StateStorage for StateSwap<S> {}
 
 // Impl `GetStateStorage<S>` to enable getting the next state from your storage type.
 // This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type,
@@ -89,9 +92,11 @@ impl<S: RawState> SetStateStorage<S> for StateSwap<S> {
 }
 
 // Impl `AddStateStorage<S>` to enable `app.add_state_::<S>()`, etc.
-impl<S: RawState> AddStateStorage<S> for StateSwap<S> {
-    fn add_state_storage(app: &mut bevy_app::App, state: Option<S>) {
-        app.insert_resource(StateSwap([state, None]));
+impl<S: AddState<AddStorage = Self>> AddStateStorage for StateSwap<S> {
+    type AddState = S;
+
+    fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
+        app.insert_resource(storage.unwrap_or_else(|| StateSwap([None, None])));
     }
 }
 
@@ -107,7 +112,10 @@ pub trait StateSwapMut: RawState {
 // Blanket impl the trait.
 impl<S: RawState<Storage = StateSwap<S>>> StateSwapMut for S {}
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Clone, PartialEq, Eq)]
 // Now you can use `StateSwap<Self>` as a first-class custom storage type!
 #[state(storage(StateSwap<Self>))]
-struct MySwappedState;
+enum MySwappedState {
+    A,
+    B,
+}

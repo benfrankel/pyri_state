@@ -1,3 +1,4 @@
+pub mod sequence;
 pub mod slot;
 pub mod stack;
 
@@ -6,7 +7,7 @@ use bevy_ecs::system::{ReadOnlySystemParam, SystemParam, SystemParamItem};
 use crate::state::{GetState, RawState, SetState};
 
 // Marker trait for types that can be used as a state's storage.
-pub trait StateStorage<S: RawState> {}
+pub trait StateStorage {}
 
 pub trait GetStateStorage<S: RawState> {
     type Param: ReadOnlySystemParam;

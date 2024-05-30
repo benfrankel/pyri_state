@@ -31,41 +31,53 @@ impl Plugin for PyriStatePlugin {
 pub trait AppExtPyriState {
     fn add_state_<S: AddState>(&mut self) -> &mut Self;
 
-    fn init_state_<S: AddState + FromWorld>(&mut self) -> &mut Self;
+    fn init_state_<S: AddState>(&mut self) -> &mut Self
+    where
+        S::AddStorage: FromWorld;
 
-    fn insert_state_<S: AddState>(&mut self, value: S) -> &mut Self;
+    fn insert_state_<T: AddStateStorage>(&mut self, storage: T) -> &mut Self;
 }
 
 impl AppExtPyriState for App {
     fn add_state_<S: AddState>(&mut self) -> &mut Self {
         if !self.world.contains_resource::<CurrentState<S>>() {
-            S::add_state(self, None);
+            S::AddStorage::add_state_storage(self, None);
+            S::add_state(self);
         }
         self
     }
 
-    fn init_state_<S: AddState + FromWorld>(&mut self) -> &mut Self {
+    fn init_state_<S: AddState>(&mut self) -> &mut Self
+    where
+        S::AddStorage: FromWorld,
+    {
         if !self.world.contains_resource::<CurrentState<S>>() {
-            let value = S::from_world(&mut self.world);
-            S::add_state(self, Some(value));
+            let storage = S::AddStorage::from_world(&mut self.world);
+            S::AddStorage::add_state_storage(self, Some(storage));
+            S::add_state(self);
         }
         self
     }
 
-    fn insert_state_<S: AddState>(&mut self, value: S) -> &mut Self {
-        if !self.world.contains_resource::<CurrentState<S>>() {
-            S::add_state(self, Some(value));
+    fn insert_state_<T: AddStateStorage>(&mut self, storage: T) -> &mut Self {
+        if !self.world.contains_resource::<CurrentState<T::AddState>>() {
+            T::add_state_storage(self, Some(storage));
+            T::AddState::add_state(self);
         }
         self
     }
 }
 
-pub trait AddStateStorage<S: RawState>: StateStorage<S> {
-    fn add_state_storage(app: &mut App, state: Option<S>);
+pub trait AddStateStorage: StateStorage + Sized {
+    type AddState: AddState;
+
+    fn add_state_storage(app: &mut App, storage: Option<Self>);
 }
 
 pub trait AddState: RawState {
-    fn add_state(app: &mut App, state: Option<Self>);
+    type AddStorage: AddStateStorage;
+
+    fn add_state(app: &mut App);
 }
 
 pub struct ResolveStatePlugin<S: RawState> {

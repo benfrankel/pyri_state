@@ -15,7 +15,7 @@ use crate::{
 };
 
 pub trait RawState: 'static + Send + Sync + Sized {
-    type Storage: StateStorage<Self>;
+    type Storage: StateStorage;
 
     const ANY: AnyStatePattern<Self> = AnyStatePattern(PhantomData);
 

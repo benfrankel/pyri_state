@@ -1,13 +1,12 @@
-use bevy_ecs::system::{
-    lifetimeless::{SRes, SResMut},
-    ResMut, Resource, SystemParamItem,
+use bevy_ecs::{
+    system::{
+        lifetimeless::{SRes, SResMut},
+        ResMut, Resource, SystemParamItem,
+    },
+    world::{FromWorld, World},
 };
 
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
-
 use crate::{
-    app::AddStateStorage,
     state::RawState,
     storage::{GetStateStorage, SetStateStorage, StateStorage},
 };
@@ -17,11 +16,12 @@ use crate::{
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
-    reflect(Resource)
+    // TODO: In bevy 0.14 this will be possible.
+    //reflect(Resource)
 )]
 pub struct StateStack<S: RawState>(pub Vec<S>);
 
-impl<S: RawState> StateStorage<S> for StateStack<S> {}
+impl<S: RawState> StateStorage for StateStack<S> {}
 
 impl<S: RawState> GetStateStorage<S> for StateStack<S> {
     type Param = SRes<Self>;
@@ -54,18 +54,17 @@ impl<S: RawState> SetStateStorage<S> for StateStack<S> {
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: RawState> AddStateStorage<S> for StateStack<S> {
-    fn add_state_storage(app: &mut bevy_app::App, state: Option<S>) {
-        app.insert_resource(match state {
-            Some(value) => StateStack::new(value),
-            None => StateStack::empty(),
-        });
+impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateStack<S> {
+    type AddState = S;
+
+    fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
+        app.insert_resource(storage.unwrap_or_else(StateStack::empty));
     }
 }
 
-impl<S: RawState> Default for StateStack<S> {
-    fn default() -> Self {
-        Self::empty()
+impl<S: RawState + FromWorld> FromWorld for StateStack<S> {
+    fn from_world(world: &mut World) -> Self {
+        Self::new(S::from_world(world))
     }
 }
 
