@@ -3,7 +3,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;
-use pyri_state::{prelude::*, storage::slot::StateSlot};
+use pyri_state::prelude::*;
 
 mod input {
     use pyri_state::extra::split::SplitState;

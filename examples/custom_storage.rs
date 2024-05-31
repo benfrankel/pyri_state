@@ -4,11 +4,9 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ecs::system::lifetimeless::{SRes, SResMut};
 use pyri_state::{
     app::{AddState, AddStateStorage},
+    extra::stack::*,
     prelude::*,
-    storage::{
-        stack::{StateStack, StateStackMut, StateStackMutExtClone},
-        GetStateStorage, SetStateStorage, StateStorage,
-    },
+    storage::{GetStateStorage, SetStateStorage, StateStorage},
 };
 
 fn main() {
@@ -42,7 +40,7 @@ fn main() {
 struct MySlottedState;
 
 #[derive(State, Clone, PartialEq, Eq, Debug, Default)]
-// You can easily swap in a `StateStack<Self>` instead (newtyped `Vec<Self>`).
+// You can easily swap in a `StateStack<Self>` instead.
 #[state(log_flush, storage(StateStack<Self>))]
 enum MyStackedState {
     #[default]

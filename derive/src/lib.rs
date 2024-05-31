@@ -28,8 +28,7 @@ fn derive_raw_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macr
         }
     } else {
         let crate_storage_path = concat(crate_path.clone(), format_ident!("storage"));
-        let crate_storage_slot_path = concat(crate_storage_path.clone(), format_ident!("slot"));
-        let state_slot_ty = concat(crate_storage_slot_path.clone(), format_ident!("StateSlot"));
+        let state_slot_ty = concat(crate_storage_path.clone(), format_ident!("StateSlot"));
 
         quote! {
             #state_slot_ty<Self>

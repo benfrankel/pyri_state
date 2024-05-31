@@ -6,9 +6,9 @@ use pyri_state::{
         AddState, ApplyFlushPlugin, BevyStatePlugin, DetectChangePlugin, FlushEventPlugin,
         ResolveStatePlugin,
     },
+    extra::stack::*,
     prelude::*,
     state::FlushState,
-    storage::stack::StateStack,
 };
 
 fn main() {
