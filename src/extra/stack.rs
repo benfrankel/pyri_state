@@ -20,8 +20,8 @@ use crate::{
     //reflect(Resource)
 )]
 pub struct StateStack<S: RawState> {
-    base: Option<S>,
     stack: Vec<Option<S>>,
+    bases: Vec<usize>,
 }
 
 impl<S: RawState> StateStorage for StateStack<S> {}
@@ -68,45 +68,63 @@ impl<S: RawState + FromWorld> FromWorld for StateStack<S> {
 impl<S: RawState> StateStack<S> {
     pub fn empty() -> Self {
         Self {
-            base: None,
             stack: Vec::new(),
+            bases: Vec::new(),
         }
     }
 
     pub fn new(state: S) -> Self {
         Self {
-            base: None,
             stack: vec![Some(state)],
+            bases: Vec::new(),
         }
     }
 
-    pub fn with_base(base: S) -> Self {
+    pub fn with_base(state: S) -> Self {
         Self {
-            base: Some(base),
-            stack: Vec::new(),
+            stack: vec![Some(state)],
+            bases: vec![1],
         }
+    }
+
+    pub fn base(&self) -> usize {
+        self.bases.last().copied().unwrap_or_default()
+    }
+
+    pub fn acquire(&mut self) -> &mut Self {
+        self.bases.push(self.stack.len());
+        self
+    }
+
+    pub fn release(&mut self) -> &mut Self {
+        self.bases.pop();
+        self
     }
 
     pub fn get(&self) -> Option<&S> {
-        self.stack.last().map_or(self.base.as_ref(), |x| x.as_ref())
+        self.stack.last().and_then(|x| x.as_ref())
     }
 
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        self.stack
-            .last_mut()
-            .map_or(self.base.as_mut(), |x| x.as_mut())
+        self.stack.last_mut().and_then(|x| x.as_mut())
     }
 
     pub fn set(&mut self, state: Option<S>) {
-        *self.stack.last_mut().unwrap_or(&mut self.base) = state;
+        if self.stack.is_empty() {
+            self.stack.push(state);
+        } else {
+            *self.stack.last_mut().unwrap() = state;
+        }
     }
 
     pub fn clear(&mut self) {
-        self.stack.clear();
+        self.stack.drain(self.base()..);
     }
 
     pub fn pop(&mut self) {
-        self.stack.pop();
+        if self.stack.len() > self.base() {
+            self.stack.pop();
+        }
     }
 
     pub fn push(&mut self, state: S) {
@@ -125,6 +143,14 @@ impl<S: RawState> StateStack<S> {
 }
 
 pub trait StateStackMut: RawState {
+    fn acquire(mut stack: ResMut<StateStack<Self>>) {
+        stack.acquire();
+    }
+
+    fn release(mut stack: ResMut<StateStack<Self>>) {
+        stack.release();
+    }
+
     fn clear(mut stack: ResMut<StateStack<Self>>) {
         stack.clear();
     }
