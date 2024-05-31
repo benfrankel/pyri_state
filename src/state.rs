@@ -355,9 +355,11 @@ impl<'w, 's, S: GetState> StateRef<'w, 's, S> {
 #[macro_export]
 macro_rules! will_flush {
     ($pattern:pat $(if $guard:expr)? $(,)?) => {
-        (|state: pyri_state::state::StateRef<_>| {
-            matches!(state.get(), $pattern $(if $guard)?)
-        })
+        {
+            |state: pyri_state::state::StateRef<_>| {
+                matches!(state.get(), $pattern $(if $guard)?)
+            }
+        }
     };
 }
 
