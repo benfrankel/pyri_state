@@ -84,7 +84,6 @@ struct StateAttrs {
     no_defaults: bool,
     detect_change: bool,
     flush_event: bool,
-    #[cfg(feature = "debug")]
     log_flush: bool,
     bevy_state: bool,
     apply_flush: bool,
@@ -127,7 +126,6 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                         "no_defaults" => state_attrs.no_defaults = true,
                         "detect_change" => state_attrs.detect_change = true,
                         "flush_event" => state_attrs.flush_event = true,
-                        #[cfg(feature = "debug")]
                         "log_flush" => state_attrs.log_flush = true,
                         "bevy_state" => state_attrs.bevy_state = true,
                         "apply_flush" => state_attrs.apply_flush = true,
