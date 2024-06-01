@@ -55,11 +55,11 @@ where
     // TODO: In bevy 0.14 this will be possible.
     //reflect(Resource)
 )]
-pub struct StateSlot<S: RawState>(pub Option<S>);
+pub struct StateBuffer<S: RawState>(pub Option<S>);
 
-impl<S: RawState> StateStorage for StateSlot<S> {}
+impl<S: RawState> StateStorage for StateBuffer<S> {}
 
-impl<S: RawState> GetStateStorage<S> for StateSlot<S> {
+impl<S: RawState> GetStateStorage<S> for StateBuffer<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -67,7 +67,7 @@ impl<S: RawState> GetStateStorage<S> for StateSlot<S> {
     }
 }
 
-impl<S: RawState> SetStateStorage<S> for StateSlot<S> {
+impl<S: RawState> SetStateStorage<S> for StateBuffer<S> {
     type Param = SResMut<Self>;
 
     fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -84,21 +84,21 @@ impl<S: RawState> SetStateStorage<S> for StateSlot<S> {
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateSlot<S> {
+impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateBuffer<S> {
     type AddState = S;
 
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
-        app.insert_resource(storage.unwrap_or_else(StateSlot::disabled));
+        app.insert_resource(storage.unwrap_or_else(StateBuffer::disabled));
     }
 }
 
-impl<S: RawState + FromWorld> FromWorld for StateSlot<S> {
+impl<S: RawState + FromWorld> FromWorld for StateBuffer<S> {
     fn from_world(world: &mut World) -> Self {
         Self::enabled(S::from_world(world))
     }
 }
 
-impl<S: RawState> StateSlot<S> {
+impl<S: RawState> StateBuffer<S> {
     pub fn disabled() -> Self {
         Self(None)
     }

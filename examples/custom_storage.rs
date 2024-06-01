@@ -12,7 +12,7 @@ use pyri_state::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
-        .init_state_::<MySlottedState>()
+        .init_state_::<MyBufferedState>()
         .init_state_::<MyStackedState>()
         .insert_state_(StateSwap([
             Some(MySwappedState::X),
@@ -35,9 +35,9 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]
-// The default storage is `StateSlot<Self>` (newtyped `Option<Self>`).
-//#[state(storage(StateSlot<Self>))]
-struct MySlottedState;
+// The default storage is `StateBuffer<Self>` (newtyped `Option<Self>`).
+//#[state(storage(StateBuffer<Self>))]
+struct MyBufferedState;
 
 #[derive(State, Clone, PartialEq, Eq, Debug, Default)]
 // You can easily swap in a `StateStack<Self>` instead.

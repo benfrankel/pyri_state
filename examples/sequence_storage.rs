@@ -31,7 +31,7 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
-// Configure `Page` to use `StateSequence` instead of `StateSlot` for storage.
+// Configure `Page` to use `StateSequence` instead of `StateBuffer` for storage.
 #[state(log_flush, storage(StateSequence<Self>))]
 enum Page {
     A,

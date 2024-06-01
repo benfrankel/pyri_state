@@ -48,7 +48,7 @@ Click a feature to see example code.
 - **[Computed & substates](/examples/computed_and_substates.rs):** Roll your own computed and substates with the full power of Bevy ECS.
 - **[Flexible scheduling](/examples/flexible_scheduling.rs):** Harness the full power of Bevy ECS to schedule your state transitions.
 - **[Custom storage](/examples/custom_storage.rs):** Swap out or define your own state storage type.
-    - **Slot:** Only store the next state. This is the default storage type.
+    - **Buffer:** Store a single state that can be mutated directly. This is the default storage type.
     - **[Stack](/examples/stack_storage.rs):** Keep track of a state's history in a stack (e.g. back button).
     - **[Sequence](/examples/sequence_storage.rs):** Navigate a fixed sequence of states by index (e.g. pages).
 - **[Ecosystem compatibility](/examples/ecosystem_compatibility.rs):** Enable a `BevyState<S>` wrapper to interact with crates that expect it.

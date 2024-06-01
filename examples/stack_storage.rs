@@ -42,7 +42,7 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
-// Configure `Menu` to use `StateStack` instead of `StateSlot` for storage.
+// Configure `Menu` to use `StateStack` instead of `StateBuffer` for storage.
 #[state(log_flush, storage(StateStack<Self>))]
 enum Menu {
     Main,

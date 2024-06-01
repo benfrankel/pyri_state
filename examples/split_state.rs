@@ -34,7 +34,7 @@ mod ui {
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
-        .insert_state_(StateSlot::enabled(InputMode::Move))
+        .insert_state_(StateBuffer::enabled(InputMode::Move))
         .add_systems(
             Update,
             // Every state added to InputMode can be accessed normally.

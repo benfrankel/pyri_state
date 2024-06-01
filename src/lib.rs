@@ -23,7 +23,7 @@ pub mod prelude {
             CurrentState, GetState, NextStateMut, NextStateRef, RawState, SetState,
             SetStateExtClone, SetStateExtDefault, StateMut, StateRef,
         },
-        storage::StateSlot,
+        storage::StateBuffer,
     };
 
     #[doc(hidden)]

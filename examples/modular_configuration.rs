@@ -41,7 +41,7 @@ struct MyRawState;
     bevy_state,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
-    // Swap out the default `StateSlot<Self>` with a custom storage type.
+    // Swap out the default `StateBuffer<Self>` with a custom storage type.
     // (see `custom_storage` example for more information)
     storage(StateStack<Self>),
     // Run this state's on flush systems after the listed states resolve.
@@ -56,7 +56,7 @@ struct MyDerivedState;
 struct MyCustomState;
 
 impl RawState for MyCustomState {
-    type Storage = StateSlot<Self>;
+    type Storage = StateBuffer<Self>;
 }
 
 // This will be called from `app.add_state_`, `init_state_`, and `insert_state_`.
@@ -86,5 +86,5 @@ impl AddState for MyCustomState {
 struct UselessState;
 
 impl RawState for UselessState {
-    type Storage = StateSlot<Self>;
+    type Storage = StateBuffer<Self>;
 }
