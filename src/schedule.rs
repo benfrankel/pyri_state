@@ -10,8 +10,8 @@ use bevy_ecs::{
 };
 
 use crate::state::{
-    BevyState, CurrentState, GetState, NextStateMut, NextStateRef, RawState, SetState,
-    StateFlushRef, TriggerStateFlush,
+    BevyState, CurrentState, NextStateMut, NextStateRef, State_, StateFlushRef, StateMut,
+    TriggerStateFlush,
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -19,7 +19,7 @@ pub struct StateFlush;
 
 // Provides system ordering for state flush handling systems.
 #[derive(SystemSet)]
-pub enum StateFlushSet<S: RawState> {
+pub enum StateFlushSet<S: State_> {
     Resolve,
     Compute,
     Trigger,
@@ -30,7 +30,7 @@ pub enum StateFlushSet<S: RawState> {
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S: RawState> Clone for StateFlushSet<S> {
+impl<S: State_> Clone for StateFlushSet<S> {
     fn clone(&self) -> Self {
         match self {
             Self::Resolve => Self::Resolve,
@@ -45,21 +45,21 @@ impl<S: RawState> Clone for StateFlushSet<S> {
     }
 }
 
-impl<S: RawState> PartialEq for StateFlushSet<S> {
+impl<S: State_> PartialEq for StateFlushSet<S> {
     fn eq(&self, other: &Self) -> bool {
         core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }
 
-impl<S: RawState> Eq for StateFlushSet<S> {}
+impl<S: State_> Eq for StateFlushSet<S> {}
 
-impl<S: RawState> Hash for StateFlushSet<S> {
+impl<S: State_> Hash for StateFlushSet<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S: RawState> Debug for StateFlushSet<S> {
+impl<S: State_> Debug for StateFlushSet<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
@@ -78,16 +78,16 @@ impl<S: RawState> Debug for StateFlushSet<S> {
 struct ApplyFlushSet;
 
 #[derive(Event)]
-pub struct StateFlushEvent<S: RawState> {
+pub struct StateFlushEvent<S: State_> {
     pub old: Option<S>,
     pub new: Option<S>,
 }
 
-fn was_triggered<S: RawState>(trigger: Res<TriggerStateFlush<S>>) -> bool {
+fn was_triggered<S: State_>(trigger: Res<TriggerStateFlush<S>>) -> bool {
     trigger.0
 }
 
-fn send_flush_event<S: GetState + Clone>(
+fn send_flush_event<S: State_ + Clone>(
     state: StateFlushRef<S>,
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
@@ -98,11 +98,11 @@ fn send_flush_event<S: GetState + Clone>(
     });
 }
 
-fn apply_flush<S: GetState + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
+fn apply_flush<S: State_ + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
     current.0 = next.get().cloned();
 }
 
-pub fn schedule_detect_change<S: GetState + Eq>(schedule: &mut Schedule) {
+pub fn schedule_detect_change<S: State_ + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
             .run_if(|state: StateFlushRef<S>| matches!(state.get(), (x, y) if x != y))
@@ -110,7 +110,7 @@ pub fn schedule_detect_change<S: GetState + Eq>(schedule: &mut Schedule) {
     );
 }
 
-pub fn schedule_resolve_state<S: RawState>(
+pub fn schedule_resolve_state<S: State_>(
     schedule: &mut Schedule,
     after: &[InternedSystemSet],
     before: &[InternedSystemSet],
@@ -143,31 +143,31 @@ pub fn schedule_resolve_state<S: RawState>(
     ));
 }
 
-pub fn schedule_send_event<S: GetState + Clone>(schedule: &mut Schedule) {
+pub fn schedule_send_event<S: State_ + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(S::on_flush(send_flush_event::<S>));
 }
 
 #[cfg(feature = "debug")]
-pub fn schedule_log_flush<S: GetState + Debug>(schedule: &mut Schedule) {
+pub fn schedule_log_flush<S: State_ + Debug>(schedule: &mut Schedule) {
     use bevy_core::FrameCount;
     use bevy_ecs::schedule::Condition;
     use bevy_log::info;
 
     use crate::pattern::{StatePattern, StatePatternExtGet};
 
-    fn log_state_exit<S: GetState + Debug>(frame: Res<FrameCount>, old: Res<CurrentState<S>>) {
+    fn log_state_exit<S: State_ + Debug>(frame: Res<FrameCount>, old: Res<CurrentState<S>>) {
         let frame = frame.0;
         let old = old.unwrap();
         info!("[Frame {frame}] Exit: {old:?}");
     }
 
-    fn log_state_transition<S: GetState + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
+    fn log_state_transition<S: State_ + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
         let frame = frame.0;
         let (old, new) = state.unwrap();
         info!("[Frame {frame}] Transition: {old:?} -> {new:?}");
     }
 
-    fn log_state_enter<S: GetState + Debug>(frame: Res<FrameCount>, new: NextStateRef<S>) {
+    fn log_state_enter<S: State_ + Debug>(frame: Res<FrameCount>, new: NextStateRef<S>) {
         let frame = frame.0;
         let new = new.unwrap();
         info!("[Frame {frame}] Enter: {new:?}");
@@ -183,7 +183,7 @@ pub fn schedule_log_flush<S: GetState + Debug>(schedule: &mut Schedule) {
     ));
 }
 
-pub fn schedule_apply_flush<S: GetState + Clone>(schedule: &mut Schedule) {
+pub fn schedule_apply_flush<S: State_ + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::relax)
             .run_if(was_triggered::<S>)
@@ -191,7 +191,7 @@ pub fn schedule_apply_flush<S: GetState + Clone>(schedule: &mut Schedule) {
     );
 }
 
-pub fn schedule_bevy_state<S: GetState + SetState + Clone + PartialEq + Eq + Hash + Debug>(
+pub fn schedule_bevy_state<S: State_ + StateMut + Clone + PartialEq + Eq + Hash + Debug>(
     schedule: &mut Schedule,
 ) {
     let update_bevy_state =

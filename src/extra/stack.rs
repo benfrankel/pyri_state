@@ -7,8 +7,8 @@ use bevy_ecs::{
 };
 
 use crate::{
-    state::RawState,
-    storage::{GetStateStorage, SetStateStorage, StateStorage},
+    state::State_,
+    storage::{StateStorage, StateStorageMut},
 };
 
 // A state stack with the current state on top.
@@ -19,14 +19,12 @@ use crate::{
     // TODO: In bevy 0.14 this will be possible.
     //reflect(Resource)
 )]
-pub struct StateStack<S: RawState> {
+pub struct StateStack<S: State_> {
     stack: Vec<Option<S>>,
     bases: Vec<usize>,
 }
 
-impl<S: RawState> StateStorage for StateStack<S> {}
-
-impl<S: RawState> GetStateStorage<S> for StateStack<S> {
+impl<S: State_> StateStorage<S> for StateStack<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -34,7 +32,7 @@ impl<S: RawState> GetStateStorage<S> for StateStack<S> {
     }
 }
 
-impl<S: RawState> SetStateStorage<S> for StateStack<S> {
+impl<S: State_> StateStorageMut<S> for StateStack<S> {
     type Param = SResMut<Self>;
 
     fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -59,13 +57,13 @@ impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for
     }
 }
 
-impl<S: RawState + FromWorld> FromWorld for StateStack<S> {
+impl<S: State_ + FromWorld> FromWorld for StateStack<S> {
     fn from_world(world: &mut World) -> Self {
         Self::new(S::from_world(world))
     }
 }
 
-impl<S: RawState> StateStack<S> {
+impl<S: State_> StateStack<S> {
     pub fn empty() -> Self {
         Self {
             stack: Vec::new(),
@@ -142,7 +140,7 @@ impl<S: RawState> StateStack<S> {
     }
 }
 
-pub trait StateStackMut: RawState {
+pub trait StateStackMut: State_ {
     fn acquire(mut stack: ResMut<StateStack<Self>>) {
         stack.acquire();
     }
@@ -160,7 +158,7 @@ pub trait StateStackMut: RawState {
     }
 }
 
-impl<S: RawState<Storage = StateStack<S>>> StateStackMut for S {}
+impl<S: State_<Storage = StateStack<S>>> StateStackMut for S {}
 
 pub trait StateStackMutExtClone: StateStackMut + Clone {
     fn push(self) -> impl Fn(ResMut<StateStack<Self>>) {

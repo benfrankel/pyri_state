@@ -6,7 +6,7 @@ use pyri_state::{
     app::{AddState, AddStateStorage},
     extra::stack::*,
     prelude::*,
-    storage::{GetStateStorage, SetStateStorage, StateStorage},
+    storage::{StateStorage, StateStorageMut},
 };
 
 fn main() {
@@ -50,15 +50,12 @@ enum MyStackedState {
 
 // You can create your own fully custom state storage type:
 #[derive(Resource)]
-pub struct StateSwap<S: RawState>([Option<S>; 2]);
+pub struct StateSwap<S: State_>([Option<S>; 2]);
 
-// Impl `StateStorage<S>` to mark your type as a valid state storage type.
-impl<S: RawState> StateStorage for StateSwap<S> {}
-
-// Impl `GetStateStorage<S>` to enable getting the next state from your storage type.
+// Impl `StateStorage<S>` to enable getting the next state from your storage type.
 // This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type,
 // and attaches run conditions such as `S::will_be_enabled`.
-impl<S: RawState> GetStateStorage<S> for StateSwap<S> {
+impl<S: State_> StateStorage<S> for StateSwap<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s bevy_ecs::system::SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -66,10 +63,10 @@ impl<S: RawState> GetStateStorage<S> for StateSwap<S> {
     }
 }
 
-// Impl `SetStateStorage<S>` to enable setting the next state for your storage type.
+// Impl `StateStorageMut<S>` to enable setting the next state for your storage type.
 // This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
 // and attaches systems such as `S::disable`.
-impl<S: RawState> SetStateStorage<S> for StateSwap<S> {
+impl<S: State_> StateStorageMut<S> for StateSwap<S> {
     type Param = SResMut<Self>;
 
     fn get_state_from_mut<'s>(
@@ -100,7 +97,7 @@ impl<S: AddState<AddStorage = Self>> AddStateStorage for StateSwap<S> {
 
 // Define a custom trait to associate extra systems and run conditions with any
 // state using your storage.
-pub trait StateSwapMut: RawState {
+pub trait StateSwapMut: State_ {
     fn swap(mut swap: ResMut<StateSwap<Self>>) {
         let [left, right] = &mut swap.0;
         std::mem::swap(left, right);
@@ -108,7 +105,7 @@ pub trait StateSwapMut: RawState {
 }
 
 // Blanket impl the trait.
-impl<S: RawState<Storage = StateSwap<S>>> StateSwapMut for S {}
+impl<S: State_<Storage = StateSwap<S>>> StateSwapMut for S {}
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
 // Now you can use `StateSwap<Self>` as a first-class custom storage type!

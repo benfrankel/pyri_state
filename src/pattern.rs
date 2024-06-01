@@ -7,10 +7,10 @@ use bevy_ecs::{
 
 use crate::{
     schedule::StateFlushSet,
-    state::{CurrentState, GetState, NextStateRef, RawState, StateFlushRef},
+    state::{CurrentState, NextStateRef, State_, StateFlushRef},
 };
 
-pub trait StatePattern<S: RawState>: 'static + Send + Sync + Sized {
+pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     fn matches(&self, state: &S) -> bool;
 
     // Equivalent to `will_exit`.
@@ -33,7 +33,7 @@ pub trait StatePattern<S: RawState>: 'static + Send + Sync + Sized {
     }
 }
 
-pub trait StatePatternExtGet<S: GetState>: StatePattern<S> {
+pub trait StatePatternExtGet<S: State_>: StatePattern<S> {
     fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| matches!(state.get(), (Some(x), None) if self.matches(x))
     }
@@ -65,9 +65,9 @@ pub trait StatePatternExtGet<S: GetState>: StatePattern<S> {
     }
 }
 
-impl<S: GetState, T: StatePattern<S>> StatePatternExtGet<S> for T {}
+impl<S: State_, T: StatePattern<S>> StatePatternExtGet<S> for T {}
 
-pub trait StatePatternExtGetAndEq<S: GetState + Eq>: StatePattern<S> {
+pub trait StatePatternExtGetAndEq<S: State_ + Eq>: StatePattern<S> {
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| {
             matches!(
@@ -84,17 +84,17 @@ pub trait StatePatternExtGetAndEq<S: GetState + Eq>: StatePattern<S> {
     }
 }
 
-impl<S: GetState + Eq, T: StatePattern<S>> StatePatternExtGetAndEq<S> for T {}
+impl<S: State_ + Eq, T: StatePattern<S>> StatePatternExtGetAndEq<S> for T {}
 
-impl<S: RawState + Eq> StatePattern<S> for S {
+impl<S: State_ + Eq> StatePattern<S> for S {
     fn matches(&self, state: &S) -> bool {
         self == state
     }
 }
 
-pub struct FnStatePattern<S: RawState, F: Fn(&S) -> bool>(pub(crate) F, pub(crate) PhantomData<S>);
+pub struct FnStatePattern<S: State_, F: Fn(&S) -> bool>(pub(crate) F, pub(crate) PhantomData<S>);
 
-impl<S: RawState, F> StatePattern<S> for FnStatePattern<S, F>
+impl<S: State_, F> StatePattern<S> for FnStatePattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S) -> bool,
 {
@@ -103,7 +103,7 @@ where
     }
 }
 
-impl<S: RawState, F> FnStatePattern<S, F>
+impl<S: State_, F> FnStatePattern<S, F>
 where
     F: Fn(&S) -> bool,
 {
@@ -122,9 +122,9 @@ macro_rules! state {
     };
 }
 
-pub struct AnyStatePattern<S: RawState>(pub(crate) PhantomData<S>);
+pub struct AnyStatePattern<S: State_>(pub(crate) PhantomData<S>);
 
-impl<S: RawState> StatePattern<S> for AnyStatePattern<S> {
+impl<S: State_> StatePattern<S> for AnyStatePattern<S> {
     fn matches(&self, _state: &S) -> bool {
         true
     }

@@ -20,8 +20,8 @@ pub mod prelude {
         pattern::{StatePattern, StatePatternExtGet, StatePatternExtGetAndEq},
         schedule::{StateFlush, StateFlushEvent},
         state::{
-            CurrentState, GetState, NextStateMut, NextStateRef, RawState, SetState,
-            SetStateExtClone, SetStateExtDefault, StateFlushMut, StateFlushRef,
+            CurrentState, NextStateMut, NextStateRef, StateFlushMut, StateFlushRef, StateMut,
+            StateMutExtClone, StateMutExtDefault, State_,
         },
         storage::StateBuffer,
     };

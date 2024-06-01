@@ -17,8 +17,8 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
-    // Construct RawState impl.
-    let impl_raw_state = derive_state_helper(&input, &attrs);
+    // Construct State impl.
+    let impl_state = derive_state_helper(&input, &attrs);
 
     // Construct AddState impl.
     #[cfg(not(feature = "bevy_app"))]
@@ -27,7 +27,7 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     let impl_add_state = app::derive_add_state_helper(&input, &attrs);
 
     quote! {
-        #impl_raw_state
+        #impl_state
         #impl_add_state
     }
     .into()
@@ -41,7 +41,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_state_path = concat(crate_path.clone(), format_ident!("state"));
-    let raw_state_trait = concat(crate_state_path.clone(), format_ident!("RawState"));
+    let state_trait = concat(crate_state_path.clone(), format_ident!("State_"));
 
     // Construct storage type.
     let storage_ty = if let Some(storage) = attrs.storage.as_ref() {
@@ -57,9 +57,9 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
         }
     };
 
-    // Construct RawState impl.
+    // Construct State_ impl.
     quote! {
-        impl #impl_generics #raw_state_trait for #ty_name #ty_generics #where_clause {
+        impl #impl_generics #state_trait for #ty_name #ty_generics #where_clause {
             type Storage = #storage_ty;
         }
     }

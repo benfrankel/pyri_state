@@ -14,7 +14,7 @@ use pyri_state::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
-        .add_state_::<MyRawState>()
+        .add_state_::<MyBasicState>()
         .add_state_::<MyDerivedState>()
         .add_state_::<MyCustomState>()
         .run();
@@ -23,7 +23,7 @@ fn main() {
 // You can derive State on its own if no other traits are required.
 #[derive(State)]
 #[state(no_defaults)]
-struct MyRawState;
+struct MyBasicState;
 
 // The built-in state plugins can be configured:
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
@@ -36,7 +36,7 @@ struct MyRawState;
     flush_event,
     // Log on exit, transition, and enter (requires Debug).
     log_flush,
-    // Include a BevyState wrapper (requires Clone, PartialEq, Eq, Hash, Debug).
+    // Include a BevyState wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     // (see `ecosystem_compatibility` example for more information)
     bevy_state,
     // Clone the next state into the current state on flush (requires Clone).
@@ -45,7 +45,7 @@ struct MyRawState;
     // (see `custom_storage` example for more information)
     storage(StateStack<Self>),
     // Run this state's on flush systems after the listed states resolve.
-    after(MyRawState),
+    after(MyBasicState),
     // Run this state's on flush systems before the listed states resolve.
     before(MyCustomState, UselessState)
 )]
@@ -55,7 +55,7 @@ struct MyDerivedState;
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 struct MyCustomState;
 
-impl RawState for MyCustomState {
+impl State_ for MyCustomState {
     type Storage = StateBuffer<Self>;
 }
 
@@ -68,7 +68,7 @@ impl AddState for MyCustomState {
             .init_resource::<TriggerStateFlush<Self>>()
             .add_plugins((
                 ResolveStatePlugin::<Self>::default()
-                    .after::<MyRawState>()
+                    .after::<MyBasicState>()
                     .after::<MyDerivedState>()
                     .before::<UselessState>(),
                 DetectChangePlugin::<Self>::default(),
@@ -85,6 +85,6 @@ impl AddState for MyCustomState {
 // A fully stripped down state type that does nothing.
 struct UselessState;
 
-impl RawState for UselessState {
+impl State_ for UselessState {
     type Storage = StateBuffer<Self>;
 }

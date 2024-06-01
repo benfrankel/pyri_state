@@ -11,11 +11,11 @@ use bevy_ecs::reflect::ReflectResource;
 use crate::{
     pattern::{AnyStatePattern, FnStatePattern, StatePattern},
     schedule::StateFlushSet,
-    storage::{GetStateStorage, SetStateStorage, StateStorage},
+    storage::{StateStorage, StateStorageMut},
 };
 
-pub trait RawState: 'static + Send + Sync + Sized {
-    type Storage: StateStorage;
+pub trait State_: 'static + Send + Sync + Sized {
+    type Storage: StateStorage<Self>;
 
     const ANY: AnyStatePattern<Self> = AnyStatePattern(PhantomData);
 
@@ -32,6 +32,14 @@ pub trait RawState: 'static + Send + Sync + Sized {
 
     fn is_enabled(state: Res<CurrentState<Self>>) -> bool {
         state.is_enabled()
+    }
+
+    fn will_be_disabled(next: NextStateRef<Self>) -> bool {
+        next.get().is_none()
+    }
+
+    fn will_be_enabled(next: NextStateRef<Self>) -> bool {
+        next.get().is_some()
     }
 
     fn on_flush<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -51,27 +59,15 @@ pub trait RawState: 'static + Send + Sync + Sized {
     }
 }
 
-pub trait GetState: RawState {
-    type GetStorage: GetStateStorage<Self>;
-
-    fn will_be_disabled(next: NextStateRef<Self>) -> bool {
-        next.get().is_none()
-    }
-
-    fn will_be_enabled(next: NextStateRef<Self>) -> bool {
-        next.get().is_some()
-    }
-}
-
-pub trait SetState: RawState {
-    type SetStorage: SetStateStorage<Self>;
+pub trait StateMut: State_ {
+    type StorageMut: StateStorageMut<Self>;
 
     fn disable(mut state: NextStateMut<Self>) {
         state.set(None);
     }
 }
 
-pub trait SetStateExtClone: SetState + Clone {
+pub trait StateMutExtClone: StateMut + Clone {
     fn enable(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             if state.will_be_disabled() {
@@ -105,9 +101,9 @@ pub trait SetStateExtClone: SetState + Clone {
     }
 }
 
-impl<S: SetState + Clone> SetStateExtClone for S {}
+impl<S: StateMut + Clone> StateMutExtClone for S {}
 
-pub trait SetStateExtDefault: SetState + Default {
+pub trait StateMutExtDefault: StateMut + Default {
     fn enable_default(mut state: NextStateMut<Self>) {
         state.enable_default();
     }
@@ -121,7 +117,7 @@ pub trait SetStateExtDefault: SetState + Default {
     }
 }
 
-impl<S: SetState + Default> SetStateExtDefault for S {}
+impl<S: StateMut + Default> StateMutExtDefault for S {}
 
 // The immutable half of the double-buffered state.
 // This should not be accessed mutably during normal usage.
@@ -131,15 +127,15 @@ impl<S: SetState + Default> SetStateExtDefault for S {}
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct CurrentState<S: RawState>(pub Option<S>);
+pub struct CurrentState<S: State_>(pub Option<S>);
 
-impl<S: RawState> Default for CurrentState<S> {
+impl<S: State_> Default for CurrentState<S> {
     fn default() -> Self {
         Self::disabled()
     }
 }
 
-impl<S: RawState> CurrentState<S> {
+impl<S: State_> CurrentState<S> {
     pub fn new(value: Option<S>) -> Self {
         Self(value)
     }
@@ -180,15 +176,15 @@ impl<S: RawState> CurrentState<S> {
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct TriggerStateFlush<S: RawState>(pub bool, PhantomData<S>);
+pub struct TriggerStateFlush<S: State_>(pub bool, PhantomData<S>);
 
-impl<S: RawState> Default for TriggerStateFlush<S> {
+impl<S: State_> Default for TriggerStateFlush<S> {
     fn default() -> Self {
         Self(false, PhantomData)
     }
 }
 
-impl<S: RawState> TriggerStateFlush<S> {
+impl<S: State_> TriggerStateFlush<S> {
     pub fn trigger(&mut self) {
         self.0 = true;
     }
@@ -199,13 +195,13 @@ impl<S: RawState> TriggerStateFlush<S> {
 }
 
 #[derive(SystemParam)]
-pub struct NextStateRef<'w, 's, S: GetState>(
-    StaticSystemParam<'w, 's, <<S as GetState>::GetStorage as GetStateStorage<S>>::Param>,
+pub struct NextStateRef<'w, 's, S: State_>(
+    StaticSystemParam<'w, 's, <<S as State_>::Storage as StateStorage<S>>::Param>,
 );
 
-impl<'w, 's, S: GetState> NextStateRef<'w, 's, S> {
+impl<'w, 's, S: State_> NextStateRef<'w, 's, S> {
     pub fn get(&self) -> Option<&S> {
-        S::GetStorage::get_state(&self.0)
+        S::Storage::get_state(&self.0)
     }
 
     pub fn unwrap(&self) -> &S {
@@ -226,12 +222,12 @@ impl<'w, 's, S: GetState> NextStateRef<'w, 's, S> {
 }
 
 #[derive(SystemParam)]
-pub struct NextStateMut<'w, 's, S: SetState> {
-    next: StaticSystemParam<'w, 's, <<S as SetState>::SetStorage as SetStateStorage<S>>::Param>,
+pub struct NextStateMut<'w, 's, S: StateMut> {
+    next: StaticSystemParam<'w, 's, <<S as StateMut>::StorageMut as StateStorageMut<S>>::Param>,
     trigger: ResMut<'w, TriggerStateFlush<S>>,
 }
 
-impl<'w, 's, S: SetState + Default> NextStateMut<'w, 's, S> {
+impl<'w, 's, S: StateMut + Default> NextStateMut<'w, 's, S> {
     // Enter the default state if disabled.
     pub fn enable_default(&mut self) {
         if self.will_be_disabled() {
@@ -254,17 +250,17 @@ impl<'w, 's, S: SetState + Default> NextStateMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: SetState> NextStateMut<'w, 's, S> {
+impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
     pub fn get(&self) -> Option<&S> {
-        S::SetStorage::get_state_from_mut(&self.next)
+        S::StorageMut::get_state_from_mut(&self.next)
     }
 
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        S::SetStorage::get_state_mut(&mut self.next)
+        S::StorageMut::get_state_mut(&mut self.next)
     }
 
     pub fn set(&mut self, state: Option<S>) {
-        S::SetStorage::set_state(&mut self.next, state)
+        S::StorageMut::set_state(&mut self.next, state)
     }
 
     pub fn unwrap(&self) -> &S {
@@ -323,12 +319,12 @@ impl<'w, 's, S: SetState> NextStateMut<'w, 's, S> {
 }
 
 #[derive(SystemParam)]
-pub struct StateFlushRef<'w, 's, S: GetState> {
+pub struct StateFlushRef<'w, 's, S: State_> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: NextStateRef<'w, 's, S>,
 }
 
-impl<'w, 's, S: GetState + Eq> StateFlushRef<'w, 's, S> {
+impl<'w, 's, S: State_ + Eq> StateFlushRef<'w, 's, S> {
     pub fn will_refresh<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(
             self.get(),
@@ -337,7 +333,7 @@ impl<'w, 's, S: GetState + Eq> StateFlushRef<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: GetState> StateFlushRef<'w, 's, S> {
+impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
     }
@@ -377,12 +373,12 @@ macro_rules! will_flush {
 }
 
 #[derive(SystemParam)]
-pub struct StateFlushMut<'w, 's, S: SetState> {
+pub struct StateFlushMut<'w, 's, S: StateMut> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: NextStateMut<'w, 's, S>,
 }
 
-impl<'w, 's, S: SetState + Clone> StateFlushMut<'w, 's, S> {
+impl<'w, 's, S: StateMut + Clone> StateFlushMut<'w, 's, S> {
     // Set the next state to the current state and relax flush.
     pub fn reset(&mut self) {
         self.next.relax().set(self.current.0.clone());
@@ -394,7 +390,7 @@ impl<'w, 's, S: SetState + Clone> StateFlushMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: SetState + Eq> StateFlushMut<'w, 's, S> {
+impl<'w, 's, S: StateMut + Eq> StateFlushMut<'w, 's, S> {
     pub fn will_refresh<P: StatePattern<S>>(&mut self, pattern: &P) -> bool {
         matches!(
             self.get(),
@@ -403,7 +399,7 @@ impl<'w, 's, S: SetState + Eq> StateFlushMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: SetState> StateFlushMut<'w, 's, S> {
+impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
     }
@@ -468,9 +464,9 @@ impl<'w, 's, S: SetState> StateFlushMut<'w, 's, S> {
 
 // A wrapper for compatibility with bevy states.
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct BevyState<S: RawState + Clone + PartialEq + Eq + Hash + Debug>(pub Option<S>);
+pub struct BevyState<S: State_ + Clone + PartialEq + Eq + Hash + Debug>(pub Option<S>);
 
-impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
+impl<S: State_ + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
     fn default() -> Self {
         Self(None)
     }
