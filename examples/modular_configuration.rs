@@ -25,7 +25,7 @@ fn main() {
 #[state(no_defaults)]
 struct MyRawState;
 
-// The built-in state plugins are fully customizable:
+// The built-in state plugins can be configured:
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
 #[state(
     // Disable default plugins: detect_change, flush_event, apply_flush.
@@ -44,17 +44,20 @@ struct MyRawState;
     // Swap out the default `StateSlot<Self>` with a custom storage type.
     // (see `custom_storage` example for more information)
     storage(StateStack<Self>),
-    // Run this state's on flush systems after the listed states.
+    // Run this state's on flush systems after the listed states resolve.
     after(MyRawState),
-    // Run this state's on flush systems before the listed states.
+    // Run this state's on flush systems before the listed states resolve.
     before(MyCustomState, UselessState)
 )]
 struct MyDerivedState;
 
-// Deriving RawState instead of State allows you to impl AddState yourself,
-// for fully custom state configuration (see below).
-#[derive(RawState, Clone, PartialEq, Eq, Hash, Debug)]
+// Skip the derive entirely to fully customize your state type (see below).
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 struct MyCustomState;
+
+impl RawState for MyCustomState {
+    type Storage = StateSlot<Self>;
+}
 
 // This will be called from `app.add_state_`, `init_state_`, and `insert_state_`.
 impl AddState for MyCustomState {
@@ -78,6 +81,10 @@ impl AddState for MyCustomState {
     }
 }
 
+// TODO: This is confusing.
 // A fully stripped down state type that does nothing.
-#[derive(RawState)]
 struct UselessState;
+
+impl RawState for UselessState {
+    type Storage = StateSlot<Self>;
+}

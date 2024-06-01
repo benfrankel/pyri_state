@@ -11,7 +11,29 @@ use syn::{
 
 use crate::util::concat;
 
-fn derive_raw_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::TokenStream {
+#[proc_macro_derive(State, attributes(state))]
+pub fn derive_state(input: TokenStream) -> TokenStream {
+    // Parse the type and #[state(...)] attributes.
+    let input = parse_macro_input!(input as DeriveInput);
+    let attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
+
+    // Construct RawState impl.
+    let impl_raw_state = derive_state_helper(&input, &attrs);
+
+    // Construct AddState impl.
+    #[cfg(not(feature = "bevy_app"))]
+    let impl_add_state = quote! {};
+    #[cfg(feature = "bevy_app")]
+    let impl_add_state = app::derive_add_state_helper(&input, &attrs);
+
+    quote! {
+        #impl_raw_state
+        #impl_add_state
+    }
+    .into()
+}
+
+fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
@@ -35,43 +57,11 @@ fn derive_raw_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macr
         }
     };
 
-    // Construct trait impl for the decorated type.
+    // Construct RawState impl.
     quote! {
         impl #impl_generics #raw_state_trait for #ty_name #ty_generics #where_clause {
             type Storage = #storage_ty;
         }
-    }
-    .into()
-}
-
-#[proc_macro_derive(RawState)]
-pub fn derive_raw_state(input: TokenStream) -> TokenStream {
-    // Parse the decorated type and #[state(...)] attributes.
-    let input = parse_macro_input!(input as DeriveInput);
-    let attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
-
-    // Construct RawState impl.
-    derive_raw_state_helper(&input, &attrs).into()
-}
-
-#[proc_macro_derive(State, attributes(state))]
-pub fn derive_state(input: TokenStream) -> TokenStream {
-    // Parse the decorated type and #[state(...)] attributes.
-    let input = parse_macro_input!(input as DeriveInput);
-    let attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
-
-    // Construct RawState impl.
-    let impl_raw_state = derive_raw_state_helper(&input, &attrs);
-
-    // Construct AddState impl.
-    #[cfg(not(feature = "bevy_app"))]
-    let impl_add_state = quote! {};
-    #[cfg(feature = "bevy_app")]
-    let impl_add_state = app::derive_add_state_helper(&input, &attrs);
-
-    quote! {
-        #impl_raw_state
-        #impl_add_state
     }
     .into()
 }

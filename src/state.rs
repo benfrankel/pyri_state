@@ -49,10 +49,6 @@ pub trait RawState: 'static + Send + Sync + Sized {
     }
 }
 
-pub trait State_: RawState + Clone + PartialEq + Eq {}
-
-impl<T: RawState + Clone + PartialEq + Eq> State_ for T {}
-
 pub trait GetState: RawState {
     type GetStorage: GetStateStorage<Self>;
 
@@ -450,9 +446,9 @@ impl<'w, 's, S: SetState> StateMut<'w, 's, S> {
 
 // A wrapper for compatibility with bevy states.
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct BevyState<S: State_ + Hash + Debug>(pub Option<S>);
+pub struct BevyState<S: RawState + Clone + PartialEq + Eq + Hash + Debug>(pub Option<S>);
 
-impl<S: State_ + Hash + Debug> Default for BevyState<S> {
+impl<S: RawState + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
     fn default() -> Self {
         Self(None)
     }

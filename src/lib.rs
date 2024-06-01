@@ -27,5 +27,5 @@ pub mod prelude {
     };
 
     #[doc(hidden)]
-    pub use pyri_state_derive::{RawState, State};
+    pub use pyri_state_derive::State;
 }
