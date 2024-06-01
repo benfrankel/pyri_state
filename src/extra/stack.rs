@@ -29,7 +29,7 @@ impl<S: RawState> StateStorage for StateStack<S> {}
 impl<S: RawState> GetStateStorage<S> for StateStack<S> {
     type Param = SRes<Self>;
 
-    fn get_state<'a>(param: &'a SystemParamItem<Self::Param>) -> Option<&'a S> {
+    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
         param.get()
     }
 }
