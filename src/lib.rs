@@ -21,7 +21,7 @@ pub mod prelude {
         schedule::{StateFlush, StateFlushEvent},
         state::{
             CurrentState, GetState, NextStateMut, NextStateRef, RawState, SetState,
-            SetStateExtClone, SetStateExtDefault, StateMut, StateRef,
+            SetStateExtClone, SetStateExtDefault, StateFlushMut, StateFlushRef,
         },
         storage::StateBuffer,
     };

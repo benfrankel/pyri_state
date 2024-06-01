@@ -7,7 +7,7 @@ use bevy_ecs::{
 
 use crate::{
     schedule::StateFlushSet,
-    state::{CurrentState, GetState, NextStateRef, RawState, StateRef},
+    state::{CurrentState, GetState, NextStateRef, RawState, StateFlushRef},
 };
 
 pub trait StatePattern<S: RawState>: 'static + Send + Sync + Sized {
@@ -34,7 +34,7 @@ pub trait StatePattern<S: RawState>: 'static + Send + Sync + Sized {
 }
 
 pub trait StatePatternExtGet<S: GetState>: StatePattern<S> {
-    fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateRef<S>) -> bool {
+    fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| matches!(state.get(), (Some(x), None) if self.matches(x))
     }
 
@@ -54,7 +54,7 @@ pub trait StatePatternExtGet<S: GetState>: StatePattern<S> {
             .in_set(StateFlushSet::<S>::Enter)
     }
 
-    fn will_enable(self) -> impl 'static + Send + Sync + Fn(StateRef<S>) -> bool {
+    fn will_enable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| matches!(state.get(), (None, Some(x)) if self.matches(x))
     }
 
@@ -68,7 +68,7 @@ pub trait StatePatternExtGet<S: GetState>: StatePattern<S> {
 impl<S: GetState, T: StatePattern<S>> StatePatternExtGet<S> for T {}
 
 pub trait StatePatternExtGetAndEq<S: GetState + Eq>: StatePattern<S> {
-    fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateRef<S>) -> bool {
+    fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| {
             matches!(
                 state.get(),

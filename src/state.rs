@@ -94,11 +94,11 @@ pub trait SetStateExtClone: SetState + Clone {
         }
     }
 
-    fn reset(mut state: StateMut<Self>) {
+    fn reset(mut state: StateFlushMut<Self>) {
         state.reset();
     }
 
-    fn refresh(mut state: StateMut<Self>) {
+    fn refresh(mut state: StateFlushMut<Self>) {
         state.refresh();
     }
 }
@@ -306,12 +306,12 @@ impl<'w, 's, S: SetState> NextStateMut<'w, 's, S> {
 }
 
 #[derive(SystemParam)]
-pub struct StateRef<'w, 's, S: GetState> {
+pub struct StateFlushRef<'w, 's, S: GetState> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: NextStateRef<'w, 's, S>,
 }
 
-impl<'w, 's, S: GetState + Eq> StateRef<'w, 's, S> {
+impl<'w, 's, S: GetState + Eq> StateFlushRef<'w, 's, S> {
     pub fn will_refresh<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(
             self.get(),
@@ -320,7 +320,7 @@ impl<'w, 's, S: GetState + Eq> StateRef<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: GetState> StateRef<'w, 's, S> {
+impl<'w, 's, S: GetState> StateFlushRef<'w, 's, S> {
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
     }
@@ -352,7 +352,7 @@ impl<'w, 's, S: GetState> StateRef<'w, 's, S> {
 macro_rules! will_flush {
     ($pattern:pat $(if $guard:expr)? $(,)?) => {
         {
-            |state: pyri_state::state::StateRef<_>| {
+            |state: pyri_state::state::StateFlushRef<_>| {
                 matches!(state.get(), $pattern $(if $guard)?)
             }
         }
@@ -360,12 +360,12 @@ macro_rules! will_flush {
 }
 
 #[derive(SystemParam)]
-pub struct StateMut<'w, 's, S: SetState> {
+pub struct StateFlushMut<'w, 's, S: SetState> {
     pub current: Res<'w, CurrentState<S>>,
     pub next: NextStateMut<'w, 's, S>,
 }
 
-impl<'w, 's, S: SetState + Clone> StateMut<'w, 's, S> {
+impl<'w, 's, S: SetState + Clone> StateFlushMut<'w, 's, S> {
     // Set the next state to the current state and disable flush.
     pub fn reset(&mut self) {
         self.next.set_flush(false).set(self.current.0.clone());
@@ -377,7 +377,7 @@ impl<'w, 's, S: SetState + Clone> StateMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: SetState + Eq> StateMut<'w, 's, S> {
+impl<'w, 's, S: SetState + Eq> StateFlushMut<'w, 's, S> {
     pub fn will_refresh<P: StatePattern<S>>(&mut self, pattern: &P) -> bool {
         matches!(
             self.get(),
@@ -386,7 +386,7 @@ impl<'w, 's, S: SetState + Eq> StateMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: SetState> StateMut<'w, 's, S> {
+impl<'w, 's, S: SetState> StateFlushMut<'w, 's, S> {
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
     }

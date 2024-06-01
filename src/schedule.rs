@@ -11,7 +11,7 @@ use bevy_ecs::{
 
 use crate::state::{
     BevyState, CurrentState, FlushState, GetState, NextStateMut, NextStateRef, RawState, SetState,
-    StateRef,
+    StateFlushRef,
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -88,7 +88,7 @@ fn check_flush_flag<S: RawState>(flush: Res<FlushState<S>>) -> bool {
 }
 
 fn send_flush_event<S: GetState + Clone>(
-    state: StateRef<S>,
+    state: StateFlushRef<S>,
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
     let (old, new) = state.get();
@@ -105,7 +105,7 @@ fn apply_flush<S: GetState + Clone>(mut current: ResMut<CurrentState<S>>, next: 
 pub fn schedule_detect_change<S: GetState + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::set_flush(true)
-            .run_if(|state: StateRef<S>| matches!(state.get(), (x, y) if x != y))
+            .run_if(|state: StateFlushRef<S>| matches!(state.get(), (x, y) if x != y))
             .in_set(StateFlushSet::<S>::Trigger),
     );
 }
@@ -161,7 +161,7 @@ pub fn schedule_log_flush<S: GetState + Debug>(schedule: &mut Schedule) {
         info!("[Frame {frame}] Exit: {old:?}");
     }
 
-    fn log_state_transition<S: GetState + Debug>(frame: Res<FrameCount>, state: StateRef<S>) {
+    fn log_state_transition<S: GetState + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
         let frame = frame.0;
         let (old, new) = state.unwrap();
         info!("[Frame {frame}] Transition: {old:?} -> {new:?}");
