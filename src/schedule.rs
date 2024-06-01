@@ -21,6 +21,7 @@ pub struct StateFlush;
 #[derive(SystemSet)]
 pub enum StateFlushSet<S: RawState> {
     Resolve,
+    Compute,
     Trigger,
     Flush,
     Exit,
@@ -33,6 +34,7 @@ impl<S: RawState> Clone for StateFlushSet<S> {
     fn clone(&self) -> Self {
         match self {
             Self::Resolve => Self::Resolve,
+            Self::Compute => Self::Compute,
             Self::Trigger => Self::Trigger,
             Self::Flush => Self::Flush,
             Self::Exit => Self::Exit,
@@ -61,6 +63,7 @@ impl<S: RawState> Debug for StateFlushSet<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
+            Self::Compute => write!(f, "Compute"),
             Self::Trigger => write!(f, "Trigger"),
             Self::Flush => write!(f, "Flush"),
             Self::Exit => write!(f, "Exit"),
@@ -125,6 +128,7 @@ pub fn schedule_resolve_state<S: RawState>(
         StateFlushSet::<S>::Resolve.before(ApplyFlushSet),
         (
             StateFlushSet::<S>::Trigger,
+            StateFlushSet::<S>::Compute,
             StateFlushSet::<S>::Flush.run_if(check_flush_flag::<S>),
         )
             .chain()
