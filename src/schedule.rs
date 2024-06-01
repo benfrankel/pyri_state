@@ -3,15 +3,15 @@ use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 use bevy_ecs::{
     event::{Event, EventWriter},
     schedule::{
-        InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs, NextState, Schedule,
-        ScheduleLabel, SystemSet,
+        common_conditions::not, InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs,
+        NextState, Schedule, ScheduleLabel, SystemSet,
     },
     system::{Res, ResMut},
 };
 
 use crate::state::{
-    BevyState, CurrentState, FlushState, GetState, NextStateMut, NextStateRef, RawState, SetState,
-    StateFlushRef,
+    BevyState, CurrentState, GetState, NextStateMut, NextStateRef, RawState, SetState,
+    StateFlushRef, TriggerStateFlush,
 };
 
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
@@ -83,8 +83,8 @@ pub struct StateFlushEvent<S: RawState> {
     pub new: Option<S>,
 }
 
-fn check_flush_flag<S: RawState>(flush: Res<FlushState<S>>) -> bool {
-    flush.0
+fn was_triggered<S: RawState>(trigger: Res<TriggerStateFlush<S>>) -> bool {
+    trigger.0
 }
 
 fn send_flush_event<S: GetState + Clone>(
@@ -104,7 +104,7 @@ fn apply_flush<S: GetState + Clone>(mut current: ResMut<CurrentState<S>>, next: 
 
 pub fn schedule_detect_change<S: GetState + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
-        S::set_flush(true)
+        S::trigger
             .run_if(|state: StateFlushRef<S>| matches!(state.get(), (x, y) if x != y))
             .in_set(StateFlushSet::<S>::Trigger),
     );
@@ -127,9 +127,9 @@ pub fn schedule_resolve_state<S: RawState>(
     schedule.configure_sets((
         StateFlushSet::<S>::Resolve.before(ApplyFlushSet),
         (
-            StateFlushSet::<S>::Trigger,
             StateFlushSet::<S>::Compute,
-            StateFlushSet::<S>::Flush.run_if(check_flush_flag::<S>),
+            StateFlushSet::<S>::Trigger.run_if(not(was_triggered::<S>)),
+            StateFlushSet::<S>::Flush.run_if(was_triggered::<S>),
         )
             .chain()
             .in_set(StateFlushSet::<S>::Resolve),
@@ -185,8 +185,8 @@ pub fn schedule_log_flush<S: GetState + Debug>(schedule: &mut Schedule) {
 
 pub fn schedule_apply_flush<S: GetState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
-        (apply_flush::<S>, S::set_flush(false))
-            .run_if(check_flush_flag::<S>)
+        (apply_flush::<S>, S::relax)
+            .run_if(was_triggered::<S>)
             .in_set(ApplyFlushSet),
     );
 }
@@ -204,7 +204,7 @@ pub fn schedule_bevy_state<S: GetState + SetState + Clone + PartialEq + Eq + Has
     let update_pyri_state = |mut pyri_state: NextStateMut<S>,
                              bevy_state: Res<NextState<BevyState<S>>>| {
         if let Some(value) = bevy_state.0.clone() {
-            pyri_state.set_flush(true).set(value.0);
+            pyri_state.trigger().set(value.0);
         }
     };
 

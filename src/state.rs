@@ -42,10 +42,12 @@ pub trait RawState: 'static + Send + Sync + Sized {
         systems.in_set(StateFlushSet::<Self>::Transition)
     }
 
-    fn set_flush(value: bool) -> impl 'static + Send + Sync + Fn(ResMut<FlushState<Self>>) {
-        move |mut flush| {
-            flush.0 = value;
-        }
+    fn trigger(mut trigger: ResMut<TriggerStateFlush<Self>>) {
+        trigger.trigger();
+    }
+
+    fn relax(mut trigger: ResMut<TriggerStateFlush<Self>>) {
+        trigger.relax();
     }
 }
 
@@ -178,11 +180,21 @@ impl<S: RawState> CurrentState<S> {
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct FlushState<S: RawState>(pub bool, PhantomData<S>);
+pub struct TriggerStateFlush<S: RawState>(pub bool, PhantomData<S>);
 
-impl<S: RawState> Default for FlushState<S> {
+impl<S: RawState> Default for TriggerStateFlush<S> {
     fn default() -> Self {
         Self(false, PhantomData)
+    }
+}
+
+impl<S: RawState> TriggerStateFlush<S> {
+    pub fn trigger(&mut self) {
+        self.0 = true;
+    }
+
+    pub fn relax(&mut self) {
+        self.0 = false;
     }
 }
 
@@ -216,7 +228,7 @@ impl<'w, 's, S: GetState> NextStateRef<'w, 's, S> {
 #[derive(SystemParam)]
 pub struct NextStateMut<'w, 's, S: SetState> {
     next: StaticSystemParam<'w, 's, <<S as SetState>::SetStorage as SetStateStorage<S>>::Param>,
-    flush: ResMut<'w, FlushState<S>>,
+    trigger: ResMut<'w, TriggerStateFlush<S>>,
 }
 
 impl<'w, 's, S: SetState + Default> NextStateMut<'w, 's, S> {
@@ -275,8 +287,13 @@ impl<'w, 's, S: SetState> NextStateMut<'w, 's, S> {
         matches!(self.get(), Some(x) if pattern.matches(x))
     }
 
-    pub fn set_flush(&mut self, value: bool) -> &mut Self {
-        self.flush.0 = value;
+    pub fn trigger(&mut self) -> &mut Self {
+        self.trigger.trigger();
+        self
+    }
+
+    pub fn relax(&mut self) -> &mut Self {
+        self.trigger.relax();
         self
     }
 
@@ -366,14 +383,14 @@ pub struct StateFlushMut<'w, 's, S: SetState> {
 }
 
 impl<'w, 's, S: SetState + Clone> StateFlushMut<'w, 's, S> {
-    // Set the next state to the current state and disable flush.
+    // Set the next state to the current state and relax flush.
     pub fn reset(&mut self) {
-        self.next.set_flush(false).set(self.current.0.clone());
+        self.next.relax().set(self.current.0.clone());
     }
 
-    // Set the next state to the current state and enable flush.
+    // Set the next state to the current state and trigger flush.
     pub fn refresh(&mut self) {
-        self.next.set_flush(true).set(self.current.0.clone());
+        self.next.trigger().set(self.current.0.clone());
     }
 }
 
@@ -438,8 +455,13 @@ impl<'w, 's, S: SetState> StateFlushMut<'w, 's, S> {
         self.next.set(Some(value));
     }
 
-    pub fn set_flush(&mut self, value: bool) -> &mut Self {
-        self.next.set_flush(value);
+    pub fn trigger(&mut self) -> &mut Self {
+        self.next.trigger();
+        self
+    }
+
+    pub fn relax(&mut self) -> &mut Self {
+        self.next.relax();
         self
     }
 }

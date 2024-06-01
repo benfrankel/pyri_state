@@ -8,7 +8,7 @@ use pyri_state::{
     },
     extra::stack::*,
     prelude::*,
-    state::FlushState,
+    state::TriggerStateFlush,
 };
 
 fn main() {
@@ -65,7 +65,7 @@ impl AddState for MyCustomState {
 
     fn add_state(app: &mut App) {
         app.init_resource::<CurrentState<Self>>()
-            .init_resource::<FlushState<Self>>()
+            .init_resource::<TriggerStateFlush<Self>>()
             .add_plugins((
                 ResolveStatePlugin::<Self>::default()
                     .after::<MyRawState>()
