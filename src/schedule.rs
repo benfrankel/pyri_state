@@ -10,7 +10,7 @@ use bevy_ecs::{
 };
 
 use crate::state::{
-    BevyState, CurrentState, NextStateMut, NextStateRef, State_, StateFlushRef, StateMut,
+    BevyState, CurrentState, NextStateMut, NextStateRef, StateFlushRef, StateMut, State_,
     TriggerStateFlush,
 };
 
@@ -144,41 +144,42 @@ pub fn schedule_resolve_state<S: State_>(
 }
 
 pub fn schedule_send_event<S: State_ + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(S::on_flush(send_flush_event::<S>));
+    schedule.add_systems(send_flush_event::<S>.in_set(StateFlushSet::<S>::Flush));
 }
 
 #[cfg(feature = "debug")]
 pub fn schedule_log_flush<S: State_ + Debug>(schedule: &mut Schedule) {
+    use std::any::type_name;
+
     use bevy_core::FrameCount;
-    use bevy_ecs::schedule::Condition;
     use bevy_log::info;
 
-    use crate::pattern::{StatePattern, StatePatternExtGet};
+    use crate::{pattern::StatePattern, prelude::StateTransitionPattern};
 
     fn log_state_exit<S: State_ + Debug>(frame: Res<FrameCount>, old: Res<CurrentState<S>>) {
         let frame = frame.0;
+        let ty = type_name::<S>();
         let old = old.unwrap();
-        info!("[Frame {frame}] Exit: {old:?}");
+        info!("[Frame {frame}] {ty} exit:  {old:?}");
     }
 
     fn log_state_transition<S: State_ + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
         let frame = frame.0;
+        let ty = type_name::<S>();
         let (old, new) = state.unwrap();
-        info!("[Frame {frame}] Transition: {old:?} -> {new:?}");
+        info!("[Frame {frame}] {ty} trans: {old:?} -> {new:?}");
     }
 
     fn log_state_enter<S: State_ + Debug>(frame: Res<FrameCount>, new: NextStateRef<S>) {
         let frame = frame.0;
+        let ty = type_name::<S>();
         let new = new.unwrap();
-        info!("[Frame {frame}] Enter: {new:?}");
+        info!("[Frame {frame}] {ty} enter: {new:?}");
     }
 
     schedule.add_systems((
         S::ANY.on_exit(log_state_exit::<S>),
-        // TODO: The story for flush / transition handling is not great right now.
-        S::on_transition(
-            log_state_transition::<S>.run_if(S::ANY.will_exit().and_then(S::ANY.will_enter())),
-        ),
+        (S::ANY, S::ANY).on_transition(log_state_transition::<S>),
         S::ANY.on_enter(log_state_enter::<S>),
     ));
 }
@@ -209,7 +210,7 @@ pub fn schedule_bevy_state<S: State_ + StateMut + Clone + PartialEq + Eq + Hash 
     };
 
     schedule.add_systems((
-        update_pyri_state.in_set(StateFlushSet::<S>::Trigger),
-        S::on_flush(update_bevy_state),
+        update_pyri_state.in_set(StateFlushSet::<S>::Compute),
+        update_bevy_state.in_set(StateFlushSet::<S>::Flush),
     ));
 }

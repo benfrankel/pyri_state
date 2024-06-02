@@ -1,7 +1,7 @@
 use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
-    schedule::{IntoSystemConfigs, States, SystemConfigs},
+    schedule::States,
     system::{Res, ResMut, Resource, StaticSystemParam, SystemParam},
 };
 
@@ -10,7 +10,6 @@ use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::{AnyStatePattern, FnStatePattern, StatePattern},
-    schedule::StateFlushSet,
     storage::{StateStorage, StateStorageMut},
 };
 
@@ -40,14 +39,6 @@ pub trait State_: 'static + Send + Sync + Sized {
 
     fn will_be_enabled(next: NextStateRef<Self>) -> bool {
         next.get().is_some()
-    }
-
-    fn on_flush<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems.in_set(StateFlushSet::<Self>::Flush)
-    }
-
-    fn on_transition<M>(systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        systems.in_set(StateFlushSet::<Self>::Transition)
     }
 
     fn trigger(mut trigger: ResMut<TriggerStateFlush<Self>>) {

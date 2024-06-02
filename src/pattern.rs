@@ -7,7 +7,7 @@ use bevy_ecs::{
 
 use crate::{
     schedule::StateFlushSet,
-    state::{CurrentState, NextStateRef, State_, StateFlushRef},
+    state::{CurrentState, NextStateRef, StateFlushRef, State_},
 };
 
 pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
@@ -31,9 +31,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
             .run_if(self.will_exit())
             .in_set(StateFlushSet::<S>::Exit)
     }
-}
 
-pub trait StatePatternExtGet<S: State_>: StatePattern<S> {
     fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| matches!(state.get(), (Some(x), None) if self.matches(x))
     }
@@ -65,9 +63,7 @@ pub trait StatePatternExtGet<S: State_>: StatePattern<S> {
     }
 }
 
-impl<S: State_, T: StatePattern<S>> StatePatternExtGet<S> for T {}
-
-pub trait StatePatternExtGetAndEq<S: State_ + Eq>: StatePattern<S> {
+pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| {
             matches!(
@@ -84,7 +80,7 @@ pub trait StatePatternExtGetAndEq<S: State_ + Eq>: StatePattern<S> {
     }
 }
 
-impl<S: State_ + Eq, T: StatePattern<S>> StatePatternExtGetAndEq<S> for T {}
+impl<S: State_ + Eq, T: StatePattern<S>> StatePatternExtEq<S> for T {}
 
 impl<S: State_ + Eq> StatePattern<S> for S {
     fn matches(&self, state: &S) -> bool {
@@ -127,5 +123,25 @@ pub struct AnyStatePattern<S: State_>(pub(crate) PhantomData<S>);
 impl<S: State_> StatePattern<S> for AnyStatePattern<S> {
     fn matches(&self, _state: &S) -> bool {
         true
+    }
+}
+
+pub trait StateTransitionPattern<S: State_>: 'static + Send + Sync + Sized {
+    fn matches(&self, old: &S, new: &S) -> bool;
+
+    fn will_transition(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
+        move |state| matches!(state.get(), (Some(x), Some(y)) if self.matches(x, y))
+    }
+
+    fn on_transition<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(self.will_transition())
+            .in_set(StateFlushSet::<S>::Transition)
+    }
+}
+
+impl<S: State_, P1: StatePattern<S>, P2: StatePattern<S>> StateTransitionPattern<S> for (P1, P2) {
+    fn matches(&self, old: &S, new: &S) -> bool {
+        self.0.matches(old) && self.1.matches(new)
     }
 }
