@@ -1,4 +1,4 @@
-// Harness the full power of Bevy ECS to schedule your state transitions.
+// Use run conditions and pattern matching to schedule your state transition systems.
 
 use bevy::prelude::*;
 use pyri_state::{prelude::*, state, will_flush};

@@ -1,4 +1,4 @@
-// Navigate a fixed sequence of states by index (e.g. pages).
+// Navigate a fixed sequence of states by index (e.g. for phases in a turn-based game).
 
 use std::fmt::Debug;
 

@@ -2,6 +2,8 @@
 
 `pyri_state` is a flexible alternative to `bevy_state`. In `pyri_state`, states are double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
+The next state is stored in a simple `StateBuffer` by default, but this can be swapped for a `StateStack`, a fixed `StateSequence`, or any custom data structure with a single line of code.
+
 # Showcase
 
 ```rust
@@ -43,16 +45,16 @@ fn main() {
 Click a feature to see example code.
 
 - **[Refresh](/examples/refresh.rs):** Trigger a transition from the current state to itself (e.g. to restart the current level).
-- **[Disable, enable, toggle](/examples/disable_enable_toggle.rs):** Disable or enable any state on command (great for toggle states and substates).
+- **[Disable, enable, toggle](/examples/disable_enable_toggle.rs):** Disable or enable any state on command (e.g. for simple toggle states and substates).
 - **[Partial mutation](/examples/partial_mutation.rs):** Directly update the next state instead of setting an entirely new value.
-- **[Computed & substates](/examples/computed_and_substates.rs):** Roll your own computed and substates with the full power of Bevy ECS.
-- **[Flexible scheduling](/examples/flexible_scheduling.rs):** Harness the full power of Bevy ECS to schedule your state transitions.
 - **[Custom storage](/examples/custom_storage.rs):** Swap out or define your own state storage type.
     - **Buffer:** Store a single state that can be mutated directly. This is the default storage type.
-    - **[Stack](/examples/stack_storage.rs):** Keep track of a state's history in a stack (e.g. back button).
-    - **[Sequence](/examples/sequence_storage.rs):** Navigate a fixed sequence of states by index (e.g. pages).
-- **[Ecosystem compatibility](/examples/ecosystem_compatibility.rs):** Enable a `BevyState<S>` wrapper to interact with crates that expect it.
+    - **[Stack](/examples/stack_storage.rs):** Keep track of a state's history in a stack (e.g. for a back button).
+    - **[Sequence](/examples/sequence_storage.rs):** Navigate a fixed sequence of states by index (e.g. for phases in a turn-based game).
+- **[Flexible scheduling](/examples/flexible_scheduling.rs):** Use state pattern matching and run conditions to schedule your systems.
+- **[Computed & substates](/examples/computed_and_substates.rs):** Compute states from anything in the ECS world, including other states.
 - **[Modular configuration](/examples/modular_configuration.rs):** Strip out or add plugins to your state type using the derive macro.
+- **[Ecosystem compatibility](/examples/ecosystem_compatibility.rs):** Enable a `BevyState<S>` wrapper to interact with crates that expect it.
     
 And some extra features:
 
