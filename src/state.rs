@@ -10,6 +10,7 @@ use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::{AnyStatePattern, FnStatePattern, StatePattern},
+    prelude::StateTransitionPattern,
     storage::{StateStorage, StateStorageMut},
 };
 
@@ -349,6 +350,10 @@ impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
     pub fn will_enable<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (None, Some(y)) if pattern.matches(y))
     }
+
+    pub fn will_transition<P: StateTransitionPattern<S>>(&self, pattern: &P) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if pattern.matches(x, y))
+    }
 }
 
 // Helper macro for building a pattern matching flush run condition.
@@ -421,6 +426,10 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
 
     pub fn will_enable<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (None, Some(y)) if pattern.matches(y))
+    }
+
+    pub fn will_transition<P: StateTransitionPattern<S>>(&self, pattern: &P) -> bool {
+        matches!(self.get(), (Some(x), Some(y)) if pattern.matches(x, y))
     }
 
     pub fn disable(&mut self) {
