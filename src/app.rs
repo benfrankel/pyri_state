@@ -154,23 +154,6 @@ impl<S: State_ + Clone> Default for FlushEventPlugin<S> {
     }
 }
 
-#[cfg(feature = "debug")]
-pub struct LogFlushPlugin<S: State_ + Debug>(PhantomData<S>);
-
-#[cfg(feature = "debug")]
-impl<S: State_ + Debug> Plugin for LogFlushPlugin<S> {
-    fn build(&self, app: &mut App) {
-        crate::schedule::schedule_log_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "debug")]
-impl<S: State_ + Debug> Default for LogFlushPlugin<S> {
-    fn default() -> Self {
-        Self(PhantomData)
-    }
-}
-
 pub struct BevyStatePlugin<S: StateMut + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
 
 impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {

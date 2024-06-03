@@ -20,6 +20,8 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let current_state_ty = concat(crate_state_path.clone(), format_ident!("CurrentState"));
     let trigger_state_flush_ty =
         concat(crate_state_path.clone(), format_ident!("TriggerStateFlush"));
+    #[cfg(feature = "debug")]
+    let crate_debug_path = concat(crate_path.clone(), format_ident!("debug"));
 
     // Construct resolve state plugin.
     let resolve_state = {
@@ -59,23 +61,22 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     };
 
     // Construct simple plugins.
-    let simple_plugin = |ty_prefix: &str, enable: bool| {
+    let simple_plugin = |path: &Path, ty_prefix: &str, enable: bool| {
         if enable {
-            let state_plugin_ty =
-                concat(crate_app_path.clone(), format_ident!("{ty_prefix}Plugin"));
+            let state_plugin_ty = concat(path.clone(), format_ident!("{ty_prefix}Plugin"));
             quote! { #state_plugin_ty::<Self>::default(), }
         } else {
             quote! {}
         }
     };
-    let detect_change = simple_plugin("DetectChange", attrs.detect_change);
-    let flush_event = simple_plugin("FlushEvent", attrs.flush_event);
+    let detect_change = simple_plugin(&crate_app_path, "DetectChange", attrs.detect_change);
+    let flush_event = simple_plugin(&crate_app_path, "FlushEvent", attrs.flush_event);
     #[cfg(not(feature = "debug"))]
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
-    let log_flush = simple_plugin("LogFlush", attrs.log_flush);
-    let bevy_state = simple_plugin("BevyState", attrs.bevy_state);
-    let apply_flush = simple_plugin("ApplyFlush", attrs.apply_flush);
+    let log_flush = simple_plugin(&crate_debug_path, "LogFlush", attrs.log_flush);
+    let bevy_state = simple_plugin(&crate_app_path, "BevyState", attrs.bevy_state);
+    let apply_flush = simple_plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush);
 
     quote! {
         impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {

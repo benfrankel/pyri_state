@@ -147,43 +147,6 @@ pub fn schedule_send_event<S: State_ + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateFlushSet::<S>::Flush));
 }
 
-#[cfg(feature = "debug")]
-pub fn schedule_log_flush<S: State_ + Debug>(schedule: &mut Schedule) {
-    use std::any::type_name;
-
-    use bevy_core::FrameCount;
-    use bevy_log::info;
-
-    use crate::{pattern::StatePattern, prelude::StateTransitionPattern};
-
-    fn log_state_exit<S: State_ + Debug>(frame: Res<FrameCount>, old: Res<CurrentState<S>>) {
-        let frame = frame.0;
-        let ty = type_name::<S>();
-        let old = old.unwrap();
-        info!("[Frame {frame}] {ty} exit:  {old:?}");
-    }
-
-    fn log_state_transition<S: State_ + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
-        let frame = frame.0;
-        let ty = type_name::<S>();
-        let (old, new) = state.unwrap();
-        info!("[Frame {frame}] {ty} trans: {old:?} -> {new:?}");
-    }
-
-    fn log_state_enter<S: State_ + Debug>(frame: Res<FrameCount>, new: NextStateRef<S>) {
-        let frame = frame.0;
-        let ty = type_name::<S>();
-        let new = new.unwrap();
-        info!("[Frame {frame}] {ty} enter: {new:?}");
-    }
-
-    schedule.add_systems((
-        S::ANY.on_exit(log_state_exit::<S>),
-        (S::ANY, S::ANY).on_transition(log_state_transition::<S>),
-        S::ANY.on_enter(log_state_enter::<S>),
-    ));
-}
-
 pub fn schedule_apply_flush<S: State_ + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::relax)
