@@ -2,11 +2,12 @@
 
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
-use pyri_state::{extra::stack::*, prelude::*, state};
+use pyri_state::{debug::DebugPyriState, extra::stack::*, prelude::*, state};
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .insert_resource(DebugPyriState::Enabled)
         // Add the `Menu` state with `Menu::Main` as the fixed base of the stack.
         .insert_state_(StateStack::with_base(Menu::Main))
         .init_state_::<GameState>()

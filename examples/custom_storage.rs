@@ -4,6 +4,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ecs::system::lifetimeless::{SRes, SResMut};
 use pyri_state::{
     app::{AddState, AddStateStorage},
+    debug::DebugPyriState,
     extra::stack::*,
     prelude::*,
     storage::{StateStorage, StateStorageMut},
@@ -12,6 +13,7 @@ use pyri_state::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .insert_resource(DebugPyriState::Enabled)
         .init_state_::<MyBufferedState>()
         .init_state_::<MyStackedState>()
         .insert_state_(StateSwap([

@@ -3,37 +3,12 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;
-use pyri_state::prelude::*;
-
-mod input {
-    use pyri_state::extra::split::SplitState;
-    use pyri_state_derive::State;
-
-    // InputMode is defined as a split state in `mod input`.
-    #[derive(State, Clone, PartialEq, Eq, Debug)]
-    #[state(log_flush)]
-    pub struct InputMode(pub SplitState);
-}
-
-mod game {
-    use super::input::InputMode;
-    use pyri_state::add_to_split_state;
-
-    // The Move and Attack states are added to InputMode in `mod game`.
-    add_to_split_state!(InputMode, Move, Attack);
-}
-
-mod ui {
-    use super::input::InputMode;
-    use pyri_state::add_to_split_state;
-
-    // The Menu state is added to InputMode in `mod ui`.
-    add_to_split_state!(InputMode, Menu);
-}
+use pyri_state::{debug::DebugPyriState, prelude::*};
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .insert_resource(DebugPyriState::Enabled)
         .insert_state_(StateBuffer::enabled(InputMode::Move))
         .add_systems(
             Update,
@@ -69,6 +44,32 @@ fn main() {
             ),
         )
         .run();
+}
+
+mod input {
+    use pyri_state::extra::split::SplitState;
+    use pyri_state_derive::State;
+
+    // InputMode is defined as a split state in `mod input`.
+    #[derive(State, Clone, PartialEq, Eq, Debug)]
+    #[state(log_flush)]
+    pub struct InputMode(pub SplitState);
+}
+
+mod game {
+    use super::input::InputMode;
+    use pyri_state::add_to_split_state;
+
+    // The Move and Attack states are added to InputMode in `mod game`.
+    add_to_split_state!(InputMode, Move, Attack);
+}
+
+mod ui {
+    use super::input::InputMode;
+    use pyri_state::add_to_split_state;
+
+    // The Menu state is added to InputMode in `mod ui`.
+    add_to_split_state!(InputMode, Menu);
 }
 
 fn move_left() {

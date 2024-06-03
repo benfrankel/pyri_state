@@ -3,11 +3,12 @@
 use std::fmt::Debug;
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use pyri_state::{extra::sequence::*, prelude::*};
+use pyri_state::{debug::DebugPyriState, extra::sequence::*, prelude::*};
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .insert_resource(DebugPyriState::Enabled)
         // Add the `Page` state with the provided sequence.
         .insert_state_(StateSequence::new([
             None,

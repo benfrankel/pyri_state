@@ -5,11 +5,12 @@ use std::{fmt::Debug, time::Duration};
 use bevy::{
     input::common_conditions::input_just_pressed, prelude::*, time::common_conditions::on_timer,
 };
-use pyri_state::prelude::*;
+use pyri_state::{debug::DebugPyriState, prelude::*};
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .insert_resource(DebugPyriState::Enabled)
         .init_state_::<ColorMode>()
         .add_systems(
             Update,

@@ -1,11 +1,12 @@
 // Disable or enable any state on command (e.g. for simple toggle states and substates).
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use pyri_state::prelude::*;
+use pyri_state::{debug::DebugPyriState, prelude::*};
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .insert_resource(DebugPyriState::Enabled)
         .add_state_::<Paused>()
         .add_systems(StateFlush, Paused.on_edge(unpause, pause))
         .add_systems(
@@ -19,7 +20,8 @@ fn main() {
         .run();
 }
 
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State, Clone, PartialEq, Eq, Debug)]
+#[state(log_flush)]
 struct Paused;
 
 // Dummy systems:
