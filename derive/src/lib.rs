@@ -3,7 +3,7 @@ mod app;
 mod util;
 
 use proc_macro::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 use syn::{
     parse_macro_input, parse_str, punctuated::Punctuated, DeriveInput, Error, Meta, Path, Result,
     Token, Type,
@@ -40,8 +40,8 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     // Construct paths.
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
-    let crate_state_path = concat(crate_path.clone(), format_ident!("state"));
-    let state_trait = concat(crate_state_path.clone(), format_ident!("State_"));
+    let crate_state_path = concat(crate_path.clone(), "state");
+    let state_trait = concat(crate_state_path.clone(), "State_");
 
     // Construct storage type.
     let storage_ty = if let Some(storage) = attrs.storage.as_ref() {
@@ -49,8 +49,8 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
             #storage
         }
     } else {
-        let crate_storage_path = concat(crate_path.clone(), format_ident!("storage"));
-        let state_buffer_ty = concat(crate_storage_path.clone(), format_ident!("StateBuffer"));
+        let crate_storage_path = concat(crate_path.clone(), "storage");
+        let state_buffer_ty = concat(crate_storage_path.clone(), "StateBuffer");
 
         quote! {
             #state_buffer_ty<Self>
