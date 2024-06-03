@@ -17,7 +17,7 @@ pub mod prelude {
 
     #[doc(hidden)]
     pub use crate::{
-        pattern::{StatePattern, StatePatternExtEq, StateTransitionPattern},
+        pattern::{StatePatterExtClone, StatePattern, StatePatternExtEq, StateTransitionPattern},
         schedule::{StateFlush, StateFlushEvent},
         state::{
             CurrentState, NextStateMut, NextStateRef, StateFlushMut, StateFlushRef, StateMut,

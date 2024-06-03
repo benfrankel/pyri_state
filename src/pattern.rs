@@ -63,6 +63,22 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     }
 }
 
+pub trait StatePatterExtClone<S: State_>: StatePattern<S> + Clone {
+    fn on_edge<M1, M2>(
+        self,
+        exit_systems: impl IntoSystemConfigs<M1>,
+        enter_systems: impl IntoSystemConfigs<M2>,
+    ) -> SystemConfigs {
+        (
+            self.clone().on_exit(exit_systems),
+            self.on_enter(enter_systems),
+        )
+            .into_configs()
+    }
+}
+
+impl<S: State_, P: StatePattern<S> + Clone> StatePatterExtClone<S> for P {}
+
 pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| state.will_refresh(&self)
@@ -75,7 +91,7 @@ pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     }
 }
 
-impl<S: State_ + Eq, T: StatePattern<S>> StatePatternExtEq<S> for T {}
+impl<S: State_ + Eq, P: StatePattern<S>> StatePatternExtEq<S> for P {}
 
 impl<S: State_ + Eq> StatePattern<S> for S {
     fn matches(&self, state: &S) -> bool {
@@ -83,7 +99,10 @@ impl<S: State_ + Eq> StatePattern<S> for S {
     }
 }
 
-pub struct FnStatePattern<S: State_, F: Fn(&S) -> bool>(pub(crate) F, pub(crate) PhantomData<S>);
+#[derive(Clone)]
+pub struct FnStatePattern<S: State_, F>(pub(crate) F, pub(crate) PhantomData<S>)
+where
+    F: 'static + Send + Sync + Fn(&S) -> bool;
 
 impl<S: State_, F> StatePattern<S> for FnStatePattern<S, F>
 where
@@ -96,7 +115,7 @@ where
 
 impl<S: State_, F> FnStatePattern<S, F>
 where
-    F: Fn(&S) -> bool,
+    F: 'static + Send + Sync + Fn(&S) -> bool,
 {
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
@@ -113,6 +132,7 @@ macro_rules! state {
     };
 }
 
+#[derive(Clone)]
 pub struct AnyStatePattern<S: State_>(pub(crate) PhantomData<S>);
 
 impl<S: State_> StatePattern<S> for AnyStatePattern<S> {

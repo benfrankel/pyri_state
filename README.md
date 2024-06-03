@@ -28,10 +28,8 @@ fn main() {
         .add_systems(
             StateFlush,
             (
-                GameState::Playing.on_exit(Level::disable),
-                GameState::Playing.on_enter(Level::enable_default),
-                Level::ANY.on_exit(tear_down_old_level),
-                Level::ANY.on_enter(set_up_new_level),
+                GameState::Playing.on_edge(Level::disable, Level::enable_default),
+                Level::ANY.on_edge(tear_down_old_level, set_up_new_level),
                 Level(10).on_enter(play_boss_music),
                 state!(Level(4 | 7 | 10)).on_enter(save_progress),
                 Level::with(|x| x.0 < 4).on_enter(spawn_tutorial_popup),

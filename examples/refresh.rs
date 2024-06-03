@@ -9,10 +9,7 @@ fn main() {
         .init_state_::<Level>()
         .add_systems(
             StateFlush,
-            (
-                Level::ANY.on_exit(tear_down_old_level),
-                Level::ANY.on_enter(set_up_new_level),
-            ),
+            Level::ANY.on_edge(tear_down_old_level, set_up_new_level),
         )
         .add_systems(
             Update,

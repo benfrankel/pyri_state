@@ -7,10 +7,7 @@ fn main() {
     App::new()
         .add_plugins((DefaultPlugins, PyriStatePlugin))
         .add_state_::<Paused>()
-        .add_systems(
-            StateFlush,
-            (Paused.on_exit(unpause), Paused.on_enter(pause)),
-        )
+        .add_systems(StateFlush, Paused.on_edge(unpause, pause))
         .add_systems(
             Update,
             (

@@ -13,8 +13,10 @@ fn main() {
             StateFlush,
             (
                 // Enable CheckerboardSquare only during GameState::Playing.
-                GameState::Playing.on_exit(CheckerboardSquare::disable),
-                GameState::Playing.on_enter(CheckerboardSquare::enable_default),
+                GameState::Playing.on_edge(
+                    CheckerboardSquare::disable,
+                    CheckerboardSquare::enable_default,
+                ),
                 // Compute SquareColor from CheckerboardSquare.
                 CheckerboardSquare::ANY.on_enter(compute_square_color),
             ),

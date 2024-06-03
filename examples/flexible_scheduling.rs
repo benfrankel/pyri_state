@@ -8,11 +8,14 @@ fn main() {
         .add_plugins((DefaultPlugins, PyriStatePlugin))
         .add_state_::<Level>()
         .init_resource::<LevelMeta>()
-        // Upon exiting any level, remove its entities and resources.
-        .add_systems(StateFlush, Level::ANY.on_exit(tear_down_level))
         .add_systems(
             StateFlush,
-            // Upon entering any level, do the following:
+            // Schedule the basic level teardown / setup.
+            Level::ANY.on_edge(tear_down_old_level, load_new_level),
+        )
+        .add_systems(
+            StateFlush,
+            // Upon entering a level, also do the following:
             Level::ANY.on_enter((
                 // Level 10 is the final boss fight, so play boss music.
                 play_boss_music.run_if(Level(10).will_enter()),
@@ -24,12 +27,12 @@ fn main() {
                 spawn_easter_egg.run_if(will_flush!(
                     (Some(Level(x @ (2 | 5..=8))), Some(&Level(y))) if y == 10 - x,
                 )),
-                // Levels are randomly generated, but they should only be generated once.
-                gen_level.run_if(|level: NextStateRef<Level>, meta: Res<LevelMeta>| {
-                    !meta.generated[level.unwrap().0]
-                }),
-                // Load the next level after it's been generated.
-                load_level.after(gen_level),
+                // Randomly generate the next level before loading it, if necessary.
+                generate_new_level.before(load_new_level).run_if(
+                    |level: NextStateRef<Level>, meta: Res<LevelMeta>| {
+                        !meta.generated[level.unwrap().0]
+                    },
+                ),
             )),
         )
         .run();
@@ -44,10 +47,10 @@ struct LevelMeta {
 }
 
 // Dummy systems:
-fn tear_down_level(_level: Res<CurrentState<Level>>) {}
+fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}
+fn load_new_level(_level: NextStateRef<Level>) {}
 fn play_boss_music() {}
 fn save_progress() {}
 fn spawn_tutorial_popup() {}
 fn spawn_easter_egg() {}
-fn gen_level(_level: NextStateRef<Level>) {}
-fn load_level(_level: NextStateRef<Level>) {}
+fn generate_new_level(_level: NextStateRef<Level>) {}
