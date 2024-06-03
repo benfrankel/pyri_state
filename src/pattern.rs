@@ -33,7 +33,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     }
 
     fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
-        move |state| matches!(state.get(), (Some(x), None) if self.matches(x))
+        move |state| state.will_disable(&self)
     }
 
     fn on_disable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -43,7 +43,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     }
 
     fn will_enter(self) -> impl 'static + Send + Sync + Fn(NextStateRef<S>) -> bool {
-        move |state| matches!(state.get(), Some(x) if self.matches(x))
+        move |state| state.will_be_in(&self)
     }
 
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -53,7 +53,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     }
 
     fn will_enable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
-        move |state| matches!(state.get(), (None, Some(x)) if self.matches(x))
+        move |state| state.will_enable(&self)
     }
 
     fn on_enable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -65,12 +65,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
 
 pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
-        move |state| {
-            matches!(
-                state.get(),
-                (Some(x), Some(y)) if x == y && self.matches(y),
-            )
-        }
+        move |state| state.will_refresh(&self)
     }
 
     fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
@@ -130,7 +125,7 @@ pub trait StateTransitionPattern<S: State_>: 'static + Send + Sync + Sized {
     fn matches(&self, old: &S, new: &S) -> bool;
 
     fn will_transition(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
-        move |state| matches!(state.get(), (Some(x), Some(y)) if self.matches(x, y))
+        move |state| state.will_transition(&self)
     }
 
     fn on_transition<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
