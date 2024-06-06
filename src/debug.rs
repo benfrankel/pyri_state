@@ -1,3 +1,5 @@
+//! TODO: Module-level documentation
+
 use std::{any::type_name, fmt::Debug, marker::PhantomData};
 
 use bevy_app::{App, Plugin};
@@ -23,7 +25,7 @@ use crate::{
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub enum DebugPyriState {
+pub enum StateDebugSettings {
     #[default]
     Disabled,
     Enabled,
@@ -71,6 +73,6 @@ pub fn schedule_log_flush<S: State_ + Debug>(schedule: &mut Schedule) {
             (S::ANY, S::ANY).on_transition(log_state_transition::<S>),
             S::ANY.on_enter(log_state_enter::<S>),
         )
-            .run_if(resource_exists_and_equals(DebugPyriState::Enabled)),
+            .run_if(resource_exists_and_equals(StateDebugSettings::Enabled)),
     );
 }

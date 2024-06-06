@@ -1,3 +1,5 @@
+//! TODO: Module-level documentation
+
 use bevy_ecs::{
     system::{
         lifetimeless::{SRes, SResMut},
@@ -11,24 +13,46 @@ use crate::{
     state::{StateMut, State_},
 };
 
-// Trait for types that can be used as a state's storage.
+/// A type that describes how the [`State_`] type `S` will be stored in the ECS world.
+///
+/// The default storage type is [`StateBuffer`]. You can set a different storage type in the derive macro:
+///
+/// ```rust
+/// #[derive(State, Clone, PartialEq, Eq)]
+/// #[state(storage(StateStack<Self>))]
+/// enum MenuState { ... }
+/// ```
+///
+/// Use [`NextStateRef`](crate::state::NextStateRef) or [`StateFlushRef`](crate::state::StateFlushRef)
+/// in a system for read-only access to the next state.
+///
+/// See [`StateStorageMut`] for mutable storage.
 pub trait StateStorage<S: State_> {
+    /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;
 
+    /// Get a reference to the next state, or `None` if it's disabled.
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S>;
 }
 
-pub trait StateStorageMut<S: State_> {
-    type Param: SystemParam;
+/// A [`StateStorage`] type that allows `S` to be mutated directly as a [`StateMut`].
+///
+/// Use [`NextStateMut`](crate::state::NextStateMut) or [`StateFlushMut`](crate::state::StateFlushMut)
+/// in a system for mutable access to the next state.
+pub trait StateStorageMut<S: State_>: StateStorage<S> {
+    /// A [`SystemParam`] with mutable access to the next state.
+    type ParamMut: SystemParam;
 
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S>;
+    /// Get a reference to the next state, or `None` if it's disabled.
+    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S>;
 
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut S>;
+    /// Get a mutable reference to the next state, or `None` if it's disabled.
+    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S>;
 
-    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>);
+    /// Set the next state to a new value, or `None` to disable.
+    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>);
 }
 
-// A state is `StateMut` if its storage is `StateStorageMut`.
 impl<S: State_> StateMut for S
 where
     S::Storage: StateStorageMut<S>,
@@ -36,8 +60,7 @@ where
     type StorageMut = S::Storage;
 }
 
-// TODO: Update this comment and the other one.
-// The mutable half of the double-buffered state.
+/// The default [`StateStorage`] type, storing the next state in a resource.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -45,7 +68,10 @@ where
     // TODO: In bevy 0.14 this will be possible.
     //reflect(Resource)
 )]
-pub struct StateBuffer<S: State_>(pub Option<S>);
+pub struct StateBuffer<S: State_>(
+    /// The next state, or `None` if disabled.
+    pub Option<S>,
+);
 
 impl<S: State_> StateStorage<S> for StateBuffer<S> {
     type Param = SRes<Self>;
@@ -56,17 +82,17 @@ impl<S: State_> StateStorage<S> for StateBuffer<S> {
 }
 
 impl<S: State_> StateStorageMut<S> for StateBuffer<S> {
-    type Param = SResMut<Self>;
+    type ParamMut = SResMut<Self>;
 
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S> {
         param.get()
     }
 
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut S> {
+    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S> {
         param.get_mut()
     }
 
-    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>) {
+    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
         param.set(state);
     }
 }
@@ -87,64 +113,78 @@ impl<S: State_ + FromWorld> FromWorld for StateBuffer<S> {
 }
 
 impl<S: State_> StateBuffer<S> {
+    /// Create a disabled `StateBuffer`.
     pub fn disabled() -> Self {
         Self(None)
     }
 
-    pub fn enabled(value: S) -> Self {
-        Self(Some(value))
+    /// Create an enabled `StateBuffer` with a specific value.
+    pub fn enabled(state: S) -> Self {
+        Self(Some(state))
     }
 
+    /// Get a reference to the next state, or `None` if it's disabled.
     pub fn get(&self) -> Option<&S> {
         self.0.as_ref()
     }
 
+    /// Get a mutable reference to the next state, or `None` if it's disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
         self.0.as_mut()
     }
 
+    /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
         self.0 = state;
     }
 
+    /// Get a reference to the next state, or panic if it's disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }
 
+    /// Get a mutable reference to the next state, or panic if it's disabled.
     pub fn unwrap_mut(&mut self) -> &mut S {
         self.get_mut().unwrap()
     }
 
+    /// Check if the next state is disabled.
     pub fn is_disabled(&self) -> bool {
         self.0.is_none()
     }
 
+    /// Check if the next state is enabled.
     pub fn is_enabled(&self) -> bool {
         self.0.is_some()
     }
 
+    /// Check if the next state is enabled and matches a specific [`StatePattern`].
     pub fn is_in<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), Some(x) if pattern.matches(x))
     }
 
+    /// Disable the next state.
     pub fn disable(&mut self) {
         self.0 = None;
     }
 
-    // Enter the given state if disabled.
-    pub fn enable(&mut self, value: S) -> &mut S {
-        self.0.get_or_insert(value)
+    /// Enable the next state with a specific value if it's disabled, and
+    /// return a mutable reference to the next state.
+    pub fn enable(&mut self, state: S) -> &mut S {
+        self.0.get_or_insert(state)
     }
 
-    // Toggle between the given state and disabled.
-    pub fn toggle(&mut self, value: S) {
+    /// Toggle between disabled and enabled with a specific value.
+    pub fn toggle(&mut self, state: S) {
         if self.is_enabled() {
             self.disable();
         } else {
-            self.enter(value);
+            self.enter(state);
         }
     }
 
+    /// Enable the next state with a specific value, and
+    /// return a mutable reference to the next state.
     pub fn enter(&mut self, value: S) -> &mut S {
         self.0.insert(value)
     }

@@ -1,4 +1,6 @@
-/// Define your own split state type by newtyping SplitState:
+//! TODO: Module-level documentation
+
+/// Define your own split state type by newtyping `SplitState`:
 ///
 /// ```rust
 /// use pyri_state::prelude::*;
@@ -11,7 +13,6 @@
 /// add_to_split_state!(MyState, Foo, Bar);
 /// add_to_split_state!(MyState, Quux);
 /// ```
-
 pub type SplitState = &'static str;
 
 #[macro_export]

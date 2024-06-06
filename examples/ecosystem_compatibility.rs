@@ -8,7 +8,7 @@ use iyes_progress::prelude::*;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .add_plugins((DefaultPlugins, StatePlugin))
         .init_state_::<GameState>()
         .init_collection::<GameAssets>()
         .add_loading_state(

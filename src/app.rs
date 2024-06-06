@@ -1,3 +1,5 @@
+//! TODO: Module-level documentation
+
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::marker::PhantomData;
@@ -16,9 +18,9 @@ use crate::{
     state::{BevyState, CurrentState, StateMut, State_},
 };
 
-pub struct PyriStatePlugin;
+pub struct StatePlugin;
 
-impl Plugin for PyriStatePlugin {
+impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
         app.init_schedule(StateFlush)
             .world
@@ -27,7 +29,7 @@ impl Plugin for PyriStatePlugin {
     }
 }
 
-pub trait AppExtPyriState {
+pub trait AppExtState {
     fn add_state_<S: AddState>(&mut self) -> &mut Self;
 
     fn init_state_<S: AddState>(&mut self) -> &mut Self
@@ -37,7 +39,7 @@ pub trait AppExtPyriState {
     fn insert_state_<T: AddStateStorage>(&mut self, storage: T) -> &mut Self;
 }
 
-impl AppExtPyriState for App {
+impl AppExtState for App {
     fn add_state_<S: AddState>(&mut self) -> &mut Self {
         if !self.world.contains_resource::<CurrentState<S>>() {
             S::AddStorage::add_state_storage(self, None);
@@ -73,6 +75,41 @@ pub trait AddStateStorage: Sized {
     fn add_state_storage(app: &mut App, storage: Option<Self>);
 }
 
+/// TODO
+///
+/// ```rust
+/// // Clone + PartialEq + Eq are required by the derive macro by default.
+/// #[derive(State, Clone, PartialEq, Eq)]
+/// enum GameState { ... }
+///
+/// #[derive(State)]
+/// #[state(no_defaults)]
+/// struct RawState;
+///
+/// // The following options are provided by the derive macro:
+/// #[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
+/// #[state(
+///     // Disable default plugins: detect_change, flush_event, apply_flush.
+///     no_defaults,
+///     // Trigger a flush on any state change (requires PartialEq, Eq).
+///     detect_change,
+///     // Send an event on flush (requires Clone).
+///     flush_event,
+///     // Log on exit, transition, and enter (requires Debug).
+///     log_flush,
+///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
+///     bevy_state,
+///     // Clone the next state into the current state on flush (requires Clone).
+///     apply_flush,
+///     // Swap out the default `StateBuffer<Self>` for a custom storage type.
+///     storage(StateStack<Self>),
+///     // Run this state's on flush systems after resolving the listed states.
+///     after(GameState),
+///     // Run this state's on flush systems before resolving the listed states.
+///     before(RawState),
+/// )]
+/// struct ConfiguredState;
+/// ```
 pub trait AddState: State_ {
     type AddStorage: AddStateStorage;
 

@@ -4,7 +4,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ecs::system::lifetimeless::{SRes, SResMut};
 use pyri_state::{
     app::{AddState, AddStateStorage},
-    debug::DebugPyriState,
+    debug::StateDebugSettings,
     extra::stack::*,
     prelude::*,
     storage::{StateStorage, StateStorageMut},
@@ -12,8 +12,8 @@ use pyri_state::{
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PyriStatePlugin))
-        .insert_resource(DebugPyriState::Enabled)
+        .add_plugins((DefaultPlugins, StatePlugin))
+        .insert_resource(StateDebugSettings::Enabled)
         .init_state_::<MyBufferedState>()
         .init_state_::<MyStackedState>()
         .insert_state_(StateSwap([
@@ -69,21 +69,21 @@ impl<S: State_> StateStorage<S> for StateSwap<S> {
 // This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
 // and attaches systems such as `S::disable`.
 impl<S: State_> StateStorageMut<S> for StateSwap<S> {
-    type Param = SResMut<Self>;
+    type ParamMut = SResMut<Self>;
 
     fn get_state_from_mut<'s>(
-        param: &'s bevy_ecs::system::SystemParamItem<Self::Param>,
+        param: &'s bevy_ecs::system::SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s S> {
         param.0[0].as_ref()
     }
 
     fn get_state_mut<'s>(
-        param: &'s mut bevy_ecs::system::SystemParamItem<Self::Param>,
+        param: &'s mut bevy_ecs::system::SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut S> {
         param.0[0].as_mut()
     }
 
-    fn set_state(param: &mut bevy_ecs::system::SystemParamItem<Self::Param>, state: Option<S>) {
+    fn set_state(param: &mut bevy_ecs::system::SystemParamItem<Self::ParamMut>, state: Option<S>) {
         param.0[0] = state;
     }
 }

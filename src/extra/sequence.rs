@@ -1,3 +1,5 @@
+//! TODO: Module-level documentation
+
 use bevy_ecs::system::{lifetimeless::SRes, ResMut, Resource, SystemParamItem};
 
 use crate::{state::State_, storage::StateStorage};

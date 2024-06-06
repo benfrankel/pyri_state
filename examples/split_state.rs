@@ -3,12 +3,12 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;
-use pyri_state::{debug::DebugPyriState, prelude::*};
+use pyri_state::{debug::StateDebugSettings, prelude::*};
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PyriStatePlugin))
-        .insert_resource(DebugPyriState::Enabled)
+        .add_plugins((DefaultPlugins, StatePlugin))
+        .insert_resource(StateDebugSettings::Enabled)
         .insert_state_(StateBuffer::enabled(InputMode::Move))
         .add_systems(
             Update,

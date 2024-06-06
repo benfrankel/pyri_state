@@ -22,7 +22,7 @@ struct Level(usize);
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .add_plugins((DefaultPlugins, StatePlugin))
         .init_state_::<GameState>()
         .add_state_::<Level>()
         .add_systems(

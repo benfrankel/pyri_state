@@ -1,3 +1,5 @@
+//! TODO: Module-level documentation
+
 use std::marker::PhantomData;
 
 use bevy_ecs::{
@@ -63,7 +65,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     }
 }
 
-pub trait StatePatterExtClone<S: State_>: StatePattern<S> + Clone {
+pub trait StatePatternExtClone<S: State_>: StatePattern<S> + Clone {
     fn on_edge<M1, M2>(
         self,
         exit_systems: impl IntoSystemConfigs<M1>,
@@ -77,7 +79,7 @@ pub trait StatePatterExtClone<S: State_>: StatePattern<S> + Clone {
     }
 }
 
-impl<S: State_, P: StatePattern<S> + Clone> StatePatterExtClone<S> for P {}
+impl<S: State_, P: StatePattern<S> + Clone> StatePatternExtClone<S> for P {}
 
 pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {

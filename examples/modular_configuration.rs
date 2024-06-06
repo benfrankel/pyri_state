@@ -13,7 +13,7 @@ use pyri_state::{
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .add_plugins((DefaultPlugins, StatePlugin))
         .add_state_::<MyBasicState>()
         .add_state_::<MyDerivedState>()
         .add_state_::<MyCustomState>()
@@ -41,13 +41,13 @@ struct MyBasicState;
     bevy_state,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
-    // Swap out the default `StateBuffer<Self>` with a custom storage type.
+    // Swap out the default `StateBuffer<Self>` for a custom storage type.
     // (see `custom_storage` example for more information)
     storage(StateStack<Self>),
-    // Run this state's on flush systems after the listed states resolve.
+    // Run this state's on flush systems after resolving the listed states.
     after(MyBasicState),
-    // Run this state's on flush systems before the listed states resolve.
-    before(MyCustomState, UselessState)
+    // Run this state's on flush systems before resolving the listed states.
+    before(MyCustomState, UselessState),
 )]
 struct MyDerivedState;
 

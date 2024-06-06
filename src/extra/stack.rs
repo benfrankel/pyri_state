@@ -1,3 +1,5 @@
+//! TODO: Module-level documentation
+
 use bevy_ecs::{
     system::{
         lifetimeless::{SRes, SResMut},
@@ -33,17 +35,17 @@ impl<S: State_> StateStorage<S> for StateStack<S> {
 }
 
 impl<S: State_> StateStorageMut<S> for StateStack<S> {
-    type Param = SResMut<Self>;
+    type ParamMut = SResMut<Self>;
 
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S> {
         param.get()
     }
 
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::Param>) -> Option<&'s mut S> {
+    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S> {
         param.get_mut()
     }
 
-    fn set_state(param: &mut SystemParamItem<Self::Param>, state: Option<S>) {
+    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
         param.set(state);
     }
 }

@@ -5,7 +5,7 @@ use pyri_state::{prelude::*, state, will_flush};
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PyriStatePlugin))
+        .add_plugins((DefaultPlugins, StatePlugin))
         .add_state_::<Level>()
         .init_resource::<LevelMeta>()
         .add_systems(
