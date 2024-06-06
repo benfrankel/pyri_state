@@ -118,7 +118,7 @@ pub struct StateFlushEvent<S: State_> {
     pub new: Option<S>,
 }
 
-fn was_triggered<S: State_>(trigger: Res<TriggerStateFlush<S>>) -> bool {
+pub(crate) fn was_triggered<S: State_>(trigger: Res<TriggerStateFlush<S>>) -> bool {
     trigger.0
 }
 

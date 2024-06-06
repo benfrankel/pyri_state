@@ -5,7 +5,7 @@ use std::{any::type_name, fmt::Debug, marker::PhantomData};
 use bevy_app::{App, Plugin};
 use bevy_core::FrameCount;
 use bevy_ecs::{
-    schedule::{common_conditions::resource_exists, IntoSystemConfigs, Schedule},
+    schedule::{common_conditions::resource_exists, Condition, IntoSystemConfigs, Schedule},
     system::{Res, Resource},
 };
 use bevy_log::info;
@@ -14,8 +14,7 @@ use bevy_log::info;
 use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
-    pattern::{StatePattern, StateTransPattern},
-    schedule::{StateFlush, StateFlushSet},
+    schedule::{was_triggered, StateFlush, StateFlushSet},
     state::{CurrentState, NextStateRef, StateFlushRef, State_},
 };
 
@@ -78,16 +77,20 @@ pub fn schedule_log_flush<S: State_ + Debug>(schedule: &mut Schedule) {
     schedule.add_systems(
         (
             log_state_flush::<S>
+                .after(StateFlushSet::<S>::Trigger)
+                .before(StateFlushSet::<S>::Flush)
+                .run_if(was_triggered::<S>.and_then(|x: Res<StateDebugSettings>| x.log_flush)),
+            log_state_exit::<S>
                 .in_set(StateFlushSet::<S>::Flush)
-                .run_if(|x: Res<StateDebugSettings>| x.log_flush),
-            S::ANY
-                .on_exit(log_state_exit::<S>)
+                .before(StateFlushSet::<S>::Exit)
                 .run_if(|x: Res<StateDebugSettings>| x.log_exit),
-            (S::ANY, S::ANY)
-                .on_trans(log_state_trans::<S>)
+            log_state_trans::<S>
+                .after(StateFlushSet::<S>::Exit)
+                .before(StateFlushSet::<S>::Trans)
                 .run_if(|x: Res<StateDebugSettings>| x.log_trans),
-            S::ANY
-                .on_enter(log_state_enter::<S>)
+            log_state_enter::<S>
+                .after(StateFlushSet::<S>::Trans)
+                .before(StateFlushSet::<S>::Enter)
                 .run_if(|x: Res<StateDebugSettings>| x.log_enter),
         )
             .run_if(resource_exists::<StateDebugSettings>),
