@@ -38,6 +38,7 @@ use crate::{
 /// See [`AddState`](crate::app::AddState) for more information on the derive macro.
 ///
 /// See the following extension traits with additional bounds on `Self` and [`Self::Storage`](State_::Storage):
+///
 /// - [`StateMut`]
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
@@ -48,7 +49,7 @@ pub trait State_: 'static + Send + Sync + Sized {
     /// A [`StatePattern`] that matches any value of this state type.
     const ANY: AnyStatePattern<Self> = AnyStatePattern(PhantomData);
 
-    /// Create a [`StatePattern`] from a closure that returns true if the state should match.
+    /// Create a [`StatePattern`] from a callback that returns true if the state should match.
     fn with<F>(f: F) -> FnStatePattern<Self, F>
     where
         F: 'static + Send + Sync + Fn(&Self) -> bool,
@@ -90,6 +91,7 @@ pub trait State_: 'static + Send + Sync + Sized {
 /// An extension trait for [`State_`] types with [mutable storage](StateStorageMut).
 ///
 /// See the following extension traits with additional bounds on `Self`:
+///
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
 pub trait StateMut: State_ {
@@ -466,7 +468,7 @@ impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
         (current.unwrap(), next.unwrap())
     }
 
-    /// Check if `S` will exit from a state that matches a specific pattern if triggered.
+    /// Check if `S` will exit a state that matches a specific pattern if triggered.
     pub fn will_exit<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (Some(x), _) if pattern.matches(x))
     }
@@ -476,7 +478,7 @@ impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
         matches!(self.get(), (Some(x), None) if pattern.matches(x))
     }
 
-    /// Check if `S` will enter into a state that matches a specific pattern if triggered.
+    /// Check if `S` will enter a state that matches a specific pattern if triggered.
     pub fn will_enter<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (_, Some(y)) if pattern.matches(y))
     }
@@ -570,7 +572,7 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
         (self.current.unwrap(), self.next.unwrap_mut())
     }
 
-    /// Check if `S` will exit from a state that matches a specific pattern if triggered.
+    /// Check if `S` will exit a state that matches a specific pattern if triggered.
     pub fn will_exit<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (Some(x), _) if pattern.matches(x))
     }
@@ -580,7 +582,7 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
         matches!(self.get(), (Some(x), None) if pattern.matches(x))
     }
 
-    /// Check if `S` will enter into a state that matches a specific pattern if triggered.
+    /// Check if `S` will enter a state that matches a specific pattern if triggered.
     pub fn will_enter<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (_, Some(y)) if pattern.matches(y))
     }
