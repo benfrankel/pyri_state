@@ -11,7 +11,10 @@ use bevy_ecs::{
 use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
-    pattern::{AnyStatePattern, FnStatePattern, StatePattern, StateTransPattern},
+    pattern::{
+        AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern, StatePattern,
+        StateTransPattern,
+    },
     storage::{StateStorage, StateStorageMut},
 };
 
@@ -45,15 +48,26 @@ pub trait State_: 'static + Send + Sync + Sized {
     /// The [`StateStorage`] type that describes how this state will be stored in the ECS world.
     type Storage: StateStorage<Self>;
 
-    /// A [`StatePattern`] that matches any value of this state type.
+    /// The [`AnyStatePattern`] for this state type.
     const ANY: AnyStatePattern<Self> = AnyStatePattern(PhantomData);
 
-    /// Create a [`StatePattern`] from a callback that returns true if the state should match.
+    /// The [`AnyStateTransPattern`] for this state type.
+    const ANY_TO_ANY: AnyStateTransPattern<Self> = AnyStateTransPattern(PhantomData);
+
+    /// Create a [`FnStatePattern`] from a callback.
     fn with<F>(f: F) -> FnStatePattern<Self, F>
     where
         F: 'static + Send + Sync + Fn(&Self) -> bool,
     {
-        FnStatePattern(f, PhantomData)
+        FnStatePattern::new(f)
+    }
+
+    /// Create a [`FnStateTransPattern`] from a callback.
+    fn when<F>(f: F) -> FnStateTransPattern<Self, F>
+    where
+        F: 'static + Send + Sync + Fn(&Self, &Self) -> bool,
+    {
+        FnStateTransPattern::new(f)
     }
 
     /// A run condition that checks if the current state is disabled.
@@ -105,7 +119,7 @@ pub trait StateMut: State_ {
 
 /// An extension trait for [`StateMut`] types that also implement [`Clone`].
 pub trait StateMutExtClone: StateMut + Clone {
-    /// A system that enables the next state with a specific value if it's disabled.
+    /// Build a system that enables the next state with a specific value if it's disabled.
     fn enable(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             if state.will_be_disabled() {
@@ -114,7 +128,7 @@ pub trait StateMutExtClone: StateMut + Clone {
         }
     }
 
-    /// A system that toggles the next state between disabled and enabled with a specific value.
+    /// Build a system that toggles the next state between disabled and enabled with a specific value.
     fn toggle(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             if state.will_be_disabled() {
@@ -125,7 +139,7 @@ pub trait StateMutExtClone: StateMut + Clone {
         }
     }
 
-    /// A system that enables the next state with a specific value.
+    /// Build a system that enables the next state with a specific value.
     fn enter(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             state.set(Some(self.clone()));
@@ -433,8 +447,7 @@ impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
 ///
 /// ```rust
 /// fn same_red(color: StateFlushRef<ColorState>) -> bool {
-///     // TODO: Better StateTransPattern API
-///     matches!(color.get(), (Some(old), Some(new)) if old.red == new.red)
+///     color.will_trans(&ColorState::when(|x, y| x.red == y.red))
 /// }
 /// ```
 #[derive(SystemParam)]
@@ -491,19 +504,6 @@ impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
     pub fn will_trans<P: StateTransPattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (Some(x), Some(y)) if pattern.matches(x, y))
     }
-}
-
-// TODO: Replace this with `state!(X -> Y if ...).will_trans()` or custom run condition for advanced cases.
-/// A helper macro for building pattern-matching flush run conditions.
-#[macro_export]
-macro_rules! will_flush {
-    ($pattern:pat $(if $guard:expr)? $(,)?) => {
-        {
-            |state: pyri_state::state::StateFlushRef<_>| {
-                matches!(state.get(), $pattern $(if $guard)?)
-            }
-        }
-    };
 }
 
 /// A [`SystemParam`] with read-only and mutable access to the current and next values of the [`State_`] type `S`,

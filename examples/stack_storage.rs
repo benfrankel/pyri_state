@@ -2,7 +2,7 @@
 
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
-use pyri_state::{debug::StateDebugSettings, extra::stack::*, prelude::*, state};
+use pyri_state::{debug::StateDebugSettings, extra::stack::*, prelude::*};
 
 fn main() {
     App::new()

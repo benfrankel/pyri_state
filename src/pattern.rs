@@ -22,7 +22,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     /// Check if the pattern matches a particular state.
     fn matches(&self, state: &S) -> bool;
 
-    /// A run condition that checks if `S` is in a matching state.
+    /// Build a run condition that checks if `S` is in a matching state.
     fn will_update(self) -> impl 'static + Send + Sync + Fn(Res<CurrentState<S>>) -> bool {
         self.will_exit()
     }
@@ -32,7 +32,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
         systems.run_if(self.will_update())
     }
 
-    /// A run condition that checks if `S` will exit a matching state if triggered.
+    /// Build a run condition that checks if `S` will exit a matching state if triggered.
     fn will_exit(self) -> impl 'static + Send + Sync + Fn(Res<CurrentState<S>>) -> bool {
         move |state| state.is_in(&self)
     }
@@ -44,7 +44,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<S>::Exit)
     }
 
-    /// A run condition that checks if `S` will become disabled from a matching state if triggered.
+    /// Build a run condition that checks if `S` will become disabled from a matching state if triggered.
     fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| state.will_disable(&self)
     }
@@ -56,7 +56,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<S>::Exit)
     }
 
-    /// A run condition that checks if `S` will enter into a matching state if triggered.
+    /// Build a run condition that checks if `S` will enter into a matching state if triggered.
     fn will_enter(self) -> impl 'static + Send + Sync + Fn(NextStateRef<S>) -> bool {
         move |state| state.will_be_in(&self)
     }
@@ -68,7 +68,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
             .in_set(StateFlushSet::<S>::Enter)
     }
 
-    /// A run condition that checks if `S` will become enabled in a matching state if triggered.
+    /// Build a run condition that checks if `S` will become enabled in a matching state if triggered.
     fn will_enable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| state.will_enable(&self)
     }
@@ -81,7 +81,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
     }
 }
 
-/// An extension trait for [`StatePattern<S>`] when `S` also implements `Clone`.
+/// An extension trait for [`StatePattern`] types that also implement `Clone`.
 pub trait StatePatternExtClone<S: State_>: StatePattern<S> + Clone {
     /// Helper method for configuring [`on_exit`](StatePattern::on_exit) and
     /// [`on_enter`](StatePattern::on_enter) systems for the same `StatePattern`.
@@ -102,7 +102,7 @@ impl<S: State_, P: StatePattern<S> + Clone> StatePatternExtClone<S> for P {}
 
 /// An extension trait for [`StatePattern<S>`] when `S` also implements `Eq`.
 pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
-    /// A run condition that checks if `S` will refresh in a matching state if triggered.
+    /// Build a run condition that checks if `S` will refresh in a matching state if triggered.
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| state.will_refresh(&self)
     }
@@ -123,7 +123,7 @@ impl<S: State_ + Eq> StatePattern<S> for S {
     }
 }
 
-/// A [`StatePattern`] that matches any value of the [`State_`] type `S`.
+/// A wildcard [`StatePattern`] for the [`State_`] type `S`.
 ///
 /// The usual way to use `AnyStatePattern` is through the associated constant [`State_::ANY`]:
 ///
@@ -143,13 +143,15 @@ impl<S: State_> StatePattern<S> for AnyStatePattern<S> {
 /// A [`StatePattern`] that runs a callback to determine which values of the [`State_`]
 /// type `S` should match.
 ///
-/// The usual way to construct a `FnStatePattern` is by using [`State_::with`]:
+/// The usual way to construct this type is with the [`state!`](crate::state!) macro or
+/// [`State_::with`]:
 ///
 /// ```rust
+/// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
 /// Level::with(|x| x.0 < 4).on_refresh(my_systems)
 /// ```
 #[derive(Clone)]
-pub struct FnStatePattern<S: State_, F>(pub(crate) F, pub(crate) PhantomData<S>)
+pub struct FnStatePattern<S: State_, F>(F, PhantomData<S>)
 where
     F: 'static + Send + Sync + Fn(&S) -> bool;
 
@@ -171,40 +173,147 @@ where
     }
 }
 
-/// A helper macro for building a simple [`StatePattern`].
-///
-/// # Example
-///
-/// ```rust
-/// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
-/// ```
-#[macro_export]
-macro_rules! state {
-    ($pattern:pat $(if $guard:expr)? $(,)?) => {
-        pyri_state::pattern::FnStatePattern::new(
-            |state| matches!(*state, $pattern $(if $guard)?),
-        )
-    };
-}
-
 /// A type that can match a subset of transitions for the [`State_`] type `S`.
+///
+/// See the following extension traits with additional bounds on `S`:
+///
+/// - [`StateTransPatternExtClone`]
 pub trait StateTransPattern<S: State_>: 'static + Send + Sync + Sized {
     /// Check if the pattern matches a particular pair of states.
     fn matches(&self, old: &S, new: &S) -> bool;
 
+    /// Build a run condition that checks if `S` will undergo a matching transition if triggered.
     fn will_trans(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| state.will_trans(&self)
     }
 
+    /// Configure systems to run when `S` exits as part of a matching transition.
+    fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(self.will_trans())
+            .in_set(StateFlushSet::<S>::Exit)
+    }
+
+    /// Configure systems to run when `S` undergoes a matching transition.
     fn on_trans<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_trans())
             .in_set(StateFlushSet::<S>::Trans)
     }
+
+    /// Configure systems to run when `S` enters as part of a matching transition.
+    fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+        systems
+            .run_if(self.will_trans())
+            .in_set(StateFlushSet::<S>::Enter)
+    }
 }
 
+/// An extension trait for [`StateTransPattern`] types that also implement `Clone`.
+pub trait StateTransPatternExtClone<S: State_>: StateTransPattern<S> + Clone {
+    /// Helper method for configuring [`on_exit`](StateTransPattern::on_exit) and
+    /// [`on_enter`](StateTransPattern::on_enter) systems for the same `StateTransPattern`.
+    fn on_edge<M1, M2>(
+        self,
+        exit_systems: impl IntoSystemConfigs<M1>,
+        enter_systems: impl IntoSystemConfigs<M2>,
+    ) -> SystemConfigs {
+        (
+            self.clone().on_exit(exit_systems),
+            self.on_enter(enter_systems),
+        )
+            .into_configs()
+    }
+}
+
+impl<S: State_, P: StateTransPattern<S> + Clone> StateTransPatternExtClone<S> for P {}
+
+// A tuple of two state patterns is a transition pattern.
 impl<S: State_, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> for (P1, P2) {
     fn matches(&self, old: &S, new: &S) -> bool {
         self.0.matches(old) && self.1.matches(new)
     }
+}
+
+/// A wildcard [`StateTransPattern`] for the [`State_`] type `S`.
+///
+/// The usual way to use this type is through the associated constant [`State_::ANY_TO_ANY`]:
+///
+/// ```rust
+/// Level::ANY_TO_ANY.on_trans(reset_timer)
+///
+/// // Equivalent to:
+/// (Level::ANY, Level::ANY).on_trans(reset_timer)
+/// ```
+///
+#[derive(Clone)]
+pub struct AnyStateTransPattern<S: State_>(pub(crate) PhantomData<S>);
+
+impl<S: State_> StateTransPattern<S> for AnyStateTransPattern<S> {
+    fn matches(&self, _old: &S, _new: &S) -> bool {
+        true
+    }
+}
+
+/// A [`StateTransPattern`] that runs a callback to determine which transitions
+/// of the [`State_`] type `S` should match.
+///
+/// The usual way to construct this type is with the [`state!`](crate::state!) macro or
+/// [`State_::when`]:
+///
+/// ```rust
+/// state!(Level(2..=5 | 7) => Level(8 | 10)).on_enter(spawn_something_cool)
+/// Level::when(|x, y| y.0 > x.0).on_enter(play_next_level_sfx)
+/// ```
+#[derive(Clone)]
+pub struct FnStateTransPattern<S: State_, F>(F, PhantomData<S>)
+where
+    F: 'static + Send + Sync + Fn(&S, &S) -> bool;
+
+impl<S: State_, F> StateTransPattern<S> for FnStateTransPattern<S, F>
+where
+    F: 'static + Send + Sync + Fn(&S, &S) -> bool,
+{
+    fn matches(&self, old: &S, new: &S) -> bool {
+        self.0(old, new)
+    }
+}
+
+impl<S: State_, F> FnStateTransPattern<S, F>
+where
+    F: 'static + Send + Sync + Fn(&S, &S) -> bool,
+{
+    pub fn new(f: F) -> Self {
+        Self(f, PhantomData)
+    }
+}
+
+/// A helper macro for building pattern-matching instances of [`FnStatePattern`] and [`FnStateTransPattern`].
+///
+/// # Example
+///
+/// State pattern-matching:
+///
+/// ```rust
+/// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
+/// ```
+///
+/// State transition pattern-matching:
+///
+/// ```rust
+/// state!(Level(x @ 1..=3) => y if y.0 == 10 - x).on_trans(do_something_cool)
+/// ```
+#[macro_export]
+macro_rules! state {
+    ($state:pat $(if $guard:expr)? $(,)?) => {
+        pyri_state::pattern::FnStatePattern::new(
+            |state| matches!(state, $state $(if $guard)?),
+        )
+    };
+
+    ($old:pat => $new:pat $(if $guard:expr)? $(,)?) => {
+        pyri_state::pattern::FnStateTransPattern::new(
+            |old, new| matches!((old, new), ($old, $new) $(if $guard)?),
+        )
+    };
 }

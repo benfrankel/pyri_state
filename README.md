@@ -8,7 +8,7 @@ The next state is stored in a simple `StateBuffer` by default, but this can be s
 
 ```rust
 use bevy::prelude::*;
-use pyri_state::{prelude::*, state};
+use pyri_state::prelude::*;
 
 #[derive(State, Clone, PartialEq, Eq, Default)]
 enum GameState {
@@ -49,7 +49,7 @@ Click a feature to see example code.
     - **Buffer:** Store a single state that can be mutated directly. This is the default storage type.
     - **[Stack](/examples/stack_storage.rs):** Keep track of a state's history in a stack (e.g. for a back button).
     - **[Sequence](/examples/sequence_storage.rs):** Navigate a fixed sequence of states by index (e.g. for phases in a turn-based game).
-- **[Flexible scheduling](/examples/flexible_scheduling.rs):** Use state pattern matching and run conditions to schedule your systems.
+- **[Flexible scheduling](/examples/flexible_scheduling.rs):** Use pattern-matching and run conditions to schedule state flush hooks.
 - **[Computed & substates](/examples/computed_and_substates.rs):** Compute states from anything in the ECS world, including other states.
 - **[Modular configuration](/examples/modular_configuration.rs):** Strip out or add plugins to your state type using the derive macro.
 - **[Ecosystem compatibility](/examples/ecosystem_compatibility.rs):** Enable a `BevyState<S>` wrapper to interact with crates that expect it.

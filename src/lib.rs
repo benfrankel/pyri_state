@@ -70,6 +70,7 @@
 //! - [`StatePatternExtClone`](pattern::StatePatternExtClone)
 //! - [`StatePatternExtEq`](pattern::StatePatternExtEq)
 //! - [`StateTransPattern`](pattern::StateTransPattern)
+//! - [`StateTransPatternExtClone`](pattern::StateTransPattern)
 //!
 //! You can write custom systems and run conditions using the following
 //! [`SystemParam`s](bevy_ecs::system::SystemParam):
@@ -117,8 +118,12 @@ pub mod prelude {
 
     #[doc(hidden)]
     pub use crate::{
-        pattern::{StatePattern, StatePatternExtClone, StatePatternExtEq, StateTransPattern},
+        pattern::{
+            StatePattern, StatePatternExtClone, StatePatternExtEq, StateTransPattern,
+            StateTransPatternExtClone,
+        },
         schedule::{StateFlush, StateFlushEvent},
+        state,
         state::{
             CurrentState, NextStateMut, NextStateRef, StateFlushMut, StateFlushRef, StateMut,
             StateMutExtClone, StateMutExtDefault, State_,
