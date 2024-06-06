@@ -14,7 +14,7 @@ use bevy_log::info;
 use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
-    pattern::{StatePattern, StateTransitionPattern},
+    pattern::{StatePattern, StateTransPattern},
     schedule::{StateFlush, StateFlushSet},
     state::{CurrentState, NextStateRef, StateFlushRef, State_},
 };
@@ -28,7 +28,7 @@ use crate::{
 pub struct StateDebugSettings {
     pub log_flush: bool,
     pub log_exit: bool,
-    pub log_transition: bool,
+    pub log_trans: bool,
     pub log_enter: bool,
 }
 
@@ -60,7 +60,7 @@ fn log_state_exit<S: State_ + Debug>(frame: Res<FrameCount>, old: Res<CurrentSta
     info!("[Frame {frame}] {ty} exit:  {old:?}");
 }
 
-fn log_state_transition<S: State_ + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
+fn log_state_trans<S: State_ + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
     let frame = frame.0;
     let ty = type_name::<S>();
     let (old, new) = state.unwrap();
@@ -84,8 +84,8 @@ pub fn schedule_log_flush<S: State_ + Debug>(schedule: &mut Schedule) {
                 .on_exit(log_state_exit::<S>)
                 .run_if(|x: Res<StateDebugSettings>| x.log_exit),
             (S::ANY, S::ANY)
-                .on_transition(log_state_transition::<S>)
-                .run_if(|x: Res<StateDebugSettings>| x.log_transition),
+                .on_trans(log_state_trans::<S>)
+                .run_if(|x: Res<StateDebugSettings>| x.log_trans),
             S::ANY
                 .on_enter(log_state_enter::<S>)
                 .run_if(|x: Res<StateDebugSettings>| x.log_enter),

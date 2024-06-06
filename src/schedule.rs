@@ -35,7 +35,7 @@ pub struct StateFlush;
 ///     2. [`Self::Trigger`] if not yet triggered.
 ///     3. [`Self::Flush`] if triggered.
 ///         1. [`Self::Exit`].
-///         2. [`Self::Transition`].
+///         2. [`Self::Trans`].
 ///         3. [`Self::Enter`].
 ///
 /// See [`AddState`](crate::app::AddState) for how to opt out of default plugins.
@@ -52,7 +52,7 @@ pub enum StateFlushSet<S: State_> {
     /// Run exit hooks for `S`.
     Exit,
     /// Run transition hooks for `S`.
-    Transition,
+    Trans,
     /// Run enter hooks for `S`.
     Enter,
     #[doc(hidden)]
@@ -67,7 +67,7 @@ impl<S: State_> Clone for StateFlushSet<S> {
             Self::Trigger => Self::Trigger,
             Self::Flush => Self::Flush,
             Self::Exit => Self::Exit,
-            Self::Transition => Self::Transition,
+            Self::Trans => Self::Trans,
             Self::Enter => Self::Enter,
             Self::_PhantomData(..) => unreachable!(),
         }
@@ -96,7 +96,7 @@ impl<S: State_> Debug for StateFlushSet<S> {
             Self::Trigger => write!(f, "Trigger"),
             Self::Flush => write!(f, "Flush"),
             Self::Exit => write!(f, "Exit"),
-            Self::Transition => write!(f, "Transition"),
+            Self::Trans => write!(f, "Trans"),
             Self::Enter => write!(f, "Enter"),
             Self::_PhantomData(..) => unreachable!(),
         }
@@ -150,7 +150,7 @@ pub fn schedule_resolve_state<S: State_>(
             .in_set(StateFlushSet::<S>::Resolve),
         (
             StateFlushSet::<S>::Exit,
-            StateFlushSet::<S>::Transition,
+            StateFlushSet::<S>::Trans,
             StateFlushSet::<S>::Enter,
         )
             .chain()

@@ -11,7 +11,7 @@ use bevy_ecs::{
 use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
-    pattern::{AnyStatePattern, FnStatePattern, StatePattern, StateTransitionPattern},
+    pattern::{AnyStatePattern, FnStatePattern, StatePattern, StateTransPattern},
     storage::{StateStorage, StateStorageMut},
 };
 
@@ -433,7 +433,7 @@ impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
 ///
 /// ```rust
 /// fn same_red(color: StateFlushRef<ColorState>) -> bool {
-///     // TODO: Better StateTransitionPattern API
+///     // TODO: Better StateTransPattern API
 ///     matches!(color.get(), (Some(old), Some(new)) if old.red == new.red)
 /// }
 /// ```
@@ -488,12 +488,12 @@ impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
     }
 
     /// Check if `S` will undergo a transition that matches a specific pattern if triggered.
-    pub fn will_transition<P: StateTransitionPattern<S>>(&self, pattern: &P) -> bool {
+    pub fn will_trans<P: StateTransPattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (Some(x), Some(y)) if pattern.matches(x, y))
     }
 }
 
-// TODO: Replace this with `state!(X -> Y if ...).will_transition()` or custom run condition for advanced cases.
+// TODO: Replace this with `state!(X -> Y if ...).will_trans()` or custom run condition for advanced cases.
 /// A helper macro for building pattern-matching flush run conditions.
 #[macro_export]
 macro_rules! will_flush {
@@ -592,7 +592,7 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
     }
 
     /// Check if `S` will undergo a transition that matches a specific pattern if triggered.
-    pub fn will_transition<P: StateTransitionPattern<S>>(&self, pattern: &P) -> bool {
+    pub fn will_trans<P: StateTransPattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), (Some(x), Some(y)) if pattern.matches(x, y))
     }
 

@@ -111,7 +111,7 @@ pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_refresh())
-            .in_set(StateFlushSet::<S>::Transition)
+            .in_set(StateFlushSet::<S>::Trans)
     }
 }
 
@@ -188,22 +188,22 @@ macro_rules! state {
 }
 
 /// A type that can match a subset of transitions for the [`State_`] type `S`.
-pub trait StateTransitionPattern<S: State_>: 'static + Send + Sync + Sized {
+pub trait StateTransPattern<S: State_>: 'static + Send + Sync + Sized {
     /// Check if the pattern matches a particular pair of states.
     fn matches(&self, old: &S, new: &S) -> bool;
 
-    fn will_transition(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
-        move |state| state.will_transition(&self)
+    fn will_trans(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
+        move |state| state.will_trans(&self)
     }
 
-    fn on_transition<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_trans<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(self.will_transition())
-            .in_set(StateFlushSet::<S>::Transition)
+            .run_if(self.will_trans())
+            .in_set(StateFlushSet::<S>::Trans)
     }
 }
 
-impl<S: State_, P1: StatePattern<S>, P2: StatePattern<S>> StateTransitionPattern<S> for (P1, P2) {
+impl<S: State_, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> for (P1, P2) {
     fn matches(&self, old: &S, new: &S) -> bool {
         self.0.matches(old) && self.1.matches(new)
     }
