@@ -8,7 +8,10 @@ use pyri_state::{debug::StateDebugSettings, prelude::*};
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .insert_resource(StateDebugSettings::Enabled)
+        .insert_resource(StateDebugSettings {
+            log_flush: true,
+            ..default()
+        })
         .insert_state_(StateBuffer::enabled(InputMode::Move))
         .add_systems(
             Update,

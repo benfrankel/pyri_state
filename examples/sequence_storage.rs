@@ -8,7 +8,10 @@ use pyri_state::{debug::StateDebugSettings, extra::sequence::*, prelude::*};
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .insert_resource(StateDebugSettings::Enabled)
+        .insert_resource(StateDebugSettings {
+            log_flush: true,
+            ..default()
+        })
         // Add the `Page` state with the provided sequence.
         .insert_state_(StateSequence::new([
             None,

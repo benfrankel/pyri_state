@@ -13,7 +13,10 @@ use pyri_state::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .insert_resource(StateDebugSettings::Enabled)
+        .insert_resource(StateDebugSettings {
+            log_flush: true,
+            ..default()
+        })
         .init_state_::<MyBufferedState>()
         .init_state_::<MyStackedState>()
         .insert_state_(StateSwap([

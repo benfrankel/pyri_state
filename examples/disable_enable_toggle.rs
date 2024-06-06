@@ -6,7 +6,10 @@ use pyri_state::{debug::StateDebugSettings, prelude::*};
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .insert_resource(StateDebugSettings::Enabled)
+        .insert_resource(StateDebugSettings {
+            log_flush: true,
+            ..default()
+        })
         .add_state_::<Paused>()
         .add_systems(StateFlush, Paused.on_edge(unpause, pause))
         .add_systems(

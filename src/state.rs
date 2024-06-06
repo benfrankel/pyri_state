@@ -11,8 +11,7 @@ use bevy_ecs::{
 use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
-    pattern::{AnyStatePattern, FnStatePattern, StatePattern},
-    prelude::StateTransitionPattern,
+    pattern::{AnyStatePattern, FnStatePattern, StatePattern, StateTransitionPattern},
     storage::{StateStorage, StateStorageMut},
 };
 
