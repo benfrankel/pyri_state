@@ -211,12 +211,12 @@ impl<S: State> CurrentState<S> {
         Self(Some(value))
     }
 
-    /// Get a reference to the current state, or `None` if disabled.
+    /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         self.0.as_ref()
     }
 
-    /// Get a reference to the current state, or panic if it's disabled.
+    /// Get a read-only reference to the current state, or panic if it's disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }
@@ -290,12 +290,12 @@ pub struct NextStateRef<'w, 's, S: State>(
 );
 
 impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
-    /// Get a reference to the next state, or `None` if disabled.
+    /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         S::Storage::get_state(&self.0)
     }
 
-    /// Get a reference to the next state, or panic if disabled.
+    /// Get a read-only reference to the next state, or panic if disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }
@@ -359,7 +359,7 @@ impl<'w, 's, S: StateMut + Default> NextStateMut<'w, 's, S> {
 }
 
 impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
-    /// Get a reference to the next state, or `None` if disabled.
+    /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         S::StorageMut::get_state_from_mut(&self.next)
     }
@@ -369,12 +369,12 @@ impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
         S::StorageMut::get_state_mut(&mut self.next)
     }
 
-    /// Set the next state, or disable it with `None`.
+    /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
         S::StorageMut::set_state(&mut self.next, state)
     }
 
-    /// Get a reference to the next state, or panic if it's disabled.
+    /// Get a read-only reference to the next state, or panic if it's disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }

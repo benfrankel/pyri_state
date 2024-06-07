@@ -34,7 +34,7 @@ pub trait StateStorage<S: State> {
     /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;
 
-    /// Get a reference to the next state, or `None` if disabled.
+    /// Get a read-only reference to the next state, or `None` if disabled.
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S>;
 }
 
