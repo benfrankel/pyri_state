@@ -18,7 +18,7 @@ use crate::{
 
 /// A [`StateStorage`] type that stores `S` in a stack with the next state on top.
 ///
-/// Using this storage unlocks the [`StateStackMut`] extension trait for `S`.
+/// Using this storage unlocks the [`StateStackMut`] extension trait for the [`State`] type `S`.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -78,7 +78,7 @@ impl<S: State> StateStack<S> {
         }
     }
 
-    /// Create a new `StateStack` starting in a specific state.
+    /// Create a new `StateStack` with an initial state.
     pub fn new(state: S) -> Self {
         Self {
             stack: vec![Some(state)],
@@ -86,7 +86,7 @@ impl<S: State> StateStack<S> {
         }
     }
 
-    /// Create a new `StateStack` starting in a specific base state.
+    /// Create a new `StateStack` with an initial base state.
     pub fn with_base(state: S) -> Self {
         Self {
             stack: vec![Some(state)],
@@ -94,18 +94,18 @@ impl<S: State> StateStack<S> {
         }
     }
 
-    /// Get the top base state index.
+    /// Get the top base state index of the stack.
     pub fn base(&self) -> usize {
         self.bases.last().copied().unwrap_or_default()
     }
 
-    /// Push a new base state index.
+    /// Push a new base state index to the stack.
     pub fn acquire(&mut self) -> &mut Self {
         self.bases.push(self.stack.len());
         self
     }
 
-    /// Pop the top base state index.
+    /// Pop the top base state index of the stack.
     pub fn release(&mut self) -> &mut Self {
         self.bases.pop();
         self
@@ -157,12 +157,12 @@ impl<S: State> StateStack<S> {
 ///
 /// - [`StateStackMutExtClone`]
 pub trait StateStackMut: State {
-    /// A system that pushes a new base state index.
+    /// A system that pushes a new base state index to the stack.
     fn acquire(mut stack: ResMut<StateStack<Self>>) {
         stack.acquire();
     }
 
-    /// A system that pops the top base state index.
+    /// A system that pops the top base state index of the stack.
     fn release(mut stack: ResMut<StateStack<Self>>) {
         stack.release();
     }
