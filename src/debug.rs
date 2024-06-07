@@ -14,8 +14,9 @@ use bevy_log::info;
 use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
+    pattern::{StatePattern, StateTransPattern},
     schedule::{was_triggered, StateFlush, StateFlushSet},
-    state::{CurrentState, NextStateRef, StateFlushRef, State},
+    state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
 #[derive(Resource, PartialEq, Eq, Default)]
@@ -83,15 +84,27 @@ pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
             log_state_exit::<S>
                 .in_set(StateFlushSet::<S>::Flush)
                 .before(StateFlushSet::<S>::Exit)
-                .run_if(|x: Res<StateDebugSettings>| x.log_exit),
+                .run_if(
+                    S::ANY
+                        .will_exit()
+                        .and_then(|x: Res<StateDebugSettings>| x.log_exit),
+                ),
             log_state_trans::<S>
                 .after(StateFlushSet::<S>::Exit)
                 .before(StateFlushSet::<S>::Trans)
-                .run_if(|x: Res<StateDebugSettings>| x.log_trans),
+                .run_if(
+                    S::ANY_TO_ANY
+                        .will_trans()
+                        .and_then(|x: Res<StateDebugSettings>| x.log_trans),
+                ),
             log_state_enter::<S>
                 .after(StateFlushSet::<S>::Trans)
                 .before(StateFlushSet::<S>::Enter)
-                .run_if(|x: Res<StateDebugSettings>| x.log_enter),
+                .run_if(
+                    S::ANY
+                        .will_enter()
+                        .and_then(|x: Res<StateDebugSettings>| x.log_enter),
+                ),
         )
             .run_if(resource_exists::<StateDebugSettings>),
     );
