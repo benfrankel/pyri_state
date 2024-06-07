@@ -117,7 +117,9 @@ pub struct ApplyFlushSet;
 /// [`AddState`](crate::app::AddState) for how to opt out of default plugins.
 #[derive(Event)]
 pub struct StateFlushEvent<S: State> {
+    /// The state before the flush, or `None` if disabled.
     pub old: Option<S>,
+    /// The state after the flush, or `None` if disabled.
     pub new: Option<S>,
 }
 
@@ -127,7 +129,7 @@ pub(crate) fn was_triggered<S: State>(trigger: Res<TriggerStateFlush<S>>) -> boo
 
 /// Configure [`StateFlushSet`] system sets for the [`State`] type `S` to a schedule.
 ///
-/// This is used by [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin).
+/// Used in [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin).
 pub fn schedule_resolve_state<S: State>(
     schedule: &mut Schedule,
     after: &[InternedSystemSet],
@@ -163,7 +165,7 @@ pub fn schedule_resolve_state<S: State>(
 
 /// Add change detection systems for the [`State`] type `S` to a schedule.
 ///
-/// This is used by [`DetectChangePlugin<S>`](crate::app::DetectChangePlugin).
+/// Used in [`DetectChangePlugin<S>`](crate::app::DetectChangePlugin).
 pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
@@ -185,14 +187,14 @@ fn send_flush_event<S: State + Clone>(
 
 /// Add a send [`StateFlushEvent`] system for the [`State`] type `S` to a schedule.
 ///
-/// This is used by [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
+/// This is used by [`FlushEventPlugin`](crate::app::FlushEventPlugin).
 pub fn schedule_send_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateFlushSet::<S>::Flush));
 }
 
 /// Add [`BevyState<S>`] propagation systems for the [`State`] type `S` to a schedule.
 ///
-/// This is used by [`BevyStatePlugin<S>`](crate::app::BevyStatePlugin).
+/// Used in [`BevyStatePlugin<S>`](crate::app::BevyStatePlugin).
 #[cfg(feature = "bevy_state")]
 pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash + Debug>(
     schedule: &mut Schedule,
@@ -223,7 +225,7 @@ fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: Nex
 
 /// Add an apply flush system for the [`State`] type `S` to a schedule.
 ///
-/// This is used by [`ApplyFlushPlugin<S>`](crate::app::ApplyFlushPlugin).
+/// Used in [`ApplyFlushPlugin<S>`](crate::app::ApplyFlushPlugin).
 pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::relax)

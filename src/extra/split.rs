@@ -1,20 +1,29 @@
-//! TODO: Module-level documentation
+//! A split state works like a basic enum state that can be split between the modules of a crate.
+//! It's a useful organizational tool for cross-cutting states in a plugin-based codebase.
+//!
+//! Newtype [`SplitState`] to define a split state type, and use [`add_to_split_state!`]
+//! to extend it.
 
-/// Define your own split state type by newtyping `SplitState`:
+/// The internal value of a split state type.
+///
+/// # Example
+///
+/// Define your own split state type as a newtype:
 ///
 /// ```rust
-/// use pyri_state::prelude::*;
-/// use pyri_state::extra::split::SplitState;
-/// use pyri_state::add_to_split_state;
-///
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// pub struct MyState(pub SplitState);
-///
-/// add_to_split_state!(MyState, Foo, Bar);
-/// add_to_split_state!(MyState, Quux);
 /// ```
 pub type SplitState = &'static str;
 
+/// A macro for extending [`SplitState`] newtypes.
+///
+/// # Example
+///
+/// ```rust
+/// add_to_split_state!(MyState, Foo, Bar);
+/// add_to_split_state!(MyState, Quux);
+/// ```
 #[macro_export]
 macro_rules! add_to_split_state {
     ($ty:ident, $($val:ident),* $(,)?) => {

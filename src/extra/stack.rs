@@ -13,7 +13,7 @@ use crate::{
     storage::{StateStorage, StateStorageMut},
 };
 
-// A state stack with the current state on top.
+/// A [`StateStorage`] type that stores `S` in a stack with the next state on top.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",

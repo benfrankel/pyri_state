@@ -9,7 +9,7 @@ use bevy_ecs::{
 
 use crate::{
     schedule::StateFlushSet,
-    state::{CurrentState, NextStateRef, StateFlushRef, State},
+    state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
 /// A type that can match a subset of states for the [`State`] type `S`.
@@ -168,6 +168,7 @@ impl<S: State, F> FnStatePattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S) -> bool,
 {
+    /// Create a new `FnStatePattern`.
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }
@@ -283,6 +284,7 @@ impl<S: State, F> FnStateTransPattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S, &S) -> bool,
 {
+    /// Create a new `FnStateTransPattern`.
     pub fn new(f: F) -> Self {
         Self(f, PhantomData)
     }

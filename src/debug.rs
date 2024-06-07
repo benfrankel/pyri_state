@@ -19,6 +19,7 @@ use crate::{
     state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
+/// A resource that controls state-related debug behavior.
 #[derive(Resource, PartialEq, Eq, Default)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -26,12 +27,19 @@ use crate::{
     reflect(Resource)
 )]
 pub struct StateDebugSettings {
+    /// Enable on-flush logs.
     pub log_flush: bool,
+    /// Enable on-exit logs.
     pub log_exit: bool,
+    /// Enable on-transition logs.
     pub log_trans: bool,
+    /// Enable on-enter logs.
     pub log_enter: bool,
 }
 
+/// A plugin that schedules flush logging for the [`State`] type `S`.
+///
+/// Calls [`schedule_log_flush<S>`].
 pub struct LogFlushPlugin<S: State + Debug>(PhantomData<S>);
 
 impl<S: State + Debug> Plugin for LogFlushPlugin<S> {
@@ -74,6 +82,9 @@ fn log_state_enter<S: State + Debug>(frame: Res<FrameCount>, new: NextStateRef<S
     info!("[Frame {frame}] {ty} enter: {new:?}");
 }
 
+/// Add flush logging systems for the [`State`] type `S` to a schedule.
+///
+/// Used in [`LogFlushPlugin<S>`].
 pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
     schedule.add_systems(
         (

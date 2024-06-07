@@ -98,7 +98,8 @@
 //! - [`LogFlushPlugin`](debug::LogFlushPlugin)
 //! - [`BevyStatePlugin`](app::BevyStatePlugin)
 //! - [`ApplyFlushPlugin`](app::ApplyFlushPlugin)
-//!
+
+#![deny(missing_docs)]
 
 // Allow macros to refer to this crate as `pyri_state` internally.
 extern crate self as pyri_state;

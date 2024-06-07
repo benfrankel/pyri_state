@@ -211,7 +211,7 @@ impl<S: State> CurrentState<S> {
         Self(Some(value))
     }
 
-    /// Get a reference to the current state, or `None` if it's disabled.
+    /// Get a reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         self.0.as_ref()
     }
@@ -290,12 +290,12 @@ pub struct NextStateRef<'w, 's, S: State>(
 );
 
 impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
-    /// Get a reference to the next state, or `None` if it's disabled.
+    /// Get a reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         S::Storage::get_state(&self.0)
     }
 
-    /// Get a reference to the next state, or panic if it's disabled.
+    /// Get a reference to the next state, or panic if disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }
@@ -359,12 +359,12 @@ impl<'w, 's, S: StateMut + Default> NextStateMut<'w, 's, S> {
 }
 
 impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
-    /// Get a reference to the next state, or `None` if it's disabled.
+    /// Get a reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         S::StorageMut::get_state_from_mut(&self.next)
     }
 
-    /// Get a mutable reference to the next state, or `None` if it's disabled.
+    /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
         S::StorageMut::get_state_mut(&mut self.next)
     }

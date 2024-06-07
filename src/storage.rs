@@ -10,7 +10,7 @@ use bevy_ecs::{
 
 use crate::{
     pattern::StatePattern,
-    state::{StateMut, State},
+    state::{State, StateMut},
 };
 
 /// A type that describes how the [`State`] type `S` will be stored in the ECS world.
@@ -31,7 +31,7 @@ pub trait StateStorage<S: State> {
     /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;
 
-    /// Get a reference to the next state, or `None` if it's disabled.
+    /// Get a reference to the next state, or `None` if disabled.
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S>;
 }
 
@@ -43,10 +43,10 @@ pub trait StateStorageMut<S: State>: StateStorage<S> {
     /// A [`SystemParam`] with mutable access to the next state.
     type ParamMut: SystemParam;
 
-    /// Get a reference to the next state, or `None` if it's disabled.
+    /// Get a reference to the next state, or `None` if disabled.
     fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S>;
 
-    /// Get a mutable reference to the next state, or `None` if it's disabled.
+    /// Get a mutable reference to the next state, or `None` if disabled.
     fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S>;
 
     /// Set the next state to a new value, or `None` to disable.
@@ -123,12 +123,12 @@ impl<S: State> StateBuffer<S> {
         Self(Some(state))
     }
 
-    /// Get a reference to the next state, or `None` if it's disabled.
+    /// Get a reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         self.0.as_ref()
     }
 
-    /// Get a mutable reference to the next state, or `None` if it's disabled.
+    /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
         self.0.as_mut()
     }
@@ -138,12 +138,12 @@ impl<S: State> StateBuffer<S> {
         self.0 = state;
     }
 
-    /// Get a reference to the next state, or panic if it's disabled.
+    /// Get a reference to the next state, or panic if disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }
 
-    /// Get a mutable reference to the next state, or panic if it's disabled.
+    /// Get a mutable reference to the next state, or panic if disabled.
     pub fn unwrap_mut(&mut self) -> &mut S {
         self.get_mut().unwrap()
     }
