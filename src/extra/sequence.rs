@@ -2,6 +2,9 @@
 
 use bevy_ecs::system::{lifetimeless::SRes, ResMut, Resource, SystemParamItem};
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
+
 use crate::{state::State, storage::StateStorage};
 
 // A fixed sequence of states with an index to the current state.
@@ -9,8 +12,7 @@ use crate::{state::State, storage::StateStorage};
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
-    // TODO: In bevy 0.14 this will be possible.
-    //reflect(Resource),
+    reflect(Resource)
 )]
 pub struct StateSequence<S: State> {
     sequence: Vec<Option<S>>,

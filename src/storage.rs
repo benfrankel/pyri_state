@@ -8,6 +8,9 @@ use bevy_ecs::{
     world::{FromWorld, World},
 };
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
+
 use crate::{
     pattern::StatePattern,
     state::{State, StateMut},
@@ -65,8 +68,7 @@ where
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
-    // TODO: In bevy 0.14 this will be possible.
-    //reflect(Resource)
+    reflect(Resource)
 )]
 pub struct StateBuffer<S: State>(
     /// The next state, or `None` if disabled.

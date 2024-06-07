@@ -8,6 +8,9 @@ use bevy_ecs::{
     world::{FromWorld, World},
 };
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
+
 use crate::{
     state::State,
     storage::{StateStorage, StateStorageMut},
@@ -18,8 +21,7 @@ use crate::{
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
-    // TODO: In bevy 0.14 this will be possible.
-    //reflect(Resource)
+    reflect(Resource)
 )]
 pub struct StateStack<S: State> {
     stack: Vec<Option<S>>,
