@@ -12,7 +12,7 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        .insert_state_(StateBuffer::enabled(InputMode::Move))
+        .insert_state(StateBuffer::enabled(InputMode::Move))
         .add_systems(
             Update,
             // Every state added to InputMode can be accessed normally.

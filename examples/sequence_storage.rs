@@ -13,7 +13,7 @@ fn main() {
             ..default()
         })
         // Add the `Page` state with the provided sequence.
-        .insert_state_(StateSequence::new([
+        .insert_state(StateSequence::new([
             None,
             Some(Page::A),
             Some(Page::B),

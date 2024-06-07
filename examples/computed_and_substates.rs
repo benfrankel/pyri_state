@@ -6,9 +6,9 @@ use pyri_state::prelude::*;
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .init_state_::<GameState>()
-        .add_state_::<CheckerboardSquare>()
-        .add_state_::<SquareColor>()
+        .init_state::<GameState>()
+        .add_state::<CheckerboardSquare>()
+        .add_state::<SquareColor>()
         .add_systems(
             StateFlush,
             (

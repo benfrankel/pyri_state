@@ -74,6 +74,9 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
     let log_flush = simple_plugin(&crate_debug_path, "LogFlush", attrs.log_flush);
+    #[cfg(not(feature = "bevy_state"))]
+    let bevy_state = quote! {};
+    #[cfg(feature = "bevy_state")]
     let bevy_state = simple_plugin(&crate_app_path, "BevyState", attrs.bevy_state);
     let apply_flush = simple_plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush);
 

@@ -62,6 +62,7 @@ And some extra features:
 
 | `bevy` version | `pyri_state` version |
 | -------------- | -------------------- |
+| 0.14           | 0.2                  |
 | 0.13           | 0.1                  |
 
 # Remaining tasks

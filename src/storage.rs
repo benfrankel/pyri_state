@@ -10,10 +10,10 @@ use bevy_ecs::{
 
 use crate::{
     pattern::StatePattern,
-    state::{StateMut, State_},
+    state::{StateMut, State},
 };
 
-/// A type that describes how the [`State_`] type `S` will be stored in the ECS world.
+/// A type that describes how the [`State`] type `S` will be stored in the ECS world.
 ///
 /// The default storage type is [`StateBuffer`]. You can set a different storage type in the derive macro:
 ///
@@ -27,7 +27,7 @@ use crate::{
 /// in a system for read-only access to the next state.
 ///
 /// See [`StateStorageMut`] for mutable storage.
-pub trait StateStorage<S: State_> {
+pub trait StateStorage<S: State> {
     /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;
 
@@ -39,7 +39,7 @@ pub trait StateStorage<S: State_> {
 ///
 /// Use [`NextStateMut`](crate::state::NextStateMut) or [`StateFlushMut`](crate::state::StateFlushMut)
 /// in a system for mutable access to the next state.
-pub trait StateStorageMut<S: State_>: StateStorage<S> {
+pub trait StateStorageMut<S: State>: StateStorage<S> {
     /// A [`SystemParam`] with mutable access to the next state.
     type ParamMut: SystemParam;
 
@@ -53,7 +53,7 @@ pub trait StateStorageMut<S: State_>: StateStorage<S> {
     fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>);
 }
 
-impl<S: State_> StateMut for S
+impl<S: State> StateMut for S
 where
     S::Storage: StateStorageMut<S>,
 {
@@ -68,12 +68,12 @@ where
     // TODO: In bevy 0.14 this will be possible.
     //reflect(Resource)
 )]
-pub struct StateBuffer<S: State_>(
+pub struct StateBuffer<S: State>(
     /// The next state, or `None` if disabled.
     pub Option<S>,
 );
 
-impl<S: State_> StateStorage<S> for StateBuffer<S> {
+impl<S: State> StateStorage<S> for StateBuffer<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -81,7 +81,7 @@ impl<S: State_> StateStorage<S> for StateBuffer<S> {
     }
 }
 
-impl<S: State_> StateStorageMut<S> for StateBuffer<S> {
+impl<S: State> StateStorageMut<S> for StateBuffer<S> {
     type ParamMut = SResMut<Self>;
 
     fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S> {
@@ -106,13 +106,13 @@ impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for
     }
 }
 
-impl<S: State_ + FromWorld> FromWorld for StateBuffer<S> {
+impl<S: State + FromWorld> FromWorld for StateBuffer<S> {
     fn from_world(world: &mut World) -> Self {
         Self::enabled(S::from_world(world))
     }
 }
 
-impl<S: State_> StateBuffer<S> {
+impl<S: State> StateBuffer<S> {
     /// Create a disabled `StateBuffer`.
     pub fn disabled() -> Self {
         Self(None)

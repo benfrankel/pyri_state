@@ -9,16 +9,16 @@ use bevy_ecs::{
 
 use crate::{
     schedule::StateFlushSet,
-    state::{CurrentState, NextStateRef, StateFlushRef, State_},
+    state::{CurrentState, NextStateRef, StateFlushRef, State},
 };
 
-/// A type that can match a subset of states for the [`State_`] type `S`.
+/// A type that can match a subset of states for the [`State`] type `S`.
 ///
 /// See the following extension traits with additional bounds on `S`:
 ///
 /// - [`StatePatternExtClone`]
 /// - [`StatePatternExtEq`]
-pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
+pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     /// Check if the pattern matches a particular state.
     fn matches(&self, state: &S) -> bool;
 
@@ -82,7 +82,7 @@ pub trait StatePattern<S: State_>: 'static + Send + Sync + Sized {
 }
 
 /// An extension trait for [`StatePattern`] types that also implement `Clone`.
-pub trait StatePatternExtClone<S: State_>: StatePattern<S> + Clone {
+pub trait StatePatternExtClone<S: State>: StatePattern<S> + Clone {
     /// Helper method for configuring [`on_exit`](StatePattern::on_exit) and
     /// [`on_enter`](StatePattern::on_enter) systems for the same `StatePattern`.
     fn on_edge<M1, M2>(
@@ -98,10 +98,10 @@ pub trait StatePatternExtClone<S: State_>: StatePattern<S> + Clone {
     }
 }
 
-impl<S: State_, P: StatePattern<S> + Clone> StatePatternExtClone<S> for P {}
+impl<S: State, P: StatePattern<S> + Clone> StatePatternExtClone<S> for P {}
 
 /// An extension trait for [`StatePattern<S>`] when `S` also implements `Eq`.
-pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
+pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     /// Build a run condition that checks if `S` will refresh in a matching state if triggered.
     fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
         move |state| state.will_refresh(&self)
@@ -115,47 +115,47 @@ pub trait StatePatternExtEq<S: State_ + Eq>: StatePattern<S> {
     }
 }
 
-impl<S: State_ + Eq, P: StatePattern<S>> StatePatternExtEq<S> for P {}
+impl<S: State + Eq, P: StatePattern<S>> StatePatternExtEq<S> for P {}
 
-impl<S: State_ + Eq> StatePattern<S> for S {
+impl<S: State + Eq> StatePattern<S> for S {
     fn matches(&self, state: &S) -> bool {
         self == state
     }
 }
 
-/// A wildcard [`StatePattern`] for the [`State_`] type `S`.
+/// A wildcard [`StatePattern`] for the [`State`] type `S`.
 ///
-/// The usual way to use `AnyStatePattern` is through the associated constant [`State_::ANY`]:
+/// The usual way to use `AnyStatePattern` is through the associated constant [`State::ANY`]:
 ///
 /// ```rust
 /// Level::ANY.on_enter(reset_timer)
 /// ```
 ///
 #[derive(Clone)]
-pub struct AnyStatePattern<S: State_>(pub(crate) PhantomData<S>);
+pub struct AnyStatePattern<S: State>(pub(crate) PhantomData<S>);
 
-impl<S: State_> StatePattern<S> for AnyStatePattern<S> {
+impl<S: State> StatePattern<S> for AnyStatePattern<S> {
     fn matches(&self, _state: &S) -> bool {
         true
     }
 }
 
-/// A [`StatePattern`] that runs a callback to determine which values of the [`State_`]
+/// A [`StatePattern`] that runs a callback to determine which values of the [`State`]
 /// type `S` should match.
 ///
 /// The usual way to construct this type is with the [`state!`](crate::state!) macro or
-/// [`State_::with`]:
+/// [`State::with`]:
 ///
 /// ```rust
 /// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
 /// Level::with(|x| x.0 < 4).on_refresh(my_systems)
 /// ```
 #[derive(Clone)]
-pub struct FnStatePattern<S: State_, F>(F, PhantomData<S>)
+pub struct FnStatePattern<S: State, F>(F, PhantomData<S>)
 where
     F: 'static + Send + Sync + Fn(&S) -> bool;
 
-impl<S: State_, F> StatePattern<S> for FnStatePattern<S, F>
+impl<S: State, F> StatePattern<S> for FnStatePattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S) -> bool,
 {
@@ -164,7 +164,7 @@ where
     }
 }
 
-impl<S: State_, F> FnStatePattern<S, F>
+impl<S: State, F> FnStatePattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S) -> bool,
 {
@@ -173,12 +173,12 @@ where
     }
 }
 
-/// A type that can match a subset of transitions for the [`State_`] type `S`.
+/// A type that can match a subset of transitions for the [`State`] type `S`.
 ///
 /// See the following extension traits with additional bounds on `S`:
 ///
 /// - [`StateTransPatternExtClone`]
-pub trait StateTransPattern<S: State_>: 'static + Send + Sync + Sized {
+pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     /// Check if the pattern matches a particular pair of states.
     fn matches(&self, old: &S, new: &S) -> bool;
 
@@ -210,7 +210,7 @@ pub trait StateTransPattern<S: State_>: 'static + Send + Sync + Sized {
 }
 
 /// An extension trait for [`StateTransPattern`] types that also implement `Clone`.
-pub trait StateTransPatternExtClone<S: State_>: StateTransPattern<S> + Clone {
+pub trait StateTransPatternExtClone<S: State>: StateTransPattern<S> + Clone {
     /// Helper method for configuring [`on_exit`](StateTransPattern::on_exit) and
     /// [`on_enter`](StateTransPattern::on_enter) systems for the same `StateTransPattern`.
     fn on_edge<M1, M2>(
@@ -226,18 +226,18 @@ pub trait StateTransPatternExtClone<S: State_>: StateTransPattern<S> + Clone {
     }
 }
 
-impl<S: State_, P: StateTransPattern<S> + Clone> StateTransPatternExtClone<S> for P {}
+impl<S: State, P: StateTransPattern<S> + Clone> StateTransPatternExtClone<S> for P {}
 
 // A tuple of two state patterns is a transition pattern.
-impl<S: State_, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> for (P1, P2) {
+impl<S: State, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> for (P1, P2) {
     fn matches(&self, old: &S, new: &S) -> bool {
         self.0.matches(old) && self.1.matches(new)
     }
 }
 
-/// A wildcard [`StateTransPattern`] for the [`State_`] type `S`.
+/// A wildcard [`StateTransPattern`] for the [`State`] type `S`.
 ///
-/// The usual way to use this type is through the associated constant [`State_::ANY_TO_ANY`]:
+/// The usual way to use this type is through the associated constant [`State::ANY_TO_ANY`]:
 ///
 /// ```rust
 /// Level::ANY_TO_ANY.on_trans(reset_timer)
@@ -247,30 +247,30 @@ impl<S: State_, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> f
 /// ```
 ///
 #[derive(Clone)]
-pub struct AnyStateTransPattern<S: State_>(pub(crate) PhantomData<S>);
+pub struct AnyStateTransPattern<S: State>(pub(crate) PhantomData<S>);
 
-impl<S: State_> StateTransPattern<S> for AnyStateTransPattern<S> {
+impl<S: State> StateTransPattern<S> for AnyStateTransPattern<S> {
     fn matches(&self, _old: &S, _new: &S) -> bool {
         true
     }
 }
 
 /// A [`StateTransPattern`] that runs a callback to determine which transitions
-/// of the [`State_`] type `S` should match.
+/// of the [`State`] type `S` should match.
 ///
 /// The usual way to construct this type is with the [`state!`](crate::state!) macro or
-/// [`State_::when`]:
+/// [`State::when`]:
 ///
 /// ```rust
 /// state!(Level(2..=5 | 7) => Level(8 | 10)).on_enter(spawn_something_cool)
 /// Level::when(|x, y| y.0 > x.0).on_enter(play_next_level_sfx)
 /// ```
 #[derive(Clone)]
-pub struct FnStateTransPattern<S: State_, F>(F, PhantomData<S>)
+pub struct FnStateTransPattern<S: State, F>(F, PhantomData<S>)
 where
     F: 'static + Send + Sync + Fn(&S, &S) -> bool;
 
-impl<S: State_, F> StateTransPattern<S> for FnStateTransPattern<S, F>
+impl<S: State, F> StateTransPattern<S> for FnStateTransPattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S, &S) -> bool,
 {
@@ -279,7 +279,7 @@ where
     }
 }
 
-impl<S: State_, F> FnStateTransPattern<S, F>
+impl<S: State, F> FnStateTransPattern<S, F>
 where
     F: 'static + Send + Sync + Fn(&S, &S) -> bool,
 {

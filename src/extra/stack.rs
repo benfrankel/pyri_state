@@ -9,7 +9,7 @@ use bevy_ecs::{
 };
 
 use crate::{
-    state::State_,
+    state::State,
     storage::{StateStorage, StateStorageMut},
 };
 
@@ -21,12 +21,12 @@ use crate::{
     // TODO: In bevy 0.14 this will be possible.
     //reflect(Resource)
 )]
-pub struct StateStack<S: State_> {
+pub struct StateStack<S: State> {
     stack: Vec<Option<S>>,
     bases: Vec<usize>,
 }
 
-impl<S: State_> StateStorage<S> for StateStack<S> {
+impl<S: State> StateStorage<S> for StateStack<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -34,7 +34,7 @@ impl<S: State_> StateStorage<S> for StateStack<S> {
     }
 }
 
-impl<S: State_> StateStorageMut<S> for StateStack<S> {
+impl<S: State> StateStorageMut<S> for StateStack<S> {
     type ParamMut = SResMut<Self>;
 
     fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S> {
@@ -59,13 +59,13 @@ impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for
     }
 }
 
-impl<S: State_ + FromWorld> FromWorld for StateStack<S> {
+impl<S: State + FromWorld> FromWorld for StateStack<S> {
     fn from_world(world: &mut World) -> Self {
         Self::new(S::from_world(world))
     }
 }
 
-impl<S: State_> StateStack<S> {
+impl<S: State> StateStack<S> {
     pub fn empty() -> Self {
         Self {
             stack: Vec::new(),
@@ -142,7 +142,7 @@ impl<S: State_> StateStack<S> {
     }
 }
 
-pub trait StateStackMut: State_ {
+pub trait StateStackMut: State {
     fn acquire(mut stack: ResMut<StateStack<Self>>) {
         stack.acquire();
     }
@@ -160,7 +160,7 @@ pub trait StateStackMut: State_ {
     }
 }
 
-impl<S: State_<Storage = StateStack<S>>> StateStackMut for S {}
+impl<S: State<Storage = StateStack<S>>> StateStackMut for S {}
 
 pub trait StateStackMutExtClone: StateStackMut + Clone {
     fn push(self) -> impl Fn(ResMut<StateStack<Self>>) {

@@ -41,7 +41,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_state_path = concat(crate_path.clone(), "state");
-    let state_trait = concat(crate_state_path.clone(), "State_");
+    let state_trait = concat(crate_state_path.clone(), "State");
 
     // Construct storage type.
     let storage_ty = if let Some(storage) = attrs.storage.as_ref() {
@@ -57,7 +57,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
         }
     };
 
-    // Construct State_ impl.
+    // Construct State impl.
     quote! {
         impl #impl_generics #state_trait for #ty_name #ty_generics #where_clause {
             type Storage = #storage_ty;

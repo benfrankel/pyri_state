@@ -14,7 +14,7 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        .init_state_::<ColorMode>()
+        .init_state::<ColorMode>()
         .add_systems(
             Update,
             // These systems might run on the same frame sometimes.

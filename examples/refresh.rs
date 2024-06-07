@@ -10,7 +10,7 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        .init_state_::<Level>()
+        .init_state::<Level>()
         .add_systems(
             StateFlush,
             Level::ANY.on_edge(tear_down_old_level, set_up_new_level),

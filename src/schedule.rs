@@ -6,17 +6,20 @@ use bevy_ecs::{
     event::{Event, EventWriter},
     schedule::{
         common_conditions::not, InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs,
-        NextState, Schedule, ScheduleLabel, SystemSet,
+        Schedule, ScheduleLabel, SystemSet,
     },
     system::{Res, ResMut},
 };
 
+#[cfg(feature = "bevy_state")]
+use bevy_state::state::NextState;
+
 use crate::state::{
-    BevyState, CurrentState, NextStateMut, NextStateRef, StateFlushRef, StateMut, State_,
+    BevyState, CurrentState, NextStateMut, NextStateRef, State, StateFlushRef, StateMut,
     TriggerStateFlush,
 };
 
-/// The schedule that handles [`State_`] flushes, added by [`StatePlugin`](crate::app::StatePlugin).
+/// The schedule that handles [`State`] flushes, added by [`StatePlugin`](crate::app::StatePlugin).
 ///
 /// System ordering:
 ///
@@ -25,7 +28,7 @@ use crate::state::{
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct StateFlush;
 
-/// A suite of system sets in the [`StateFlush`] schedule per [`State_`] type `S`.
+/// A suite of system sets in the [`StateFlush`] schedule per [`State`] type `S`.
 ///
 /// Configured by default by [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin) as follows:
 ///
@@ -40,7 +43,7 @@ pub struct StateFlush;
 ///
 /// See [`AddState`](crate::app::AddState) for how to opt out of default plugins.
 #[derive(SystemSet)]
-pub enum StateFlushSet<S: State_> {
+pub enum StateFlushSet<S: State> {
     /// Resolve the state flush logic for `S` this frame.
     Resolve,
     /// Optionally compute the next value for `S`.
@@ -59,7 +62,7 @@ pub enum StateFlushSet<S: State_> {
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S: State_> Clone for StateFlushSet<S> {
+impl<S: State> Clone for StateFlushSet<S> {
     fn clone(&self) -> Self {
         match self {
             Self::Resolve => Self::Resolve,
@@ -74,21 +77,21 @@ impl<S: State_> Clone for StateFlushSet<S> {
     }
 }
 
-impl<S: State_> PartialEq for StateFlushSet<S> {
+impl<S: State> PartialEq for StateFlushSet<S> {
     fn eq(&self, other: &Self) -> bool {
         core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }
 
-impl<S: State_> Eq for StateFlushSet<S> {}
+impl<S: State> Eq for StateFlushSet<S> {}
 
-impl<S: State_> Hash for StateFlushSet<S> {
+impl<S: State> Hash for StateFlushSet<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S: State_> Debug for StateFlushSet<S> {
+impl<S: State> Debug for StateFlushSet<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
@@ -103,29 +106,29 @@ impl<S: State_> Debug for StateFlushSet<S> {
     }
 }
 
-/// A system set that applies all triggered [`State_`] flushes at the end of
+/// A system set that applies all triggered [`State`] flushes at the end of
 /// the [`StateFlush`] schedule.
 #[derive(SystemSet, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct ApplyFlushSet;
 
-/// An event sent whenever the [`State_`] type `S` flushes.
+/// An event sent whenever the [`State`] type `S` flushes.
 ///
 /// Added by default by [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin). See
 /// [`AddState`](crate::app::AddState) for how to opt out of default plugins.
 #[derive(Event)]
-pub struct StateFlushEvent<S: State_> {
+pub struct StateFlushEvent<S: State> {
     pub old: Option<S>,
     pub new: Option<S>,
 }
 
-pub(crate) fn was_triggered<S: State_>(trigger: Res<TriggerStateFlush<S>>) -> bool {
+pub(crate) fn was_triggered<S: State>(trigger: Res<TriggerStateFlush<S>>) -> bool {
     trigger.0
 }
 
-/// Configure [`StateFlushSet`] system sets for the [`State_`] type `S` to a schedule.
+/// Configure [`StateFlushSet`] system sets for the [`State`] type `S` to a schedule.
 ///
 /// This is used by [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin).
-pub fn schedule_resolve_state<S: State_>(
+pub fn schedule_resolve_state<S: State>(
     schedule: &mut Schedule,
     after: &[InternedSystemSet],
     before: &[InternedSystemSet],
@@ -158,10 +161,10 @@ pub fn schedule_resolve_state<S: State_>(
     ));
 }
 
-/// Add change detection systems for the [`State_`] type `S` to a schedule.
+/// Add change detection systems for the [`State`] type `S` to a schedule.
 ///
 /// This is used by [`DetectChangePlugin<S>`](crate::app::DetectChangePlugin).
-pub fn schedule_detect_change<S: State_ + Eq>(schedule: &mut Schedule) {
+pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
             .run_if(|state: StateFlushRef<S>| matches!(state.get(), (x, y) if x != y))
@@ -169,7 +172,7 @@ pub fn schedule_detect_change<S: State_ + Eq>(schedule: &mut Schedule) {
     );
 }
 
-fn send_flush_event<S: State_ + Clone>(
+fn send_flush_event<S: State + Clone>(
     state: StateFlushRef<S>,
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
@@ -180,30 +183,31 @@ fn send_flush_event<S: State_ + Clone>(
     });
 }
 
-/// Add a send [`StateFlushEvent`] system for the [`State_`] type `S` to a schedule.
+/// Add a send [`StateFlushEvent`] system for the [`State`] type `S` to a schedule.
 ///
 /// This is used by [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
-pub fn schedule_send_event<S: State_ + Clone>(schedule: &mut Schedule) {
+pub fn schedule_send_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateFlushSet::<S>::Flush));
 }
 
-/// Add [`BevyState<S>`] propagation systems for the [`State_`] type `S` to a schedule.
+/// Add [`BevyState<S>`] propagation systems for the [`State`] type `S` to a schedule.
 ///
 /// This is used by [`BevyStatePlugin<S>`](crate::app::BevyStatePlugin).
-pub fn schedule_bevy_state<S: State_ + StateMut + Clone + PartialEq + Eq + Hash + Debug>(
+#[cfg(feature = "bevy_state")]
+pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash + Debug>(
     schedule: &mut Schedule,
 ) {
     let update_bevy_state =
         |pyri_state: NextStateRef<S>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
-            if bevy_state.0.is_none() {
+            if matches!(bevy_state.as_ref(), NextState::Unchanged) {
                 bevy_state.set(BevyState(pyri_state.get().cloned()));
             }
         };
 
     let update_pyri_state = |mut pyri_state: NextStateMut<S>,
                              bevy_state: Res<NextState<BevyState<S>>>| {
-        if let Some(value) = bevy_state.0.clone() {
-            pyri_state.trigger().set(value.0);
+        if let NextState::Pending(bevy_state) = bevy_state.as_ref() {
+            pyri_state.trigger().set(bevy_state.0.clone());
         }
     };
 
@@ -213,14 +217,14 @@ pub fn schedule_bevy_state<S: State_ + StateMut + Clone + PartialEq + Eq + Hash 
     ));
 }
 
-fn apply_flush<S: State_ + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
+fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
     current.0 = next.get().cloned();
 }
 
-/// Add an apply flush system for the [`State_`] type `S` to a schedule.
+/// Add an apply flush system for the [`State`] type `S` to a schedule.
 ///
 /// This is used by [`ApplyFlushPlugin<S>`](crate::app::ApplyFlushPlugin).
-pub fn schedule_apply_flush<S: State_ + Clone>(schedule: &mut Schedule) {
+pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::relax)
             .run_if(was_triggered::<S>)

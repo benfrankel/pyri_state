@@ -17,9 +17,9 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        .init_state_::<MyBufferedState>()
-        .init_state_::<MyStackedState>()
-        .insert_state_(StateSwap([
+        .init_state::<MyBufferedState>()
+        .init_state::<MyStackedState>()
+        .insert_state(StateSwap([
             Some(MySwappedState::X),
             Some(MySwappedState::Y),
         ]))
@@ -55,12 +55,12 @@ enum MyStackedState {
 
 // You can create your own fully custom state storage type:
 #[derive(Resource)]
-pub struct StateSwap<S: State_>([Option<S>; 2]);
+pub struct StateSwap<S: State>([Option<S>; 2]);
 
 // Impl `StateStorage<S>` to enable getting the next state from your storage type.
 // This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type,
 // and attaches run conditions such as `S::will_be_enabled`.
-impl<S: State_> StateStorage<S> for StateSwap<S> {
+impl<S: State> StateStorage<S> for StateSwap<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s bevy_ecs::system::SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -71,7 +71,7 @@ impl<S: State_> StateStorage<S> for StateSwap<S> {
 // Impl `StateStorageMut<S>` to enable setting the next state for your storage type.
 // This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
 // and attaches systems such as `S::disable`.
-impl<S: State_> StateStorageMut<S> for StateSwap<S> {
+impl<S: State> StateStorageMut<S> for StateSwap<S> {
     type ParamMut = SResMut<Self>;
 
     fn get_state_from_mut<'s>(
@@ -91,7 +91,7 @@ impl<S: State_> StateStorageMut<S> for StateSwap<S> {
     }
 }
 
-// Impl `AddStateStorage<S>` to enable `app.add_state_::<S>()`, etc.
+// Impl `AddStateStorage<S>` to enable `app.add_state::<S>()`, etc.
 impl<S: AddState<AddStorage = Self>> AddStateStorage for StateSwap<S> {
     type AddState = S;
 
@@ -102,7 +102,7 @@ impl<S: AddState<AddStorage = Self>> AddStateStorage for StateSwap<S> {
 
 // Define a custom trait to associate extra systems and run conditions with any
 // state using your storage.
-pub trait StateSwapMut: State_ {
+pub trait StateSwapMut: State {
     fn swap(mut swap: ResMut<StateSwap<Self>>) {
         let [left, right] = &mut swap.0;
         std::mem::swap(left, right);
@@ -110,7 +110,7 @@ pub trait StateSwapMut: State_ {
 }
 
 // Blanket impl the trait.
-impl<S: State_<Storage = StateSwap<S>>> StateSwapMut for S {}
+impl<S: State<Storage = StateSwap<S>>> StateSwapMut for S {}
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
 // Now you can use `StateSwap<Self>` as a first-class custom storage type!

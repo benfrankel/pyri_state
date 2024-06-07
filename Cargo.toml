@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "A flexible alternative to `bevy_state`"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -9,21 +9,28 @@ keywords = ["ecs", "game", "bevy"]
 categories = ["game-engines", "data-structures"]
 
 [features]
-default = ["bevy_app", "bevy_reflect", "debug", "extra"]
+default = ["bevy_app", "bevy_reflect", "bevy_state", "debug", "extra"]
 bevy_app = ["dep:bevy_app", "pyri_state_derive/bevy_app"]
 bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
+bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 debug = ["dep:bevy_core", "dep:bevy_log", "pyri_state_derive/debug"]
 extra = []
 
 [dependencies]
-bevy_app = { version = "0.13", default-features = false, optional = true }
-bevy_core = { version = "0.13", optional = true }
-bevy_ecs = { version = "0.13", default-features = false }
-bevy_log = { version = "0.13", optional = true }
-bevy_reflect = { version = "0.13", optional = true }
-pyri_state_derive = { version = "0.1", path = "derive" }
+bevy_app = { version = "0.14.0-rc.2", default-features = false, optional = true }
+bevy_core = { version = "0.14.0-rc.2", optional = true }
+bevy_ecs = { version = "0.14.0-rc.2", default-features = false }
+bevy_log = { version = "0.14.0-rc.2", optional = true }
+bevy_reflect = { version = "0.14.0-rc.2", optional = true }
+bevy_state = { version = "0.14.0-rc.2", optional = true }
+pyri_state_derive = { version = "0.2", path = "derive" }
 
 [dev-dependencies]
-bevy = "0.13"
+bevy = { version = "0.14.0-rc.2", default-features = false, features = [
+    "bevy_winit",
+    "x11",
+    "multi_threaded",
+] }
+# TODO: Ecosystem crates need to be updated for bevy 0.14 as well.
 bevy_asset_loader = "0.20"
 iyes_progress = "0.11"

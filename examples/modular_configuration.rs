@@ -14,9 +14,9 @@ use pyri_state::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .add_state_::<MyBasicState>()
-        .add_state_::<MyDerivedState>()
-        .add_state_::<MyCustomState>()
+        .add_state::<MyBasicState>()
+        .add_state::<MyDerivedState>()
+        .add_state::<MyCustomState>()
         .run();
 }
 
@@ -55,11 +55,11 @@ struct MyDerivedState;
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 struct MyCustomState;
 
-impl State_ for MyCustomState {
+impl State for MyCustomState {
     type Storage = StateBuffer<Self>;
 }
 
-// This will be called from `app.add_state_`, `init_state_`, and `insert_state_`.
+// This will be called from `app.add_state`, `init_state`, and `insert_state`.
 impl AddState for MyCustomState {
     type AddStorage = Self::Storage;
 
@@ -85,6 +85,6 @@ impl AddState for MyCustomState {
 // A fully stripped down state type that does nothing.
 struct UselessState;
 
-impl State_ for UselessState {
+impl State for UselessState {
     type Storage = StateBuffer<Self>;
 }

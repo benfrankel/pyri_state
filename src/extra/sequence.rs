@@ -2,7 +2,7 @@
 
 use bevy_ecs::system::{lifetimeless::SRes, ResMut, Resource, SystemParamItem};
 
-use crate::{state::State_, storage::StateStorage};
+use crate::{state::State, storage::StateStorage};
 
 // A fixed sequence of states with an index to the current state.
 #[derive(Resource, Debug)]
@@ -12,12 +12,12 @@ use crate::{state::State_, storage::StateStorage};
     // TODO: In bevy 0.14 this will be possible.
     //reflect(Resource),
 )]
-pub struct StateSequence<S: State_> {
+pub struct StateSequence<S: State> {
     sequence: Vec<Option<S>>,
     pub index: usize,
 }
 
-impl<S: State_> StateStorage<S> for StateSequence<S> {
+impl<S: State> StateStorage<S> for StateSequence<S> {
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -34,7 +34,7 @@ impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for
     }
 }
 
-impl<S: State_> StateSequence<S> {
+impl<S: State> StateSequence<S> {
     pub fn empty() -> Self {
         Self {
             sequence: vec![None],
@@ -92,7 +92,7 @@ impl<S: State_> StateSequence<S> {
 }
 
 // TODO: Do we want to always flush on seek? Or on seek to different index?
-pub trait StateSequenceMut: State_ {
+pub trait StateSequenceMut: State {
     fn seek(to: isize) -> impl 'static + Send + Sync + Fn(ResMut<StateSequence<Self>>) {
         move |mut sequence| sequence.seek(to)
     }
@@ -126,4 +126,4 @@ pub trait StateSequenceMut: State_ {
     }
 }
 
-impl<S: State_<Storage = StateSequence<S>>> StateSequenceMut for S {}
+impl<S: State<Storage = StateSequence<S>>> StateSequenceMut for S {}

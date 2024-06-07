@@ -10,7 +10,7 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        .init_state_::<Level>()
+        .init_state::<Level>()
         .init_resource::<LevelMeta>()
         .add_systems(
             StateFlush,

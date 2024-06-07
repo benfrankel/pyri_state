@@ -18,10 +18,13 @@
 //! Import the [prelude] to bring traits and common types into scope:
 //!
 //! ```rust
+//! // Note: Disable the `bevy_state` feature of `bevy` to avoid prelude interference.
+//! // use bevy::prelude::*;
 //! use pyri_state::prelude::*;
 //! ```
 //!
-//! Derive [`State_`](state::State_) to define your own state types:
+//!
+//! Derive [`State`](state::State) to define your own state types:
 //!
 //! ```rust
 //! #[derive(State, Clone, PartialEq, Eq, Default)]
@@ -31,7 +34,7 @@
 //! Add [`StatePlugin`](app::StatePlugin), and initialize your state types:
 //!
 //! ```rust
-//! app.add_plugins(StatePlugin).init_state_::<Level>();
+//! app.add_plugins(StatePlugin).init_state::<Level>();
 //! ```
 //!
 //! Use [`on_update`](pattern::StatePattern::on_update) to add pattern-matching update systems:
@@ -62,7 +65,7 @@
 //!
 //! Helper systems and run conditions are provided by the following traits:
 //!
-//! - [`State_`](state::State_)
+//! - [`State`](state::State)
 //! - [`StateMut`](state::StateMut)
 //! - [`StateMutExtClone`](state::StateMutExtClone)
 //! - [`StateMutExtDefault`](state::StateMutExtDefault)
@@ -112,11 +115,9 @@ pub mod state;
 pub mod storage;
 
 pub mod prelude {
-    #[doc(hidden)]
     #[cfg(feature = "bevy_app")]
     pub use crate::app::{AppExtState, StatePlugin};
 
-    #[doc(hidden)]
     pub use crate::{
         pattern::{
             StatePattern, StatePatternExtClone, StatePatternExtEq, StateTransPattern,
@@ -125,12 +126,11 @@ pub mod prelude {
         schedule::{StateFlush, StateFlushEvent},
         state,
         state::{
-            CurrentState, NextStateMut, NextStateRef, StateFlushMut, StateFlushRef, StateMut,
-            StateMutExtClone, StateMutExtDefault, State_,
+            CurrentState, NextStateMut, NextStateRef, State, StateFlushMut, StateFlushRef,
+            StateMut, StateMutExtClone, StateMutExtDefault,
         },
         storage::StateBuffer,
     };
 
-    #[doc(hidden)]
     pub use pyri_state_derive::State;
 }

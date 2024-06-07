@@ -2,10 +2,10 @@
 
 use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
-use bevy_ecs::{
-    schedule::States,
-    system::{Res, ResMut, Resource, StaticSystemParam, SystemParam},
-};
+use bevy_ecs::system::{Res, ResMut, Resource, StaticSystemParam, SystemParam};
+
+#[cfg(feature = "bevy_state")]
+use bevy_state::state::States;
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
@@ -32,19 +32,19 @@ use crate::{
 /// enum MenuState { ... }
 ///
 /// // The derive macro would also `impl AddState for MenuState`.
-/// impl State_ for MenuState {
+/// impl State for MenuState {
 ///     type Storage = StateBuffer<Self>;
 /// }
 /// ```
 ///
 /// See [`AddState`](crate::app::AddState) for more information on the derive macro.
 ///
-/// See the following extension traits with additional bounds on `Self` and [`Self::Storage`](State_::Storage):
+/// See the following extension traits with additional bounds on `Self` and [`Self::Storage`](State::Storage):
 ///
 /// - [`StateMut`]
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait State_: 'static + Send + Sync + Sized {
+pub trait State: 'static + Send + Sync + Sized {
     /// The [`StateStorage`] type that describes how this state will be stored in the ECS world.
     type Storage: StateStorage<Self>;
 
@@ -101,14 +101,14 @@ pub trait State_: 'static + Send + Sync + Sized {
     }
 }
 
-/// An extension trait for [`State_`] types with [mutable storage](StateStorageMut).
+/// An extension trait for [`State`] types with [mutable storage](StateStorageMut).
 ///
 /// See the following extension traits with additional bounds on `Self`:
 ///
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait StateMut: State_ {
-    /// This is the same type as `<Self as State_>::Storage` but with an additional [`StateStorageMut`] bound.
+pub trait StateMut: State {
+    /// This is the same type as `<Self as State>::Storage` but with an additional [`StateStorageMut`] bound.
     type StorageMut: StateStorageMut<Self>;
 
     /// A system that disables the next state.
@@ -179,7 +179,7 @@ pub trait StateMutExtDefault: StateMut + Default {
 
 impl<S: StateMut + Default> StateMutExtDefault for S {}
 
-/// A resource that contains the current value of the [`State_`] type `S`.
+/// A resource that contains the current value of the [`State`] type `S`.
 ///
 /// Use [`StateFlushRef`] or [`StateFlushMut`] in a system to access the next state alongside
 /// the current state.
@@ -189,18 +189,18 @@ impl<S: StateMut + Default> StateMutExtDefault for S {}
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct CurrentState<S: State_>(
+pub struct CurrentState<S: State>(
     /// The current state, or `None` if disabled.
     pub Option<S>,
 );
 
-impl<S: State_> Default for CurrentState<S> {
+impl<S: State> Default for CurrentState<S> {
     fn default() -> Self {
         Self::disabled()
     }
 }
 
-impl<S: State_> CurrentState<S> {
+impl<S: State> CurrentState<S> {
     /// Create a disabled `CurrentState`.
     pub fn disabled() -> Self {
         Self(None)
@@ -237,7 +237,7 @@ impl<S: State_> CurrentState<S> {
     }
 }
 
-/// A resource that determines whether the [`State_`] type `S` will flush in the
+/// A resource that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
 #[derive(Resource, Debug)]
 #[cfg_attr(
@@ -245,19 +245,19 @@ impl<S: State_> CurrentState<S> {
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct TriggerStateFlush<S: State_>(
+pub struct TriggerStateFlush<S: State>(
     /// The flush flag. If true, `S` will flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
     pub bool,
     PhantomData<S>,
 );
 
-impl<S: State_> Default for TriggerStateFlush<S> {
+impl<S: State> Default for TriggerStateFlush<S> {
     fn default() -> Self {
         Self(false, PhantomData)
     }
 }
 
-impl<S: State_> TriggerStateFlush<S> {
+impl<S: State> TriggerStateFlush<S> {
     /// Trigger `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
     pub fn trigger(&mut self) {
         self.0 = true;
@@ -269,7 +269,7 @@ impl<S: State_> TriggerStateFlush<S> {
     }
 }
 
-/// A [`SystemParam`] with read-only access to the next value of the [`State_`] type `S`.
+/// A [`SystemParam`] with read-only access to the next value of the [`State`] type `S`.
 ///
 /// NOTE: The next state is only set in stone during the [`StateFlush`](crate::schedule::StateFlush)
 /// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
@@ -285,11 +285,11 @@ impl<S: State_> TriggerStateFlush<S> {
 /// }
 /// ```
 #[derive(SystemParam)]
-pub struct NextStateRef<'w, 's, S: State_>(
-    StaticSystemParam<'w, 's, <<S as State_>::Storage as StateStorage<S>>::Param>,
+pub struct NextStateRef<'w, 's, S: State>(
+    StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorage<S>>::Param>,
 );
 
-impl<'w, 's, S: State_> NextStateRef<'w, 's, S> {
+impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
     /// Get a reference to the next state, or `None` if it's disabled.
     pub fn get(&self) -> Option<&S> {
         S::Storage::get_state(&self.0)
@@ -316,7 +316,7 @@ impl<'w, 's, S: State_> NextStateRef<'w, 's, S> {
     }
 }
 
-/// A [`SystemParam`] with mutable access to the next value of the [`State_`] type `S`.
+/// A [`SystemParam`] with mutable access to the next value of the [`State`] type `S`.
 ///
 /// NOTE: The next state should not be mutated during the [`StateFlush`](crate::schedule::StateFlush)
 /// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
@@ -438,7 +438,7 @@ impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
     }
 }
 
-/// A [`SystemParam`] with read-only access to the current and next values of the [`State_`] type `S`.
+/// A [`SystemParam`] with read-only access to the current and next values of the [`State`] type `S`.
 ///
 /// NOTE: The next state is only set in stone during the [`StateFlush`](crate::schedule::StateFlush)
 /// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
@@ -451,14 +451,14 @@ impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
 /// }
 /// ```
 #[derive(SystemParam)]
-pub struct StateFlushRef<'w, 's, S: State_> {
+pub struct StateFlushRef<'w, 's, S: State> {
     /// A system parameter with read-only access to the current state.
     pub current: Res<'w, CurrentState<S>>,
     /// A system parameter with read-only access to the next state.
     pub next: NextStateRef<'w, 's, S>,
 }
 
-impl<'w, 's, S: State_ + Eq> StateFlushRef<'w, 's, S> {
+impl<'w, 's, S: State + Eq> StateFlushRef<'w, 's, S> {
     /// Check if `S` will refresh in a state that matches a specific pattern if triggered.
     pub fn will_refresh<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(
@@ -468,7 +468,7 @@ impl<'w, 's, S: State_ + Eq> StateFlushRef<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
+impl<'w, 's, S: State> StateFlushRef<'w, 's, S> {
     /// Get read-only references to the current and next states, or `None` if disabled.
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
@@ -506,7 +506,7 @@ impl<'w, 's, S: State_> StateFlushRef<'w, 's, S> {
     }
 }
 
-/// A [`SystemParam`] with read-only and mutable access to the current and next values of the [`State_`] type `S`,
+/// A [`SystemParam`] with read-only and mutable access to the current and next values of the [`State`] type `S`,
 /// respectively.
 ///
 /// NOTE: The next state should not be mutated during the [`StateFlush`](crate::schedule::StateFlush)
@@ -629,7 +629,7 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
     }
 }
 
-/// A wrapper around the [`State_`] type `S` for compatibility with the Bevy ecosystem.
+/// A wrapper around the [`State`] type `S` for compatibility with the Bevy ecosystem.
 ///
 /// Any change to `S` will propagate to `BevyState<S>`, and vice versa.
 ///
@@ -651,7 +651,7 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
 /// Add `GameState` along with its `BevyState` wrapper:
 ///
 /// ```rust
-/// app.init_state_::<GameState>();
+/// app.init_state::<GameState>();
 /// ```
 ///
 /// Use `GameState` to drive `BevyState`:
@@ -670,13 +670,15 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
 ///         .continue_to(BevyState(Some(GameState::Playing))),
 /// );
 /// ```
+#[cfg(feature = "bevy_state")]
 #[derive(States, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct BevyState<S: State_ + Clone + PartialEq + Eq + Hash + Debug>(
+pub struct BevyState<S: State + Clone + PartialEq + Eq + Hash + Debug>(
     /// The wrapped state value, or `None` if disabled.
     pub Option<S>,
 );
 
-impl<S: State_ + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
+#[cfg(feature = "bevy_state")]
+impl<S: State + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
     fn default() -> Self {
         Self(None)
     }

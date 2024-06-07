@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state_derive"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "Derive macros for `pyri_state`"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -11,12 +11,13 @@ categories = ["game-engines", "data-structures"]
 [features]
 debug = []
 bevy_app = ["dep:bevy_macro_utils"]
+bevy_state = []
 
 [lib]
 proc-macro = true
 
 [dependencies]
-bevy_macro_utils = { version = "0.13", optional = true }
+bevy_macro_utils = { version = "0.14.0-rc.2", optional = true }
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", default-features = false, features = [

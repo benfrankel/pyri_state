@@ -10,7 +10,7 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        .add_state_::<Paused>()
+        .add_state::<Paused>()
         .add_systems(StateFlush, Paused.on_edge(unpause, pause))
         .add_systems(
             Update,

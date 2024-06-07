@@ -12,8 +12,8 @@ fn main() {
             ..default()
         })
         // Add the `Menu` state with `Menu::Main` as the fixed base of the stack.
-        .insert_state_(StateStack::with_base(Menu::Main))
-        .init_state_::<GameState>()
+        .insert_state(StateStack::with_base(Menu::Main))
+        .init_state::<GameState>()
         .add_systems(
             Update,
             (

@@ -15,7 +15,7 @@ use crate::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_resolve_state,
         schedule_send_event, StateFlush, StateFlushEvent, StateFlushSet,
     },
-    state::{BevyState, CurrentState, StateMut, State_},
+    state::{BevyState, CurrentState, State, StateMut},
 };
 
 pub struct StatePlugin;
@@ -23,45 +23,48 @@ pub struct StatePlugin;
 impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
         app.init_schedule(StateFlush)
-            .world
+            .world_mut()
             .resource_mut::<MainScheduleOrder>()
             .insert_after(PreUpdate, StateFlush);
     }
 }
 
 pub trait AppExtState {
-    fn add_state_<S: AddState>(&mut self) -> &mut Self;
+    fn add_state<S: AddState>(&mut self) -> &mut Self;
 
-    fn init_state_<S: AddState>(&mut self) -> &mut Self
+    fn init_state<S: AddState>(&mut self) -> &mut Self
     where
         S::AddStorage: FromWorld;
 
-    fn insert_state_<T: AddStateStorage>(&mut self, storage: T) -> &mut Self;
+    fn insert_state<T: AddStateStorage>(&mut self, storage: T) -> &mut Self;
 }
 
 impl AppExtState for App {
-    fn add_state_<S: AddState>(&mut self) -> &mut Self {
-        if !self.world.contains_resource::<CurrentState<S>>() {
+    fn add_state<S: AddState>(&mut self) -> &mut Self {
+        if !self.world().contains_resource::<CurrentState<S>>() {
             S::AddStorage::add_state_storage(self, None);
             S::add_state(self);
         }
         self
     }
 
-    fn init_state_<S: AddState>(&mut self) -> &mut Self
+    fn init_state<S: AddState>(&mut self) -> &mut Self
     where
         S::AddStorage: FromWorld,
     {
-        if !self.world.contains_resource::<CurrentState<S>>() {
-            let storage = S::AddStorage::from_world(&mut self.world);
+        if !self.world().contains_resource::<CurrentState<S>>() {
+            let storage = S::AddStorage::from_world(self.world_mut());
             S::AddStorage::add_state_storage(self, Some(storage));
             S::add_state(self);
         }
         self
     }
 
-    fn insert_state_<T: AddStateStorage>(&mut self, storage: T) -> &mut Self {
-        if !self.world.contains_resource::<CurrentState<T::AddState>>() {
+    fn insert_state<T: AddStateStorage>(&mut self, storage: T) -> &mut Self {
+        if !self
+            .world()
+            .contains_resource::<CurrentState<T::AddState>>()
+        {
             T::add_state_storage(self, Some(storage));
             T::AddState::add_state(self);
         }
@@ -75,7 +78,7 @@ pub trait AddStateStorage: Sized {
     fn add_state_storage(app: &mut App, storage: Option<Self>);
 }
 
-/// TODO
+/// TODO: Actually, most of this documentation should go on the derive macro itself.
 ///
 /// ```rust
 /// // Clone + PartialEq + Eq are required by the derive macro by default.
@@ -110,19 +113,19 @@ pub trait AddStateStorage: Sized {
 /// )]
 /// struct ConfiguredState;
 /// ```
-pub trait AddState: State_ {
+pub trait AddState: State {
     type AddStorage: AddStateStorage;
 
     fn add_state(app: &mut App);
 }
 
-pub struct ResolveStatePlugin<S: State_> {
+pub struct ResolveStatePlugin<S: State> {
     after: Vec<InternedSystemSet>,
     before: Vec<InternedSystemSet>,
     _phantom: PhantomData<S>,
 }
 
-impl<S: State_> Plugin for ResolveStatePlugin<S> {
+impl<S: State> Plugin for ResolveStatePlugin<S> {
     fn build(&self, app: &mut App) {
         schedule_resolve_state::<S>(
             app.get_schedule_mut(StateFlush).unwrap(),
@@ -132,7 +135,7 @@ impl<S: State_> Plugin for ResolveStatePlugin<S> {
     }
 }
 
-impl<S: State_> Default for ResolveStatePlugin<S> {
+impl<S: State> Default for ResolveStatePlugin<S> {
     fn default() -> Self {
         Self {
             after: Vec::new(),
@@ -142,7 +145,7 @@ impl<S: State_> Default for ResolveStatePlugin<S> {
     }
 }
 
-impl<S: State_> ResolveStatePlugin<S> {
+impl<S: State> ResolveStatePlugin<S> {
     pub fn new(after: Vec<InternedSystemSet>, before: Vec<InternedSystemSet>) -> Self {
         Self {
             after,
@@ -151,70 +154,73 @@ impl<S: State_> ResolveStatePlugin<S> {
         }
     }
 
-    pub fn after<T: State_>(mut self) -> Self {
+    pub fn after<T: State>(mut self) -> Self {
         self.after.push(StateFlushSet::<T>::Resolve.intern());
         self
     }
 
-    pub fn before<T: State_>(mut self) -> Self {
+    pub fn before<T: State>(mut self) -> Self {
         self.before.push(StateFlushSet::<T>::Resolve.intern());
         self
     }
 }
 
-pub struct DetectChangePlugin<S: State_ + Eq>(PhantomData<S>);
+pub struct DetectChangePlugin<S: State + Eq>(PhantomData<S>);
 
-impl<S: State_ + Eq> Plugin for DetectChangePlugin<S> {
+impl<S: State + Eq> Plugin for DetectChangePlugin<S> {
     fn build(&self, app: &mut App) {
         schedule_detect_change::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Eq> Default for DetectChangePlugin<S> {
+impl<S: State + Eq> Default for DetectChangePlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
-pub struct FlushEventPlugin<S: State_ + Clone>(PhantomData<S>);
+pub struct FlushEventPlugin<S: State + Clone>(PhantomData<S>);
 
-impl<S: State_ + Clone> Plugin for FlushEventPlugin<S> {
+impl<S: State + Clone> Plugin for FlushEventPlugin<S> {
     fn build(&self, app: &mut App) {
         app.add_event::<StateFlushEvent<S>>();
         schedule_send_event::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Clone> Default for FlushEventPlugin<S> {
+impl<S: State + Clone> Default for FlushEventPlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
+#[cfg(feature = "bevy_state")]
 pub struct BevyStatePlugin<S: StateMut + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
 
+#[cfg(feature = "bevy_state")]
 impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {
     fn build(&self, app: &mut App) {
-        app.init_state::<BevyState<S>>();
+        bevy_state::app::AppExtStates::init_state::<BevyState<S>>(app);
         schedule_bevy_state::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
+#[cfg(feature = "bevy_state")]
 impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Default for BevyStatePlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }
 }
 
-pub struct ApplyFlushPlugin<S: State_ + Clone>(PhantomData<S>);
+pub struct ApplyFlushPlugin<S: State + Clone>(PhantomData<S>);
 
-impl<S: State_ + Clone> Plugin for ApplyFlushPlugin<S> {
+impl<S: State + Clone> Plugin for ApplyFlushPlugin<S> {
     fn build(&self, app: &mut App) {
         schedule_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
     }
 }
 
-impl<S: State_ + Clone> Default for ApplyFlushPlugin<S> {
+impl<S: State + Clone> Default for ApplyFlushPlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }

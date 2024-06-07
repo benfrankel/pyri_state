@@ -9,7 +9,7 @@ use iyes_progress::prelude::*;
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .init_state_::<GameState>()
+        .init_state::<GameState>()
         .init_collection::<GameAssets>()
         .add_loading_state(
             LoadingState::new(BevyState(Some(GameState::LoadingGame)))
