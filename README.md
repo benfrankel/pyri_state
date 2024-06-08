@@ -1,5 +1,10 @@
 # Flexible game states
 
+[![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/benfrankel/pyri_state)
+[![Crates.io](https://img.shields.io/crates/v/pyri_state.svg)](https://crates.io/crates/pyri_state)
+[![Downloads](https://img.shields.io/crates/d/pyri_state.svg)](https://crates.io/crates/pyri_state)
+[![Docs](https://docs.rs/pyri_state/badge.svg)](https://docs.rs/pyri_state/latest/pyri_state/)
+
 `pyri_state` is a flexible alternative to `bevy_state`. In `pyri_state`, states are double-buffered resources with a fixed flush point and some tooling around change detection and system ordering.
 
 The next state is stored in a simple `StateBuffer` by default, but this can be swapped for a `StateStack`, a fixed `StateSequence`, or any custom data structure with a single line of code.
