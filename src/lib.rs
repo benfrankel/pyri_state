@@ -134,5 +134,41 @@ pub mod prelude {
         storage::StateBuffer,
     };
 
+    /// A derive macro for the [`State`] and [`AddState`](crate::app::AddState) traits.
+    ///
+    /// ```rust
+    /// // Clone + PartialEq + Eq are required by the derive macro by default.
+    /// #[derive(State, Clone, PartialEq, Eq)]
+    /// enum GameState { ... }
+    ///
+    /// // They can be omitted if you disable the default plugins.
+    /// #[derive(State)]
+    /// #[state(no_defaults)]
+    /// struct RawState;
+    ///
+    /// // The following plugins are provided by the derive macro:
+    /// #[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
+    /// #[state(
+    ///     // Disable default plugins: detect_change, flush_event, apply_flush.
+    ///     no_defaults,
+    ///     // Trigger a flush on any state change (requires PartialEq, Eq).
+    ///     detect_change,
+    ///     // Send an event on flush (requires Clone).
+    ///     flush_event,
+    ///     // Log on exit, transition, and enter (requires Debug).
+    ///     log_flush,
+    ///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
+    ///     bevy_state,
+    ///     // Clone the next state into the current state on flush (requires Clone).
+    ///     apply_flush,
+    ///     // Swap out the default `StateBuffer<Self>` for a custom storage type.
+    ///     storage(StateStack<Self>),
+    ///     // Run this state's on flush systems after resolving the listed states.
+    ///     after(GameState),
+    ///     // Run this state's on flush systems before resolving the listed states.
+    ///     before(RawState),
+    /// )]
+    /// struct ConfiguredState;
+    /// ```
     pub use pyri_state_derive::State;
 }
