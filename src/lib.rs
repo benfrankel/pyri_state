@@ -136,17 +136,26 @@ pub mod prelude {
 
     /// A derive macro for the [`State`] and [`AddState`](crate::app::AddState) traits.
     ///
+    /// # Examples
+    ///
+    /// The derive macro requires `Clone`, `PartialEq`, and `Eq` by default:
+    ///
     /// ```rust
-    /// // Clone + PartialEq + Eq are required by the derive macro by default.
     /// #[derive(State, Clone, PartialEq, Eq)]
     /// enum GameState { ... }
+    /// ```
     ///
-    /// // They can be omitted if you disable the default plugins.
+    /// They can be omitted if you disable the default options:
+    ///
+    /// ```rust
     /// #[derive(State)]
     /// #[state(no_defaults)]
     /// struct RawState;
+    /// ```
     ///
-    /// // The following plugins are provided by the derive macro:
+    /// The following options are provided:
+    ///
+    /// ```rust
     /// #[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
     /// #[state(
     ///     // Disable default plugins: detect_change, flush_event, apply_flush.

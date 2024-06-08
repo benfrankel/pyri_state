@@ -292,7 +292,7 @@ where
 
 /// A helper macro for building pattern-matching instances of [`FnStatePattern`] and [`FnStateTransPattern`].
 ///
-/// # Example
+/// # Examples
 ///
 /// State pattern-matching:
 ///

@@ -88,11 +88,20 @@ pub trait AddStateStorage: Sized {
 
 /// A [`State`] type that can be added to an [`App`].
 pub trait AddState: State {
-    /// An [`AddStateStorage`] to add this state type's
+    /// An [`AddStateStorage`] for this state type's
     /// [`StateStorage`](crate::storage::StateStorage).
     type AddStorage: AddStateStorage;
 
     /// Add this state type to the app.
+    ///
+    /// The following plugins may be useful when implementing this method:
+    ///
+    /// - [`ResolveStatePlugin<Self>`]
+    /// - [`DetectChangePlugin<Self>`]
+    /// - [`FlushEventPlugin<Self>`]
+    /// - [`LogFlushPlugin<Self>`](crate::debug::LogFlushPlugin)
+    /// - [`BevyStatePlugin<Self>`]
+    /// - [`ApplyFlushPlugin<Self>`]
     fn add_state(app: &mut App);
 }
 
