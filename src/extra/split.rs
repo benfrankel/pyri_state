@@ -1,8 +1,11 @@
-//! A split state works like a basic enum state that can be split between the modules of a crate.
-//! It's a useful organizational tool for cross-cutting states in a plugin-based codebase.
+//! Split the definition of a simple enum-like [`State`](crate::state::State) between the
+//! modules of your crate.
 //!
-//! Newtype [`SplitState`] to define a split state type, and use
+//! Newtype [`SplitState`] to define a new split state type, and use
 //! [`add_to_split_state!`](crate::add_to_split_state!) to extend it.
+//!
+//! This can be a useful organizational tool for cross-cutting states in a plugin-based
+//! codebase.
 
 /// The internal value of a split state type.
 ///

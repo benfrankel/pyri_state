@@ -1,4 +1,6 @@
-//! TODO: Module-level documentation
+//! Keep track of a [`State`] type's history in a [`StateStack`].
+//!
+//! This can be used to implement a back button, for example.
 
 use bevy_ecs::{
     system::{
@@ -16,9 +18,9 @@ use crate::{
     storage::{StateStorage, StateStorageMut},
 };
 
-/// A [`StateStorage`] type that stores `S` in a stack with the next state on top.
+/// A [`StateStorage`] type that stores the [`State`] type `S` in a stack with the next state on top.
 ///
-/// Using this storage unlocks the [`StateStackMut`] extension trait for the [`State`] type `S`.
+/// Using this as storage unlocks the [`StateStackMut`] extension trait for `S`.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",

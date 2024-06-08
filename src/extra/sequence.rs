@@ -1,4 +1,6 @@
-//! TODO: Module-level documentation
+//! Navigate a fixed [`StateSequence`] by index.
+//!
+//! This can be used to implement phases in a turn-based game, for example.
 
 use bevy_ecs::system::{lifetimeless::SRes, ResMut, Resource, SystemParamItem};
 
@@ -7,9 +9,10 @@ use bevy_ecs::reflect::ReflectResource;
 
 use crate::{state::State, storage::StateStorage};
 
-/// A [`StateStorage`] type that stores `S` in a fixed sequence with an index to the next state.
+/// A [`StateStorage`] type that stores the [`State`] type `S` in a fixed sequence with an
+/// index to the next state.
 ///
-/// Using this storage unlocks the [`StateSequenceMut`] extension trait for the [`State`] type `S`.
+/// Using this as storage unlocks the [`StateSequenceMut`] extension trait for `S`.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",

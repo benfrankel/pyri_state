@@ -1,8 +1,9 @@
-//! TODO: Module-level documentation
+//! Debugging tools (behind the `debug` feature flag).
+//!
+//! Insert the [`StateDebugSettings`] resource to enable debug tools.
 
-use std::{any::type_name, fmt::Debug, marker::PhantomData};
+use std::{any::type_name, fmt::Debug};
 
-use bevy_app::{App, Plugin};
 use bevy_core::FrameCount;
 use bevy_ecs::{
     schedule::{common_conditions::resource_exists, Condition, IntoSystemConfigs, Schedule},
@@ -15,11 +16,11 @@ use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::{StatePattern, StateTransPattern},
-    schedule::{was_triggered, StateFlush, StateFlushSet},
+    schedule::{was_triggered, StateFlushSet},
     state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
-/// A resource that controls state-related debug behavior.
+/// A resource that controls the behavior of [state debugging tools](crate::debug).
 #[derive(Resource, PartialEq, Eq, Default)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -37,20 +38,23 @@ pub struct StateDebugSettings {
     pub log_enter: bool,
 }
 
-/// A plugin that schedules flush logging for the [`State`] type `S`.
+/// A plugin that adds on-flush logging systems for the [`State`] type `S`.
 ///
 /// Calls [`schedule_log_flush<S>`].
-pub struct LogFlushPlugin<S: State + Debug>(PhantomData<S>);
+#[cfg(feature = "bevy_app")]
+pub struct LogFlushPlugin<S: State + Debug>(std::marker::PhantomData<S>);
 
-impl<S: State + Debug> Plugin for LogFlushPlugin<S> {
-    fn build(&self, app: &mut App) {
-        schedule_log_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
+#[cfg(feature = "bevy_app")]
+impl<S: State + Debug> bevy_app::Plugin for LogFlushPlugin<S> {
+    fn build(&self, app: &mut bevy_app::App) {
+        schedule_log_flush::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
     }
 }
 
+#[cfg(feature = "bevy_app")]
 impl<S: State + Debug> Default for LogFlushPlugin<S> {
     fn default() -> Self {
-        Self(PhantomData)
+        Self(std::marker::PhantomData)
     }
 }
 
@@ -82,7 +86,7 @@ fn log_state_enter<S: State + Debug>(frame: Res<FrameCount>, new: NextStateRef<S
     info!("[Frame {frame}] {ty} enter: {new:?}");
 }
 
-/// Add flush logging systems for the [`State`] type `S` to a schedule.
+/// Add on-flush logging systems for the [`State`] type `S` to a schedule.
 ///
 /// Used in [`LogFlushPlugin<S>`].
 pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
