@@ -127,7 +127,10 @@ pub(crate) fn was_triggered<S: State>(trigger: Res<TriggerStateFlush<S>>) -> boo
     trigger.0
 }
 
-/// Configure [`StateFlushSet`] system sets for the [`State`] type `S` to a schedule.
+/// Configure [`StateFlushSet<S>`] system sets for the [`State`] type `S` in a schedule.
+///
+/// To specify a dependency relative to another `State` type `T`, include
+/// [`StateFlushSet::<T>::Resolve`] in `after` or `before`.
 ///
 /// Used in [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin).
 pub fn schedule_resolve_state<S: State>(
@@ -185,10 +188,10 @@ fn send_flush_event<S: State + Clone>(
     });
 }
 
-/// Add a send [`StateFlushEvent`] system for the [`State`] type `S` to a schedule.
+/// Add a [`StateFlushEvent<S>`] sending system for the [`State`] type `S` to a schedule.
 ///
-/// This is used by [`FlushEventPlugin`](crate::app::FlushEventPlugin).
-pub fn schedule_send_event<S: State + Clone>(schedule: &mut Schedule) {
+/// Used in [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
+pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateFlushSet::<S>::Flush));
 }
 

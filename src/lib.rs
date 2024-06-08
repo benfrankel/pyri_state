@@ -115,6 +115,7 @@ pub mod schedule;
 pub mod state;
 pub mod storage;
 
+/// TODO: Module-level documentation
 pub mod prelude {
     #[cfg(feature = "bevy_app")]
     pub use crate::app::{AppExtState, StatePlugin};

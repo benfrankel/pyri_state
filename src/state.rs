@@ -23,21 +23,19 @@ use crate::{
 /// The current state will be stored in the [`CurrentState`] resource,
 /// and the next state will be stored in the specified [`StateStorage`].
 ///
-/// This trait can be derived or implemented manually:
+/// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
 /// ```rust
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// enum GameState { ... }
 ///
 /// enum MenuState { ... }
-///
-/// // The derive macro would also `impl AddState for MenuState`.
 /// impl State for MenuState {
 ///     type Storage = StateBuffer<Self>;
 /// }
 /// ```
 ///
-/// See [`AddState`](crate::app::AddState) for more information on the derive macro.
+/// The derive macro would also implement [`AddState`](crate::app::AddState) for `MenuState`.
 ///
 /// See the following extension traits with additional bounds on `Self` and [`Self::Storage`](State::Storage):
 ///
