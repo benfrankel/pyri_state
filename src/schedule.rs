@@ -1,9 +1,9 @@
-//! TODO: Module-level documentation
+//! State flush scheduling types and helper functions.
 //!
-//! System ordering:
+//! The [`StateFlush`] schedule runs after [`PreUpdate`](bevy_app::PreUpdate)
+//! and handles all [`State`] flush logic.
 //!
-//! 1. [`StateFlushSet::<S>::Resolve`](StateFlushSet) per state type `S`.
-//! 2. [`ApplyFlushSet`] for all state types.
+//! State flush hooks run in [`StateFlushSet<S>`], and every flush is applied in [`ApplyFlushSet`].
 
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
@@ -30,20 +30,19 @@ use crate::state::{
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct StateFlush;
 
-/// A suite of system sets in the [`StateFlush`] schedule per [`State`] type `S`.
+/// A suite of system sets in the [`StateFlush`] schedule for each [`State`] type `S`.
 ///
-/// Configured by default by [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin) as follows:
+/// Configured by default[*](pyri_state_derive::State) by
+/// [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin) as follows:
 ///
-/// 1. [`Self::Resolve`] before / after other `Resolve` system sets based on state dependencies,
-/// and before [`ApplyFlushSet`].
-///     1. [`Self::Compute`].
-///     2. [`Self::Trigger`] if not yet triggered.
-///     3. [`Self::Flush`] if triggered.
-///         1. [`Self::Exit`].
-///         2. [`Self::Trans`].
-///         3. [`Self::Enter`].
-///
-/// See [`AddState`](crate::app::AddState) for how to opt out of default plugins.
+/// 1. [`Resolve`](Self::Resolve) (before or after other `Resolve` system sets based on
+/// state dependencies, and before [`ApplyFlushSet`])
+///     1. [`Compute`](Self::Compute)
+///     2. [`Trigger`](Self::Trigger) (if not yet triggered)
+///     3. [`Flush`](Self::Flush) (if triggered)
+///         1. [`Exit`](Self::Exit)
+///         2. [`Trans`](Self::Trans)
+///         3. [`Enter`](Self::Enter)
 #[derive(SystemSet)]
 pub enum StateFlushSet<S: State> {
     /// Resolve the state flush logic for `S` this frame.
@@ -115,8 +114,8 @@ pub struct ApplyFlushSet;
 
 /// An event sent whenever the [`State`] type `S` flushes.
 ///
-/// Added by default by [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin). See
-/// [`AddState`](crate::app::AddState) for how to opt out of default plugins.
+/// Added by default[*](pyri_state_derive::State) by
+/// [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
 #[derive(Event)]
 pub struct StateFlushEvent<S: State> {
     /// The state before the flush, or `None` if disabled.

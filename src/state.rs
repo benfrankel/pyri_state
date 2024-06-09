@@ -1,13 +1,15 @@
-//! TODO: Module-level documentation
+//! State traits, resources, and system parameters.
 //!
-//! You can write custom systems and run conditions using the following
-//! [`SystemParam`s](bevy_ecs::system::SystemParam):
+//! Use the following [`SystemParam`] types to access the [`State`] type `S` in your systems
+//! and run conditions:
 //!
-//! | State          | Read-only                              | Mutable                                   |
-//! | -------------- | -------------------------------------- | ----------------------------------------- |
-//! | Current        | [`Res<CurrentState<S>>`](CurrentState) | [`ResMut<CurrentState<S>>`](CurrentState) |
-//! | Next           | [`NextStateRef<S>`]                    | [`NextStateMut<S>`]                       |
-//! | Current + Next | [`StateFlushRef<S>`]                   | [`StateFlushMut<S>`]                      |
+//! | State          | Read-only access                       | Mutable access                             |
+//! | -------------- | -------------------------------------- | ------------------------------------------ |
+//! | Current        | [`Res<CurrentState<S>>`](CurrentState) | [`ResMut<CurrentState<S>>`](CurrentState)* |
+//! | Next           | [`NextStateRef<S>`]                    | [`NextStateMut<S>`]                        |
+//! | Current & Next | [`StateFlushRef<S>`]                   | [`StateFlushMut<S>`]                       |
+//!
+//! \* Don't mutate the current state directly unless you know what you're doing.
 
 use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 

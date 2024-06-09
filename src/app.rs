@@ -105,7 +105,7 @@ pub trait AddState: State {
     fn add_state(app: &mut App);
 }
 
-/// A plugin that configures [`StateFlushSet<S>`] system sets for the [`State`] type `S`
+/// A plugin that configures the [`StateFlushSet<S>`] system sets for the [`State`] type `S`
 /// in the [`StateFlush`] schedule.
 ///
 /// To specify a dependency relative to another `State` type `T`, add
