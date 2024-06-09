@@ -1,0 +1,68 @@
+# Version 0.2.0
+
+- Updated to bevy 0.14.0
+- Wrote [documentation](https://docs.rs/pyri_state/latest/pyri_state/)
+- Wrote [interactive examples](/examples/)
+- Implemented state pattern-matching:
+    - Added `state!` macro
+    - Added `StatePattern` trait
+    - Added `StatePatternExtClone` extension trait
+    - Added `StatePatternExtEq` extension trait
+    - Added `StateTransPattern` trait
+    - Added `StateTransPatternExtClone` extension trait
+    - Added `AnyStateTransPattern` type
+    - Added `AnyStatePattern` type
+    - Added `FnStatePattern` type
+    - Added `FnStateTransPattern` type
+    - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
+    - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
+- Implemented state storage:
+    - Added `storage(...)` derive macro option
+    - Added `StateStorage` trait
+    - Added `StateStorageMut` trait
+    - Added `AddStateStorage` trait
+    - Added `NextStateRef` system param
+    - Added `NextStateMut` system param
+    - Replaced `NextState_` with `StateBuffer` and `TriggerStateFlush` resources
+    - Renamed `StateRef` -> `StateFlushRef` system param
+    - Renamed `StateMut` -> `StateFlushMut` system param
+- Implemented flush logging:
+    - Added `debug` feature flag
+    - Added `StateDebugSettings` resource
+    - Added `log_flush` derive macro option
+    - Added `LogFlushPlugin` plugin
+    - Added `schedule_log_flush` function
+- Implemented extra features:
+    - Added `extra` feature flag
+    - Added `StateStack` resource and `StateStackMut`, `StateStackMutExtClone` extension traits
+    - Added `StateSequence` resource and `StateSequenceMut` extension trait
+    - Added `SplitState` type and `add_to_split_state!` macro
+- Adjusted state traits:
+    - Removed `State_` trait
+    - Renamed `RawState` -> `State` trait
+    - Added `StateMut` extension trait
+    - Renamed `RawStateExtClone` -> `StateMutExtClone` extension trait
+    - Renamed `RawStateExtDefault` -> `StateMutExtDefault` extension trait
+    - Removed `RawStateExtEq` extension trait (see `StatePatternExtEq` instead)
+- Adjusted `AppExtState`:
+    - Renamed `add_state_` -> `add_state` method
+    - Renamed `init_state_` -> `init_state` method
+    - Renamed `insert_state_` -> `insert_state` method
+- Replaced configs with plugins:
+    - Replaced `GetStateConfig` and `ConfigureState` with `AddState` (and `AddStateStorage`) traits
+    - Renamed `StateConfigResolveState` -> `ResolveStatePlugin` plugin
+    - Renamed `StateConfigDetectChange` -> `DetectChangePlugin` plugin
+    - Renamed `StateConfigSendEvent` -> `FlushEventPlugin` plugin
+    - Renamed `StateConfigBevyState` -> `BevyStatePlugin` plugin
+    - Renamed `StateConfigApplyFlush` -> `ApplyFlushPlugin` plugin
+- Adjusted scheduling:
+    - Renamed `StateFlushSet` -> `StateHook` system set
+    - Renamed `StateFlushSet::Transition` -> `StateHook::Trans` variant
+    - Added `StateHook::Compute` variant
+    - Renamed `StateFlushEvent` fields: `before` -> `old` and `after` -> `new`
+    - Renamed `schedule_send_event` -> `schedule_flush_event` function
+    - Renamed `send_event` -> `flush_event` derive macro option
+
+# Version 0.1.0
+
+- Initial version.

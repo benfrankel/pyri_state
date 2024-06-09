@@ -2,7 +2,7 @@
 //!
 //! # Overview
 //!
-//! 1. The current state is stored in the [`CurrentState`](state::CurrentState) resource.
+//! 1. The current state is stored in a [`CurrentState`](state::CurrentState) resource.
 //! 2. The next state is stored in a [`StateBuffer`](storage::StateBuffer) resource by default
 //! (see [storage] for more information).
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
@@ -22,15 +22,15 @@
 //! use pyri_state::prelude::*;
 //! ```
 //!
-//!
-//! Derive [`State`](state::State) to define your own state types:
+//! Define your own [`State`](state::State) type using the
+//! [derive macro](pyri_state_derive::State):
 //!
 //! ```rust
 //! #[derive(State, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
 //! ```
 //!
-//! Add [`StatePlugin`](app::StatePlugin) and initialize your state types:
+//! Add [`StatePlugin`](app::StatePlugin) and initialize your state type:
 //!
 //! ```rust
 //! app.add_plugins(StatePlugin).init_state::<Level>();
