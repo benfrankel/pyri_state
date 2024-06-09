@@ -3,7 +3,7 @@
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;
-use pyri_state::{debug::StateDebugSettings, prelude::*};
+use pyri_state::prelude::*;
 
 fn main() {
     App::new()

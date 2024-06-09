@@ -1,4 +1,6 @@
-//! A [`BevyState`] wrapper for ecosystem compatibility (`bevy_state` feature flag).
+//! A [`BevyState`] wrapper for ecosystem compatibility.
+//!
+//! Enable the `bevy_state` feature flag to use this module.
 //!
 //! # Example
 //!

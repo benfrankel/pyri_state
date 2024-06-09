@@ -4,6 +4,7 @@
 - Wrote [documentation](https://docs.rs/pyri_state/latest/pyri_state/)
 - Wrote [interactive examples](/examples/)
 - Implemented state pattern-matching:
+    - Added `pattern` module
     - Added `state!` macro
     - Added `StatePattern` trait
     - Added `StatePatternExtClone` extension trait
@@ -17,6 +18,7 @@
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
 - Implemented state storage:
+    - Added `storage` module
     - Added `storage(...)` derive macro option
     - Added `StateStorage` trait
     - Added `StateStorageMut` trait
@@ -26,19 +28,31 @@
     - Replaced `NextState_` with `StateBuffer` and `TriggerStateFlush` resources
     - Renamed `StateRef` -> `StateFlushRef` system param
     - Renamed `StateMut` -> `StateFlushMut` system param
-- Implemented flush logging:
-    - Added `debug` feature flag
-    - Added `StateDebugSettings` resource
-    - Added `log_flush` derive macro option
-    - Added `LogFlushPlugin` plugin
-    - Added `schedule_log_flush` function
 - Implemented extra features:
-    - Added `extra` feature flag
-    - Moved `BevyState` and related items into `extra::bevy_state` module
-    - Added `StateStack` resource and `StateStackMut`, `StateStackMutExtClone` extension traits
-    - Added `StateSequence` resource and `StateSequenceMut` extension trait
-    - Added `SplitState` type and `add_to_split_state!` macro
+    - Added `extra` module
+    - Moved `app` -> `extra::app` module
+    - Moved `BevyState` and related items into new `extra::bevy_state` module
+    - Implemented flush logging:
+        - Added `debug` feature flag
+        - Added `StateDebugSettings` resource
+        - Added `log_flush` derive macro option
+        - Added `LogFlushPlugin` plugin
+        - Added `schedule_log_flush` function
+    - Implemented state stack storage:
+        - Added `stack` feature flag
+        - Added `StateStack` resource
+        - Added `StateStackMut` extension trait
+        - Added `StateStackMutExtClone` extension trait
+    - Implemented state sequence storage:
+        - Added `sequence` feature flag
+        - Added `StateSequence` resource
+        - Added `StateSequenceMut` extension trait
+    - Implemented split state definition:
+        - Added `split` feature flag
+        - Added `SplitState` type alias
+        - Added `add_to_split_state!` macro
 - Adjusted state traits:
+    - Merged `buffer` -> `state` module
     - Removed `State_` trait
     - Renamed `RawState` -> `State` trait
     - Added `StateMut` extension trait

@@ -3,7 +3,7 @@
 use std::fmt::Debug;
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use pyri_state::{debug::StateDebugSettings, extra::sequence::*, prelude::*};
+use pyri_state::prelude::*;
 
 fn main() {
     App::new()

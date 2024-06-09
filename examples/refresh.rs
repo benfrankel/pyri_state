@@ -1,7 +1,7 @@
 // Trigger a transition from the current state to itself (e.g. to restart the current level).
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use pyri_state::{debug::StateDebugSettings, prelude::*};
+use pyri_state::prelude::*;
 
 fn main() {
     App::new()

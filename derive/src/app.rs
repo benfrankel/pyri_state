@@ -14,7 +14,8 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let app_ty = concat(bevy_app_path.clone(), "App");
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
-    let crate_app_path = concat(crate_path.clone(), "app");
+    let crate_extra_path = concat(crate_path.clone(), "extra");
+    let crate_app_path = concat(crate_extra_path.clone(), "app");
     let add_state_trait = concat(crate_app_path.clone(), "AddState");
     let crate_state_path = concat(crate_path.clone(), "state");
     let current_state_ty = concat(crate_state_path.clone(), "CurrentState");
@@ -72,14 +73,13 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
     let log_flush = {
-        let crate_debug_path = concat(crate_path.clone(), "debug");
+        let crate_debug_path = concat(crate_extra_path.clone(), "debug");
         simple_plugin(&crate_debug_path, "LogFlush", attrs.log_flush)
     };
     #[cfg(not(feature = "bevy_state"))]
     let bevy_state = quote! {};
     #[cfg(feature = "bevy_state")]
     let bevy_state = {
-        let crate_extra_path = concat(crate_path.clone(), "extra");
         let crate_bevy_state_path = concat(crate_extra_path.clone(), "bevy_state");
         simple_plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state)
     };

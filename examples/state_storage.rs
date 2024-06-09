@@ -3,9 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ecs::system::lifetimeless::{SRes, SResMut};
 use pyri_state::{
-    app::{AddState, AddStateStorage},
-    debug::StateDebugSettings,
-    extra::stack::*,
+    extra::app::{AddState, AddStateStorage},
     prelude::*,
     storage::{StateStorage, StateStorageMut},
 };

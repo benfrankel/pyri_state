@@ -1,4 +1,6 @@
-//! Navigate a fixed [`StateSequence`] by index (`extra` feature flag).
+//! Navigate a fixed [`StateSequence`] by index.
+//!
+//! Enable the `sequence` feature flag to use this module.
 //!
 //! This can be used to implement phases in a turn-based game, for example.
 
@@ -33,7 +35,9 @@ impl<S: State> StateStorage<S> for StateSequence<S> {
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateSequence<S> {
+impl<S: crate::extra::app::AddState<AddStorage = Self>> crate::extra::app::AddStateStorage
+    for StateSequence<S>
+{
     type AddState = S;
 
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {

@@ -9,18 +9,30 @@ keywords = ["ecs", "game", "bevy"]
 categories = ["game-engines", "data-structures"]
 
 [features]
-# Everything is enabled by default.
-default = ["bevy_app", "bevy_reflect", "bevy_state", "debug", "extra"]
+# All features are enabled by default.
+default = [
+    "bevy_app",
+    "bevy_reflect",
+    "bevy_state",
+    "debug",
+    "sequence",
+    "split",
+    "stack",
+]
 # Enable state configuration tools for `App`.
 bevy_app = ["dep:bevy_app", "pyri_state_derive/bevy_app"]
 # Derive `Reflect` for the types in this crate.
 bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
 # Enable `BevyState` as an ecosystem compatibility tool.
 bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
-# Enable state debugging tools (e.g. flush logging).
+# Enable state debugging tools (e.g. on-flush logging).
 debug = ["dep:bevy_core", "dep:bevy_log", "pyri_state_derive/debug"]
-# Enable some extra tools (e.g. state stack / sequence).
-extra = []
+# Enable the `StateSequence` storage type.
+sequence = []
+# Enable split states as a code organization tool.
+split = []
+# Enable the `StateStack` storage type.
+stack = []
 
 [dependencies]
 bevy_app = { version = "0.14.0-rc.2", default-features = false, optional = true }

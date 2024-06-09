@@ -1,4 +1,6 @@
-//! State configuration tools (behind the `bevy_app` feature flag).
+//! State configuration tools.
+//!
+//! Enable the `bevy_app` feature flag to use this module.
 
 use std::marker::PhantomData;
 
@@ -97,7 +99,7 @@ pub trait AddState: State {
     /// - [`ResolveStatePlugin<Self>`]
     /// - [`DetectChangePlugin<Self>`]
     /// - [`FlushEventPlugin<Self>`]
-    /// - [`LogFlushPlugin<Self>`](crate::debug::LogFlushPlugin)
+    /// - [`LogFlushPlugin<Self>`](crate::extra::debug::LogFlushPlugin)
     /// - [`BevyStatePlugin<Self>`](crate::extra::bevy_state::BevyStatePlugin)
     /// - [`ApplyFlushPlugin<Self>`]
     fn add_state(app: &mut App);

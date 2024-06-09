@@ -9,7 +9,7 @@
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
-//! 5. Tools are provided for [state configuration](app), [debugging](debug),
+//! 5. Tools are provided for [state configuration](extra::app), [debugging](extra::debug),
 //! [pattern-matching](pattern), [and more](extra).
 //!
 //! # Getting started
@@ -30,7 +30,7 @@
 //! struct Level(pub usize);
 //! ```
 //!
-//! Add [`StatePlugin`](app::StatePlugin) and initialize your state type:
+//! Add [`StatePlugin`](extra::app::StatePlugin) and initialize your state type:
 //!
 //! ```rust
 //! app.add_plugins(StatePlugin).init_state::<Level>();
@@ -63,10 +63,6 @@
 // Allow macros to refer to this crate as `pyri_state` internally.
 extern crate self as pyri_state;
 
-#[cfg(feature = "bevy_app")]
-pub mod app;
-#[cfg(feature = "debug")]
-pub mod debug;
 pub mod extra;
 pub mod pattern;
 pub mod schedule;
@@ -81,9 +77,6 @@ pub mod storage;
 /// use pyri_state::prelude::*;
 /// ```
 pub mod prelude {
-    #[cfg(feature = "bevy_app")]
-    pub use crate::app::{AppExtState, StatePlugin};
-
     pub use crate::{
         pattern::{
             StatePattern, StatePatternExtClone, StatePatternExtEq, StateTransPattern,
@@ -98,7 +91,27 @@ pub mod prelude {
         storage::StateBuffer,
     };
 
-    /// A derive macro for the [`State`] and [`AddState`](crate::app::AddState) traits.
+    #[cfg(feature = "bevy_app")]
+    pub use crate::extra::app::{AppExtState, StatePlugin};
+
+    #[cfg(feature = "bevy_state")]
+    pub use crate::extra::bevy_state::BevyState;
+
+    #[cfg(feature = "debug")]
+    pub use crate::extra::debug::StateDebugSettings;
+
+    #[cfg(feature = "stack")]
+    pub use crate::extra::stack::{StateStack, StateStackMut, StateStackMutExtClone};
+
+    #[cfg(feature = "sequence")]
+    pub use crate::extra::sequence::{StateSequence, StateSequenceMut};
+
+    #[cfg(feature = "split")]
+    pub use crate::add_to_split_state;
+    #[cfg(feature = "split")]
+    pub use crate::extra::split::SplitState;
+
+    /// A derive macro for the [`State`] and [`AddState`](crate::extra::app::AddState) traits.
     ///
     /// # Examples
     ///

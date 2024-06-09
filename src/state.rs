@@ -43,7 +43,7 @@ use crate::{
 /// }
 /// ```
 ///
-/// The derive macro would also implement [`AddState`](crate::app::AddState) for `MenuState`.
+/// The derive macro would also implement [`AddState`](crate::extra::app::AddState) for `MenuState`.
 ///
 /// See the following extension traits with additional bounds on `Self` and [`Self::Storage`](State::Storage):
 ///

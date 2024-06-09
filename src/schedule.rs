@@ -16,7 +16,7 @@ use bevy_ecs::{
 use crate::state::{CurrentState, NextStateRef, State, StateFlushRef, TriggerStateFlush};
 
 /// The schedule that handles all [`State`] flush logic, added after
-/// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::app::StatePlugin).
+/// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::extra::app::StatePlugin).
 ///
 /// State flush hooks run in [`StateHook<S>`] system sets and the flush is applied in
 /// [`ApplyFlushSet`].
@@ -26,7 +26,7 @@ pub struct StateFlush;
 /// A suite of system sets in the [`StateFlush`] schedule for each [`State`] type `S`.
 ///
 /// Configured by default[*](pyri_state_derive::State) by
-/// [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin) as follows:
+/// [`ResolveStatePlugin<S>`](crate::extra::app::ResolveStatePlugin) as follows:
 ///
 /// 1. [`Resolve`](Self::Resolve) (before or after other `Resolve` system sets based on
 /// state dependencies, and before [`ApplyFlushSet`])
@@ -108,7 +108,7 @@ pub struct ApplyFlushSet;
 /// An event sent whenever the [`State`] type `S` flushes.
 ///
 /// Added by default[*](pyri_state_derive::State) by
-/// [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
+/// [`FlushEventPlugin<S>`](crate::extra::app::FlushEventPlugin).
 #[derive(Event)]
 pub struct StateFlushEvent<S: State> {
     /// The state before the flush, or `None` if disabled.
@@ -126,7 +126,7 @@ pub(crate) fn was_triggered<S: State>(trigger: Res<TriggerStateFlush<S>>) -> boo
 /// To specify a dependency relative to another `State` type `T`, include
 /// [`StateHook::<T>::Resolve`] in `after` or `before`.
 ///
-/// Used in [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin).
+/// Used in [`ResolveStatePlugin<S>`](crate::extra::app::ResolveStatePlugin).
 pub fn schedule_resolve_state<S: State>(
     schedule: &mut Schedule,
     after: &[InternedSystemSet],
@@ -162,7 +162,7 @@ pub fn schedule_resolve_state<S: State>(
 
 /// Add change detection systems for the [`State`] type `S` to a schedule.
 ///
-/// Used in [`DetectChangePlugin<S>`](crate::app::DetectChangePlugin).
+/// Used in [`DetectChangePlugin<S>`](crate::extra::app::DetectChangePlugin).
 pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
@@ -184,7 +184,7 @@ fn send_flush_event<S: State + Clone>(
 
 /// Add a [`StateFlushEvent<S>`] sending system for the [`State`] type `S` to a schedule.
 ///
-/// Used in [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
+/// Used in [`FlushEventPlugin<S>`](crate::extra::app::FlushEventPlugin).
 pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
 }
@@ -195,7 +195,7 @@ fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: Nex
 
 /// Add an apply flush system for the [`State`] type `S` to a schedule.
 ///
-/// Used in [`ApplyFlushPlugin<S>`](crate::app::ApplyFlushPlugin).
+/// Used in [`ApplyFlushPlugin<S>`](crate::extra::app::ApplyFlushPlugin).
 pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::relax)

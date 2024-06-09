@@ -1,4 +1,6 @@
-//! Keep track of a [`State`] type's history in a [`StateStack`] (`extra` feature flag).
+//! Keep track of a [`State`] type's history in a [`StateStack`].
+//!
+//! Enable the `stack` feature flag to use this module.
 //!
 //! This can be used to implement a back button, for example.
 
@@ -57,7 +59,9 @@ impl<S: State> StateStorageMut<S> for StateStack<S> {
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateStack<S> {
+impl<S: crate::extra::app::AddState<AddStorage = Self>> crate::extra::app::AddStateStorage
+    for StateStack<S>
+{
     type AddState = S;
 
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {

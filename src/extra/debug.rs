@@ -1,4 +1,6 @@
-//! State debugging tools (behind the `debug` feature flag).
+//! State debugging tools.
+//!
+//! Enable the `debug` feature flag to use this module.
 //!
 //! Insert the [`StateDebugSettings`] resource to enable debug tools.
 
@@ -20,7 +22,7 @@ use crate::{
     state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
-/// A resource that controls the behavior of [state debugging tools](crate::debug).
+/// A resource that controls the behavior of [state debugging tools](crate::extra::debug).
 #[derive(Resource, PartialEq, Eq, Default)]
 #[cfg_attr(
     feature = "bevy_reflect",

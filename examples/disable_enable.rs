@@ -1,7 +1,7 @@
 // Disable or enable any state on command (e.g. for simple toggle states and substates).
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use pyri_state::{debug::StateDebugSettings, prelude::*};
+use pyri_state::prelude::*;
 
 fn main() {
     App::new()

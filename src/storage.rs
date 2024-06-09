@@ -109,7 +109,9 @@ impl<S: State> StateStorageMut<S> for StateBuffer<S> {
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::app::AddState<AddStorage = Self>> crate::app::AddStateStorage for StateBuffer<S> {
+impl<S: crate::extra::app::AddState<AddStorage = Self>> crate::extra::app::AddStateStorage
+    for StateBuffer<S>
+{
     type AddState = S;
 
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {

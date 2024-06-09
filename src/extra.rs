@@ -1,10 +1,14 @@
 //! Extra tools behind feature flags.
 
+#[cfg(feature = "bevy_app")]
+pub mod app;
 #[cfg(feature = "bevy_state")]
 pub mod bevy_state;
-#[cfg(feature = "extra")]
+#[cfg(feature = "debug")]
+pub mod debug;
+#[cfg(feature = "sequence")]
 pub mod sequence;
-#[cfg(feature = "extra")]
+#[cfg(feature = "split")]
 pub mod split;
-#[cfg(feature = "extra")]
+#[cfg(feature = "stack")]
 pub mod stack;

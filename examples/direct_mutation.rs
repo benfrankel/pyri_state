@@ -5,7 +5,7 @@ use std::{fmt::Debug, time::Duration};
 use bevy::{
     input::common_conditions::input_just_pressed, prelude::*, time::common_conditions::on_timer,
 };
-use pyri_state::{debug::StateDebugSettings, prelude::*};
+use pyri_state::prelude::*;
 
 fn main() {
     App::new()
