@@ -1,4 +1,4 @@
-//! Debugging tools (behind the `debug` feature flag).
+//! State debugging tools (behind the `debug` feature flag).
 //!
 //! Insert the [`StateDebugSettings`] resource to enable debug tools.
 

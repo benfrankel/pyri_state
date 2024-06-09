@@ -1,4 +1,10 @@
 //! TODO: Module-level documentation
+//!
+//! Provided [`StateStorage`] types:
+//!
+//! - [`StateBuffer`] (default)
+//! - [`StateStack`](crate::extra::stack::StateStack)
+//! - [`StateSequence`](crate::extra::sequence::StateSequence)
 
 use bevy_ecs::{
     system::{
@@ -18,18 +24,21 @@ use crate::{
 
 /// A type that describes how the [`State`] type `S` will be stored in the ECS world.
 ///
-/// The default storage type is [`StateBuffer`]. You can set a different storage type in the derive macro:
+/// Use [`NextStateRef`](crate::state::NextStateRef) or [`StateFlushRef`](crate::state::StateFlushRef)
+/// in a system for read-only access to the next state.
+///
+/// See [`StateStorageMut`] for mutable storage.
+///
+/// # Example
+///
+/// The default storage type is [`StateBuffer`]. You can set a different storage type in the
+/// [derive macro](pyri_state_derive::State):
 ///
 /// ```rust
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// #[state(storage(StateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
-///
-/// Use [`NextStateRef`](crate::state::NextStateRef) or [`StateFlushRef`](crate::state::StateFlushRef)
-/// in a system for read-only access to the next state.
-///
-/// See [`StateStorageMut`] for mutable storage.
 pub trait StateStorage<S: State> {
     /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;

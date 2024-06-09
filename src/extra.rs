@@ -1,4 +1,4 @@
-//! Optional extra tools (behind the `extra` feature flag).
+//! Extra tools (behind the `extra` feature flag).
 
 pub mod sequence;
 pub mod split;

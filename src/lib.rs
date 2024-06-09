@@ -1,17 +1,16 @@
 //! `pyri_state` is a `bevy_state` alternative offering flexible change detection & scheduling.
 //!
-//! # Design overview
+//! # Overview
 //!
-//! TODO: Improve this section.
-//!
-//! The next state is stored in a [`StateBuffer`](storage::StateBuffer) by default, but this
-//! can be swapped for any [`StateStorage`](storage::StateStorage) type with one line of code.
-//!
-//! States are flushed in the [`StateFlush`](schedule::StateFlush) schedule, which is
-//! organized into [`StateFlushSet`](schedule::StateFlushSet) system sets.
-//!
-//! A flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) flag, which
-//! can be set manually or by the opt-out change detection system.
+//! 1. The current state is stored in the [`CurrentState`](state::CurrentState) resource.
+//! 2. The next state is stored in a [`StateBuffer`](storage::StateBuffer) resource by default
+//! (see [storage] for more information).
+//! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
+//! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
+//! 4. State flush hooks are organized into [`StateFlushSet`](schedule::StateFlushSet)
+//! system sets.
+//! 5. Tools are provided for [state configuration](app), [debugging](debug),
+//! [pattern-matching](pattern), [and more](extra).
 //!
 //! # Getting started
 //!
@@ -19,7 +18,7 @@
 //!
 //! ```rust
 //! // Note: Disable the `bevy_state` feature of `bevy` to avoid prelude interference.
-//! // use bevy::prelude::*;
+//! //use bevy::prelude::*;
 //! use pyri_state::prelude::*;
 //! ```
 //!
@@ -31,13 +30,13 @@
 //! struct Level(pub usize);
 //! ```
 //!
-//! Add [`StatePlugin`](app::StatePlugin), and initialize your state types:
+//! Add [`StatePlugin`](app::StatePlugin) and initialize your state types:
 //!
 //! ```rust
 //! app.add_plugins(StatePlugin).init_state::<Level>();
 //! ```
 //!
-//! Use [`on_update`](pattern::StatePattern::on_update) to add pattern-matching update systems:
+//! Add update systems with [`StatePattern::on_update`](pattern::StatePattern::on_update):
 //!
 //! ```rust
 //! app.add_systems(Update, (
@@ -47,7 +46,7 @@
 //! ));
 //! ```
 //!
-//! Use the other [`StatePattern`](pattern::StatePattern) methods to add flush hooks:
+//! Add flush hooks with other [`StatePattern`](pattern::StatePattern) methods:
 //!
 //! ```rust
 //! app.add_systems(StateFlush, (
@@ -58,46 +57,6 @@
 //!     Level::with(|x| x.0 < 4).on_enter(spawn_tutorial_popup),
 //! ));
 //! ```
-//!
-//! # Index
-//!
-//! TODO: Split this into module-level documentation
-//!
-//! Helper systems and run conditions are provided by the following traits:
-//!
-//! - [`State`](state::State)
-//! - [`StateMut`](state::StateMut)
-//! - [`StateMutExtClone`](state::StateMutExtClone)
-//! - [`StateMutExtDefault`](state::StateMutExtDefault)
-//! - [`StatePattern`](pattern::StatePattern)
-//! - [`StatePatternExtClone`](pattern::StatePatternExtClone)
-//! - [`StatePatternExtEq`](pattern::StatePatternExtEq)
-//! - [`StateTransPattern`](pattern::StateTransPattern)
-//! - [`StateTransPatternExtClone`](pattern::StateTransPattern)
-//!
-//! You can write custom systems and run conditions using the following
-//! [`SystemParam`s](bevy_ecs::system::SystemParam):
-//!
-//! | State          | Read-only                                     | Mutable                                          |
-//! | -------------- | --------------------------------------------- | ------------------------------------------------ |
-//! | Current        | [`Res<CurrentState<S>>`](state::CurrentState) | [`ResMut<CurrentState<S>>`](state::CurrentState) |
-//! | Next           | [`NextStateRef<S>`](state::NextStateRef)      | [`NextStateMut<S>`](state::NextStateMut)         |
-//! | Current + Next | [`StateFlushRef<S>`](state::StateFlushRef)    | [`StateFlushMut<S>`](state::StateFlushMut)       |
-//!
-//! State storage types provided:
-//!
-//! - [`StateBuffer`](storage::StateBuffer) (default)
-//! - [`StateStack`](extra::stack::StateStack)
-//! - [`StateSequence`](extra::sequence::StateSequence)
-//!
-//! State plugins provided:
-//!
-//! - [`ResolveStatePlugin`](app::ResolveStatePlugin)
-//! - [`DetectChangePlugin`](app::DetectChangePlugin)
-//! - [`FlushEventPlugin`](app::FlushEventPlugin)
-//! - [`LogFlushPlugin`](debug::LogFlushPlugin)
-//! - [`BevyStatePlugin`](app::BevyStatePlugin)
-//! - [`ApplyFlushPlugin`](app::ApplyFlushPlugin)
 
 #![deny(missing_docs)]
 
@@ -115,7 +74,13 @@ pub mod schedule;
 pub mod state;
 pub mod storage;
 
-/// TODO: Module-level documentation
+/// Re-exported traits and common types.
+///
+/// Import the prelude to get started:
+///
+/// ```rust
+/// use pyri_state::prelude::*;
+/// ```
 pub mod prelude {
     #[cfg(feature = "bevy_app")]
     pub use crate::app::{AppExtState, StatePlugin};

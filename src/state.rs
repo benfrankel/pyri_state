@@ -1,4 +1,13 @@
 //! TODO: Module-level documentation
+//!
+//! You can write custom systems and run conditions using the following
+//! [`SystemParam`s](bevy_ecs::system::SystemParam):
+//!
+//! | State          | Read-only                              | Mutable                                   |
+//! | -------------- | -------------------------------------- | ----------------------------------------- |
+//! | Current        | [`Res<CurrentState<S>>`](CurrentState) | [`ResMut<CurrentState<S>>`](CurrentState) |
+//! | Next           | [`NextStateRef<S>`]                    | [`NextStateMut<S>`]                       |
+//! | Current + Next | [`StateFlushRef<S>`]                   | [`StateFlushMut<S>`]                      |
 
 use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 

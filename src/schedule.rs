@@ -1,4 +1,9 @@
 //! TODO: Module-level documentation
+//!
+//! System ordering:
+//!
+//! 1. [`StateFlushSet::<S>::Resolve`](StateFlushSet) per state type `S`.
+//! 2. [`ApplyFlushSet`] for all state types.
 
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
@@ -19,12 +24,9 @@ use crate::state::{
     TriggerStateFlush,
 };
 
-/// The schedule that handles [`State`] flushes, added by [`StatePlugin`](crate::app::StatePlugin).
+/// The schedule that handles all [`State`] flushes.
 ///
-/// System ordering:
-///
-/// 1. [`StateFlushSet::<S>::Resolve`](StateFlushSet) per state type `S`.
-/// 2. [`ApplyFlushSet`] for all state types.
+/// Added by [`StatePlugin`](crate::app::StatePlugin).
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct StateFlush;
 

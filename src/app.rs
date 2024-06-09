@@ -1,4 +1,4 @@
-//! Tools for adding [`State`] types to an [`App`] (behind the `bevy_app` feature flag).
+//! State configuration tools (behind the `bevy_app` feature flag).
 
 use std::fmt::Debug;
 use std::hash::Hash;
