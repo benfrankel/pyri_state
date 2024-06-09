@@ -32,6 +32,11 @@
     - Added `extra` module
     - Moved `app` -> `extra::app` module
     - Moved `BevyState` and related items into new `extra::bevy_state` module
+    - Implemented state scoping for entities:
+        - Added `entity_scope` feature flag
+        - Added `StateScope` component
+        - Added `schedule_entity_scope` function
+        - Added `EntityScopePlugin` plugin
     - Implemented flush logging:
         - Added `debug` feature flag
         - Added `StateDebugSettings` resource
@@ -80,4 +85,4 @@
 
 # Version 0.1.0
 
-- Initial version.
+- Initial release

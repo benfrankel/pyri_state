@@ -13,10 +13,9 @@
 
 use std::{fmt::Debug, marker::PhantomData};
 
-use bevy_ecs::system::{Res, ResMut, Resource, StaticSystemParam, SystemParam};
-
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
+use bevy_ecs::system::{Res, ResMut, Resource, StaticSystemParam, SystemParam};
 
 use crate::{
     pattern::{

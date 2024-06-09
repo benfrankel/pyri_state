@@ -7,14 +7,13 @@
 use std::{any::type_name, fmt::Debug};
 
 use bevy_core::FrameCount;
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     schedule::{common_conditions::resource_exists, Condition, IntoSystemConfigs, Schedule},
     system::{Res, Resource},
 };
 use bevy_log::info;
-
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::{StatePattern, StateTransPattern},

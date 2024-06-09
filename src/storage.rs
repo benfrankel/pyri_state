@@ -6,6 +6,8 @@
 //! - [`StateStack`](crate::extra::stack::StateStack)
 //! - [`StateSequence`](crate::extra::sequence::StateSequence)
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     system::{
         lifetimeless::{SRes, SResMut},
@@ -13,9 +15,6 @@ use bevy_ecs::{
     },
     world::{FromWorld, World},
 };
-
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::StatePattern,

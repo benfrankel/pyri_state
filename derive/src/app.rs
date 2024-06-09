@@ -83,6 +83,13 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
         let crate_bevy_state_path = concat(crate_extra_path.clone(), "bevy_state");
         simple_plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state)
     };
+    #[cfg(not(feature = "entity_scope"))]
+    let entity_scope = quote! {};
+    #[cfg(feature = "entity_scope")]
+    let entity_scope = {
+        let crate_entity_scope_path = concat(crate_extra_path.clone(), "entity_scope");
+        simple_plugin(&crate_entity_scope_path, "EntityScope", attrs.entity_scope)
+    };
     let apply_flush = simple_plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush);
 
     quote! {
@@ -98,6 +105,7 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
                         #flush_event
                         #log_flush
                         #bevy_state
+                        #entity_scope
                         #apply_flush
                     ));
             }

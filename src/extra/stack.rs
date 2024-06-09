@@ -4,6 +4,8 @@
 //!
 //! This can be used to implement a back button, for example.
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     system::{
         lifetimeless::{SRes, SResMut},
@@ -11,9 +13,6 @@ use bevy_ecs::{
     },
     world::{FromWorld, World},
 };
-
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     state::State,

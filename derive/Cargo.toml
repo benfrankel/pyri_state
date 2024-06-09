@@ -9,9 +9,10 @@ keywords = ["ecs", "game", "bevy"]
 categories = ["game-engines", "data-structures"]
 
 [features]
-debug = []
 bevy_app = ["dep:bevy_macro_utils"]
 bevy_state = []
+debug = []
+entity_scope = []
 
 [lib]
 proc-macro = true

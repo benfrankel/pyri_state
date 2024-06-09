@@ -145,6 +145,8 @@ pub mod prelude {
     ///     log_flush,
     ///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     ///     bevy_state,
+    ///     // Despawn entities marked with `StateScope<Self>` on any exit.
+    ///     entity_scope,
     ///     // Clone the next state into the current state on flush (requires Clone).
     ///     apply_flush,
     ///     // Swap out the default `StateBuffer<Self>` for a custom storage type.

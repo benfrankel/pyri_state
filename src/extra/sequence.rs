@@ -4,10 +4,9 @@
 //!
 //! This can be used to implement phases in a turn-based game, for example.
 
-use bevy_ecs::system::{lifetimeless::SRes, ResMut, Resource, SystemParamItem};
-
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
+use bevy_ecs::system::{lifetimeless::SRes, ResMut, Resource, SystemParamItem};
 
 use crate::{state::State, storage::StateStorage};
 
