@@ -16,7 +16,7 @@ use bevy_ecs::reflect::ReflectResource;
 
 use crate::{
     pattern::{StatePattern, StateTransPattern},
-    schedule::{was_triggered, StateFlushSet},
+    schedule::{was_triggered, StateHook},
     state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
@@ -93,28 +93,28 @@ pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
     schedule.add_systems(
         (
             log_state_flush::<S>
-                .after(StateFlushSet::<S>::Trigger)
-                .before(StateFlushSet::<S>::Flush)
+                .after(StateHook::<S>::Trigger)
+                .before(StateHook::<S>::Flush)
                 .run_if(was_triggered::<S>.and_then(|x: Res<StateDebugSettings>| x.log_flush)),
             log_state_exit::<S>
-                .in_set(StateFlushSet::<S>::Flush)
-                .before(StateFlushSet::<S>::Exit)
+                .in_set(StateHook::<S>::Flush)
+                .before(StateHook::<S>::Exit)
                 .run_if(
                     S::ANY
                         .will_exit()
                         .and_then(|x: Res<StateDebugSettings>| x.log_exit),
                 ),
             log_state_trans::<S>
-                .after(StateFlushSet::<S>::Exit)
-                .before(StateFlushSet::<S>::Trans)
+                .after(StateHook::<S>::Exit)
+                .before(StateHook::<S>::Trans)
                 .run_if(
                     S::ANY_TO_ANY
                         .will_trans()
                         .and_then(|x: Res<StateDebugSettings>| x.log_trans),
                 ),
             log_state_enter::<S>
-                .after(StateFlushSet::<S>::Trans)
-                .before(StateFlushSet::<S>::Enter)
+                .after(StateHook::<S>::Trans)
+                .before(StateHook::<S>::Enter)
                 .run_if(
                     S::ANY
                         .will_enter()

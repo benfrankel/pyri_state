@@ -13,7 +13,7 @@ use bevy_ecs::{
 use crate::{
     schedule::{
         schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_flush_event,
-        schedule_resolve_state, StateFlush, StateFlushEvent, StateFlushSet,
+        schedule_resolve_state, StateFlush, StateFlushEvent, StateHook,
     },
     state::{BevyState, CurrentState, State, StateMut},
 };
@@ -105,11 +105,11 @@ pub trait AddState: State {
     fn add_state(app: &mut App);
 }
 
-/// A plugin that configures the [`StateFlushSet<S>`] system sets for the [`State`] type `S`
+/// A plugin that configures the [`StateHook<S>`] system sets for the [`State`] type `S`
 /// in the [`StateFlush`] schedule.
 ///
 /// To specify a dependency relative to another `State` type `T`, add
-/// [`StateFlushSet::<T>::Resolve`] to [`after`](Self::after) or [`before`](Self::before).
+/// [`StateHook::<T>::Resolve`] to [`after`](Self::after) or [`before`](Self::before).
 ///
 /// Calls [`schedule_resolve_state<S>`].
 pub struct ResolveStatePlugin<S: State> {
@@ -150,13 +150,13 @@ impl<S: State> ResolveStatePlugin<S> {
 
     /// Configure a `.after` system set.
     pub fn after<T: State>(mut self) -> Self {
-        self.after.push(StateFlushSet::<T>::Resolve.intern());
+        self.after.push(StateHook::<T>::Resolve.intern());
         self
     }
 
     /// Configure a `.before` system set.
     pub fn before<T: State>(mut self) -> Self {
-        self.before.push(StateFlushSet::<T>::Resolve.intern());
+        self.before.push(StateHook::<T>::Resolve.intern());
         self
     }
 }

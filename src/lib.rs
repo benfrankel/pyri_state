@@ -7,7 +7,7 @@
 //! (see [storage] for more information).
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
-//! 4. State flush hooks are organized into [`StateFlushSet`](schedule::StateFlushSet)
+//! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
 //! 5. Tools are provided for [state configuration](app), [debugging](debug),
 //! [pattern-matching](pattern), [and more](extra).

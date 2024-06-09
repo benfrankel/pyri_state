@@ -281,7 +281,7 @@ impl<S: State> TriggerStateFlush<S> {
 /// A [`SystemParam`] with read-only access to the next value of the [`State`] type `S`.
 ///
 /// NOTE: The next state is only set in stone during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
+/// schedule after [`StateHook::<S>::Compute`](crate::schedule::StateHook::Compute).
 ///
 /// # Example
 ///
@@ -328,7 +328,7 @@ impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
 /// A [`SystemParam`] with mutable access to the next value of the [`State`] type `S`.
 ///
 /// NOTE: The next state should not be mutated during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
+/// schedule after [`StateHook::<S>::Compute`](crate::schedule::StateHook::Compute).
 ///
 /// # Example
 ///
@@ -450,7 +450,7 @@ impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
 /// A [`SystemParam`] with read-only access to the current and next values of the [`State`] type `S`.
 ///
 /// NOTE: The next state is only set in stone during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
+/// schedule after [`StateHook::<S>::Compute`](crate::schedule::StateHook::Compute).
 ///
 /// # Example
 ///
@@ -519,7 +519,7 @@ impl<'w, 's, S: State> StateFlushRef<'w, 's, S> {
 /// respectively.
 ///
 /// NOTE: The next state should not be mutated during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`StateFlushSet::<S>::Compute`](crate::schedule::StateFlushSet::Compute).
+/// schedule after [`StateHook::<S>::Compute`](crate::schedule::StateHook::Compute).
 ///
 /// # Example
 ///

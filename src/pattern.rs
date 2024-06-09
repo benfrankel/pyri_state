@@ -8,7 +8,7 @@ use bevy_ecs::{
 };
 
 use crate::{
-    schedule::StateFlushSet,
+    schedule::StateHook,
     state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
@@ -41,7 +41,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_exit())
-            .in_set(StateFlushSet::<S>::Exit)
+            .in_set(StateHook::<S>::Exit)
     }
 
     /// Build a run condition that checks if `S` will become disabled from a matching state if triggered.
@@ -53,7 +53,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_disable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_disable())
-            .in_set(StateFlushSet::<S>::Exit)
+            .in_set(StateHook::<S>::Exit)
     }
 
     /// Build a run condition that checks if `S` will enter into a matching state if triggered.
@@ -65,7 +65,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_enter())
-            .in_set(StateFlushSet::<S>::Enter)
+            .in_set(StateHook::<S>::Enter)
     }
 
     /// Build a run condition that checks if `S` will become enabled in a matching state if triggered.
@@ -77,7 +77,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_enable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_enable())
-            .in_set(StateFlushSet::<S>::Enter)
+            .in_set(StateHook::<S>::Enter)
     }
 }
 
@@ -111,7 +111,7 @@ pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_refresh())
-            .in_set(StateFlushSet::<S>::Trans)
+            .in_set(StateHook::<S>::Trans)
     }
 }
 
@@ -192,21 +192,21 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_trans())
-            .in_set(StateFlushSet::<S>::Exit)
+            .in_set(StateHook::<S>::Exit)
     }
 
     /// Configure systems to run when `S` undergoes a matching transition.
     fn on_trans<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_trans())
-            .in_set(StateFlushSet::<S>::Trans)
+            .in_set(StateHook::<S>::Trans)
     }
 
     /// Configure systems to run when `S` enters as part of a matching transition.
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(self.will_trans())
-            .in_set(StateFlushSet::<S>::Enter)
+            .in_set(StateHook::<S>::Enter)
     }
 }
 

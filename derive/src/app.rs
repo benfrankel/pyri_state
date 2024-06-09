@@ -29,15 +29,15 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
         let system_set = concat(bevy_ecs_schedule_path.clone(), "SystemSet");
 
         let crate_schedule_path = concat(crate_path.clone(), "schedule");
-        let state_flush_set = concat(crate_schedule_path.clone(), "StateFlushSet");
+        let state_hook_ty = concat(crate_schedule_path.clone(), "StateHook");
 
         let after = attrs
             .after
             .iter()
             .map(|state| {
                 quote! {
-                    <#state_flush_set::<#state> as #system_set>::intern(
-                        &#state_flush_set::<#state>::Resolve,
+                    <#state_hook_ty::<#state> as #system_set>::intern(
+                        &#state_hook_ty::<#state>::Resolve,
                     )
                 }
             })
@@ -48,8 +48,8 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
             .iter()
             .map(|state| {
                 quote! {
-                    <#state_flush_set::<#state> as #system_set>::intern(
-                        &#state_flush_set::<#state>::Resolve,
+                    <#state_hook_ty::<#state> as #system_set>::intern(
+                        &#state_hook_ty::<#state>::Resolve,
                     )
                 }
             })

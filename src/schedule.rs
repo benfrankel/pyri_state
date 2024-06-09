@@ -3,7 +3,7 @@
 //! The [`StateFlush`] schedule runs after [`PreUpdate`](bevy_app::PreUpdate)
 //! and handles all [`State`] flush logic.
 //!
-//! State flush hooks run in [`StateFlushSet<S>`], and every flush is applied in [`ApplyFlushSet`].
+//! State flush hooks run in [`StateHook<S>`], and every flush is applied in [`ApplyFlushSet`].
 
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
@@ -44,7 +44,7 @@ pub struct StateFlush;
 ///         2. [`Trans`](Self::Trans)
 ///         3. [`Enter`](Self::Enter)
 #[derive(SystemSet)]
-pub enum StateFlushSet<S: State> {
+pub enum StateHook<S: State> {
     /// Resolve the state flush logic for `S` this frame.
     Resolve,
     /// Optionally compute the next value for `S`.
@@ -63,7 +63,7 @@ pub enum StateFlushSet<S: State> {
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S: State> Clone for StateFlushSet<S> {
+impl<S: State> Clone for StateHook<S> {
     fn clone(&self) -> Self {
         match self {
             Self::Resolve => Self::Resolve,
@@ -78,21 +78,21 @@ impl<S: State> Clone for StateFlushSet<S> {
     }
 }
 
-impl<S: State> PartialEq for StateFlushSet<S> {
+impl<S: State> PartialEq for StateHook<S> {
     fn eq(&self, other: &Self) -> bool {
         core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }
 
-impl<S: State> Eq for StateFlushSet<S> {}
+impl<S: State> Eq for StateHook<S> {}
 
-impl<S: State> Hash for StateFlushSet<S> {
+impl<S: State> Hash for StateHook<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S: State> Debug for StateFlushSet<S> {
+impl<S: State> Debug for StateHook<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
@@ -128,10 +128,10 @@ pub(crate) fn was_triggered<S: State>(trigger: Res<TriggerStateFlush<S>>) -> boo
     trigger.0
 }
 
-/// Configure [`StateFlushSet<S>`] system sets for the [`State`] type `S` in a schedule.
+/// Configure [`StateHook<S>`] system sets for the [`State`] type `S` in a schedule.
 ///
 /// To specify a dependency relative to another `State` type `T`, include
-/// [`StateFlushSet::<T>::Resolve`] in `after` or `before`.
+/// [`StateHook::<T>::Resolve`] in `after` or `before`.
 ///
 /// Used in [`ResolveStatePlugin<S>`](crate::app::ResolveStatePlugin).
 pub fn schedule_resolve_state<S: State>(
@@ -141,29 +141,29 @@ pub fn schedule_resolve_state<S: State>(
 ) {
     // External ordering
     for &system_set in after {
-        schedule.configure_sets(StateFlushSet::<S>::Resolve.after(system_set));
+        schedule.configure_sets(StateHook::<S>::Resolve.after(system_set));
     }
     for &system_set in before {
-        schedule.configure_sets(StateFlushSet::<S>::Resolve.before(system_set));
+        schedule.configure_sets(StateHook::<S>::Resolve.before(system_set));
     }
 
     // Internal ordering
     schedule.configure_sets((
-        StateFlushSet::<S>::Resolve.before(ApplyFlushSet),
+        StateHook::<S>::Resolve.before(ApplyFlushSet),
         (
-            StateFlushSet::<S>::Compute,
-            StateFlushSet::<S>::Trigger.run_if(not(was_triggered::<S>)),
-            StateFlushSet::<S>::Flush.run_if(was_triggered::<S>),
+            StateHook::<S>::Compute,
+            StateHook::<S>::Trigger.run_if(not(was_triggered::<S>)),
+            StateHook::<S>::Flush.run_if(was_triggered::<S>),
         )
             .chain()
-            .in_set(StateFlushSet::<S>::Resolve),
+            .in_set(StateHook::<S>::Resolve),
         (
-            StateFlushSet::<S>::Exit,
-            StateFlushSet::<S>::Trans,
-            StateFlushSet::<S>::Enter,
+            StateHook::<S>::Exit,
+            StateHook::<S>::Trans,
+            StateHook::<S>::Enter,
         )
             .chain()
-            .in_set(StateFlushSet::<S>::Flush),
+            .in_set(StateHook::<S>::Flush),
     ));
 }
 
@@ -174,7 +174,7 @@ pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
             .run_if(|state: StateFlushRef<S>| matches!(state.get(), (x, y) if x != y))
-            .in_set(StateFlushSet::<S>::Trigger),
+            .in_set(StateHook::<S>::Trigger),
     );
 }
 
@@ -193,7 +193,7 @@ fn send_flush_event<S: State + Clone>(
 ///
 /// Used in [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
 pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(send_flush_event::<S>.in_set(StateFlushSet::<S>::Flush));
+    schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
 }
 
 /// Add [`BevyState<S>`] propagation systems for the [`State`] type `S` to a schedule.
@@ -218,8 +218,8 @@ pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash +
     };
 
     schedule.add_systems((
-        update_pyri_state.in_set(StateFlushSet::<S>::Compute),
-        update_bevy_state.in_set(StateFlushSet::<S>::Flush),
+        update_pyri_state.in_set(StateHook::<S>::Compute),
+        update_bevy_state.in_set(StateHook::<S>::Flush),
     ));
 }
 
