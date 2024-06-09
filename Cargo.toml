@@ -15,11 +15,11 @@ default = ["bevy_app", "bevy_reflect", "bevy_state", "debug", "extra"]
 bevy_app = ["dep:bevy_app", "pyri_state_derive/bevy_app"]
 # Derive `Reflect` for the types in this crate.
 bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
-# Enable `BevyState`, an ecosystem compatibility tool.
+# Enable `BevyState` as an ecosystem compatibility tool.
 bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 # Enable state debugging tools (e.g. flush logging).
 debug = ["dep:bevy_core", "dep:bevy_log", "pyri_state_derive/debug"]
-# Enable extra tools (e.g. state stack / sequence).
+# Enable some extra tools (e.g. state stack / sequence).
 extra = []
 
 [dependencies]

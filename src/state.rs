@@ -11,12 +11,9 @@
 //!
 //! \* Don't mutate the current state directly unless you know what you're doing.
 
-use std::{fmt::Debug, hash::Hash, marker::PhantomData};
+use std::{fmt::Debug, marker::PhantomData};
 
 use bevy_ecs::system::{Res, ResMut, Resource, StaticSystemParam, SystemParam};
-
-#[cfg(feature = "bevy_state")]
-use bevy_state::state::States;
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
@@ -635,60 +632,5 @@ impl<'w, 's, S: StateMut> StateFlushMut<'w, 's, S> {
     pub fn relax(&mut self) -> &mut Self {
         self.next.relax();
         self
-    }
-}
-
-/// A wrapper around the [`State`] type `S` for compatibility with the Bevy ecosystem.
-///
-/// Any change to `S` will propagate to `BevyState<S>`, and vice versa.
-///
-/// # Example
-///
-/// Include [`BevyStatePlugin<S>`](crate::app::BevyStatePlugin) for `GameState`:
-///
-/// ```rust
-/// #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
-/// #[state(bevy_state)]
-/// enum GameState {
-///     #[default]
-///     Title,
-///     Loading,
-///     Playing,
-/// }
-/// ```
-///
-/// Add `GameState` along with its `BevyState` wrapper:
-///
-/// ```rust
-/// app.init_state::<GameState>();
-/// ```
-///
-/// Use `GameState` to drive `BevyState`:
-///
-/// ```rust
-/// app.add_systems(Update, GameState::Title.on_update(
-///     GameState::Loading.enter().run_if(input_just_pressed(KeyCode::Enter)),
-/// ));
-/// ```
-///
-/// Use `BevyState` to drive `GameState` (using `iyes_progress`):
-///
-/// ```rust
-/// app.add_plugins(
-///     ProgressPlugin::new(BevyState(Some(GameState::Loading)))
-///         .continue_to(BevyState(Some(GameState::Playing))),
-/// );
-/// ```
-#[cfg(feature = "bevy_state")]
-#[derive(States, Clone, PartialEq, Eq, Hash, Debug)]
-pub struct BevyState<S: State + Clone + PartialEq + Eq + Hash + Debug>(
-    /// The wrapped state value, or `None` if disabled.
-    pub Option<S>,
-);
-
-#[cfg(feature = "bevy_state")]
-impl<S: State + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
-    fn default() -> Self {
-        Self(None)
     }
 }

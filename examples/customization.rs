@@ -2,11 +2,8 @@
 
 use bevy::prelude::*;
 use pyri_state::{
-    app::{
-        AddState, ApplyFlushPlugin, BevyStatePlugin, DetectChangePlugin, FlushEventPlugin,
-        ResolveStatePlugin,
-    },
-    extra::stack::*,
+    app::{AddState, ApplyFlushPlugin, DetectChangePlugin, FlushEventPlugin, ResolveStatePlugin},
+    extra::{bevy_state::BevyStatePlugin, stack::*},
     prelude::*,
     state::TriggerStateFlush,
 };

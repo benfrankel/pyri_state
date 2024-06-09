@@ -34,6 +34,7 @@
     - Added `schedule_log_flush` function
 - Implemented extra features:
     - Added `extra` feature flag
+    - Moved `BevyState` and related items into `extra::bevy_state` module
     - Added `StateStack` resource and `StateStackMut`, `StateStackMutExtClone` extension traits
     - Added `StateSequence` resource and `StateSequenceMut` extension trait
     - Added `SplitState` type and `add_to_split_state!` macro

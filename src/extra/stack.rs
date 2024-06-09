@@ -1,4 +1,4 @@
-//! Keep track of a [`State`] type's history in a [`StateStack`].
+//! Keep track of a [`State`] type's history in a [`StateStack`] (`extra` feature flag).
 //!
 //! This can be used to implement a back button, for example.
 

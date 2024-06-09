@@ -1,4 +1,4 @@
-//! Navigate a fixed [`StateSequence`] by index.
+//! Navigate a fixed [`StateSequence`] by index (`extra` feature flag).
 //!
 //! This can be used to implement phases in a turn-based game, for example.
 

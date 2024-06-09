@@ -1,5 +1,5 @@
 //! Split the definition of a simple enum-like [`State`](crate::state::State) between the
-//! modules of your crate.
+//! modules of your crate (`extra` feature flag).
 //!
 //! Newtype [`SplitState`] to define a new split state type, and use
 //! [`add_to_split_state!`](crate::add_to_split_state!) to extend it.

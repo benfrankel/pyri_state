@@ -19,8 +19,6 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let crate_state_path = concat(crate_path.clone(), "state");
     let current_state_ty = concat(crate_state_path.clone(), "CurrentState");
     let trigger_state_flush_ty = concat(crate_state_path.clone(), "TriggerStateFlush");
-    #[cfg(feature = "debug")]
-    let crate_debug_path = concat(crate_path.clone(), "debug");
 
     // Construct resolve state plugin.
     let resolve_state = {
@@ -73,11 +71,18 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     #[cfg(not(feature = "debug"))]
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
-    let log_flush = simple_plugin(&crate_debug_path, "LogFlush", attrs.log_flush);
+    let log_flush = {
+        let crate_debug_path = concat(crate_path.clone(), "debug");
+        simple_plugin(&crate_debug_path, "LogFlush", attrs.log_flush)
+    };
     #[cfg(not(feature = "bevy_state"))]
     let bevy_state = quote! {};
     #[cfg(feature = "bevy_state")]
-    let bevy_state = simple_plugin(&crate_app_path, "BevyState", attrs.bevy_state);
+    let bevy_state = {
+        let crate_extra_path = concat(crate_path.clone(), "extra");
+        let crate_bevy_state_path = concat(crate_extra_path.clone(), "bevy_state");
+        simple_plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state)
+    };
     let apply_flush = simple_plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush);
 
     quote! {

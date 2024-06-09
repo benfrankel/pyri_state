@@ -1,7 +1,5 @@
 //! State configuration tools (behind the `bevy_app` feature flag).
 
-use std::fmt::Debug;
-use std::hash::Hash;
 use std::marker::PhantomData;
 
 use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
@@ -12,10 +10,10 @@ use bevy_ecs::{
 
 use crate::{
     schedule::{
-        schedule_apply_flush, schedule_bevy_state, schedule_detect_change, schedule_flush_event,
-        schedule_resolve_state, StateFlush, StateFlushEvent, StateHook,
+        schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
+        StateFlush, StateFlushEvent, StateHook,
     },
-    state::{BevyState, CurrentState, State, StateMut},
+    state::{CurrentState, State},
 };
 
 /// A plugin that adds the [`StateFlush`] schedule to the [`MainScheduleOrder`].
@@ -100,7 +98,7 @@ pub trait AddState: State {
     /// - [`DetectChangePlugin<Self>`]
     /// - [`FlushEventPlugin<Self>`]
     /// - [`LogFlushPlugin<Self>`](crate::debug::LogFlushPlugin)
-    /// - [`BevyStatePlugin<Self>`]
+    /// - [`BevyStatePlugin<Self>`](crate::extra::bevy_state::BevyStatePlugin)
     /// - [`ApplyFlushPlugin<Self>`]
     fn add_state(app: &mut App);
 }
@@ -193,28 +191,6 @@ impl<S: State + Clone> Plugin for FlushEventPlugin<S> {
 }
 
 impl<S: State + Clone> Default for FlushEventPlugin<S> {
-    fn default() -> Self {
-        Self(PhantomData)
-    }
-}
-
-/// A plugin that adds [`BevyState<S>`] propagation systems for the [`State`] type `S`
-/// to the [`StateFlush`] schedule.
-///
-/// Calls [`schedule_bevy_state<S>`].
-#[cfg(feature = "bevy_state")]
-pub struct BevyStatePlugin<S: StateMut + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
-
-#[cfg(feature = "bevy_state")]
-impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {
-    fn build(&self, app: &mut App) {
-        bevy_state::app::AppExtStates::init_state::<BevyState<S>>(app);
-        schedule_bevy_state::<S>(app.get_schedule_mut(StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_state")]
-impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Default for BevyStatePlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }

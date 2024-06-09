@@ -67,7 +67,6 @@ extern crate self as pyri_state;
 pub mod app;
 #[cfg(feature = "debug")]
 pub mod debug;
-#[cfg(feature = "extra")]
 pub mod extra;
 pub mod pattern;
 pub mod schedule;

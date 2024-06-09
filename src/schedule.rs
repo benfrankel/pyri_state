@@ -13,13 +13,7 @@ use bevy_ecs::{
     system::{Res, ResMut},
 };
 
-#[cfg(feature = "bevy_state")]
-use bevy_state::state::NextState;
-
-use crate::state::{
-    BevyState, CurrentState, NextStateMut, NextStateRef, State, StateFlushRef, StateMut,
-    TriggerStateFlush,
-};
+use crate::state::{CurrentState, NextStateRef, State, StateFlushRef, TriggerStateFlush};
 
 /// The schedule that handles all [`State`] flush logic, added after
 /// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::app::StatePlugin).
@@ -193,33 +187,6 @@ fn send_flush_event<S: State + Clone>(
 /// Used in [`FlushEventPlugin<S>`](crate::app::FlushEventPlugin).
 pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
-}
-
-/// Add [`BevyState<S>`] propagation systems for the [`State`] type `S` to a schedule.
-///
-/// Used in [`BevyStatePlugin<S>`](crate::app::BevyStatePlugin).
-#[cfg(feature = "bevy_state")]
-pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash + Debug>(
-    schedule: &mut Schedule,
-) {
-    let update_bevy_state =
-        |pyri_state: NextStateRef<S>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
-            if matches!(bevy_state.as_ref(), NextState::Unchanged) {
-                bevy_state.set(BevyState(pyri_state.get().cloned()));
-            }
-        };
-
-    let update_pyri_state = |mut pyri_state: NextStateMut<S>,
-                             bevy_state: Res<NextState<BevyState<S>>>| {
-        if let NextState::Pending(bevy_state) = bevy_state.as_ref() {
-            pyri_state.trigger().set(bevy_state.0.clone());
-        }
-    };
-
-    schedule.add_systems((
-        update_pyri_state.in_set(StateHook::<S>::Compute),
-        update_bevy_state.in_set(StateHook::<S>::Flush),
-    ));
 }
 
 fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
