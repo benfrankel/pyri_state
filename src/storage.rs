@@ -1,4 +1,4 @@
-//! TODO: Module-level documentation
+//! State storage types and traits.
 //!
 //! Provided [`StateStorage`] types:
 //!

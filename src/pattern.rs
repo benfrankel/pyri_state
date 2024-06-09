@@ -1,4 +1,7 @@
-//! TODO: Module-level documentation
+//! State pattern-matching tools.
+//!
+//! Use the [`state!`](crate::state!) macro to build [`StatePattern`] and
+//! [`StateTransPattern`] instances.
 
 use std::marker::PhantomData;
 
@@ -12,12 +15,14 @@ use crate::{
     state::{CurrentState, NextStateRef, State, StateFlushRef},
 };
 
-/// A type that can match a subset of states for the [`State`] type `S`.
+/// A type that can match a subset of values of the [`State`] type `S`.
 ///
-/// See the following extension traits with additional bounds on `S`:
+/// If `S` implements `Eq`, it can be used directly as a state pattern.
 ///
-/// - [`StatePatternExtClone`]
-/// - [`StatePatternExtEq`]
+/// See the following extension traits with additional bounds on `Self` and `S`:
+///
+/// - [`StatePatternExtClone<S>`]
+/// - [`StatePatternExtEq<S>`]
 pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     /// Check if the pattern matches a particular state.
     fn matches(&self, state: &S) -> bool;
@@ -130,7 +135,6 @@ impl<S: State + Eq> StatePattern<S> for S {
 /// ```rust
 /// Level::ANY.on_enter(reset_timer)
 /// ```
-///
 #[derive(Clone)]
 pub struct AnyStatePattern<S: State>(pub(crate) PhantomData<S>);
 
@@ -174,9 +178,11 @@ where
     }
 }
 
-/// A type that can match a subset of transitions for the [`State`] type `S`.
+/// A type that can match a subset of transitions in the [`State`] type `S`.
 ///
-/// See the following extension traits with additional bounds on `S`:
+/// A tuple of two [`StatePattern`] types can be used as a transition pattern.
+///
+/// See the following extension traits with additional bounds on `Self`:
 ///
 /// - [`StateTransPatternExtClone`]
 pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
@@ -229,7 +235,6 @@ pub trait StateTransPatternExtClone<S: State>: StateTransPattern<S> + Clone {
 
 impl<S: State, P: StateTransPattern<S> + Clone> StateTransPatternExtClone<S> for P {}
 
-// A tuple of two state patterns is a transition pattern.
 impl<S: State, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> for (P1, P2) {
     fn matches(&self, old: &S, new: &S) -> bool {
         self.0.matches(old) && self.1.matches(new)
@@ -290,7 +295,7 @@ where
     }
 }
 
-/// A helper macro for building pattern-matching instances of [`FnStatePattern`] and [`FnStateTransPattern`].
+/// A macro for building pattern-matching [`FnStatePattern`] and [`FnStateTransPattern`] instances.
 ///
 /// # Examples
 ///

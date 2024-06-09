@@ -1,9 +1,6 @@
-//! State flush scheduling types and helper functions.
+//! State flush scheduling types and functions.
 //!
-//! The [`StateFlush`] schedule runs after [`PreUpdate`](bevy_app::PreUpdate)
-//! and handles all [`State`] flush logic.
-//!
-//! State flush hooks run in [`StateHook<S>`], and every flush is applied in [`ApplyFlushSet`].
+//! The [`StateFlush`] schedule handles all [`State`] flush logic and emits [`StateFlushEvent`].
 
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
@@ -24,9 +21,11 @@ use crate::state::{
     TriggerStateFlush,
 };
 
-/// The schedule that handles all [`State`] flushes.
+/// The schedule that handles all [`State`] flush logic, added after
+/// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::app::StatePlugin).
 ///
-/// Added by [`StatePlugin`](crate::app::StatePlugin).
+/// State flush hooks run in [`StateHook<S>`] system sets and the flush is applied in
+/// [`ApplyFlushSet`].
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct StateFlush;
 
