@@ -1,4 +1,4 @@
-// Strip out or add plugins to your state type using the derive macro.
+// Strip out or add plugins to your state type.
 
 use bevy::prelude::*;
 use pyri_state::{
@@ -14,16 +14,20 @@ use pyri_state::{
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .add_state::<MyBasicState>()
-        .add_state::<MyDerivedState>()
-        .add_state::<MyCustomState>()
+        .add_state::<BasicState>()
+        .add_state::<RawState>()
+        .add_state::<CustomState>()
         .run();
 }
 
-// You can derive State on its own if no other traits are required.
+// The derive macro requires `Clone`, `PartialEq`, and `Eq` by default.`
+#[derive(State, Clone, PartialEq, Eq)]
+struct BasicState;
+
+// They can be omitted if you disable the default options:
 #[derive(State)]
 #[state(no_defaults)]
-struct MyBasicState;
+struct RawState;
 
 // The built-in state plugins can be configured:
 #[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
@@ -44,47 +48,41 @@ struct MyBasicState;
     // Swap out the default `StateBuffer<Self>` for a custom storage type.
     // (see `custom_storage` example for more information)
     storage(StateStack<Self>),
-    // Run this state's on flush systems after resolving the listed states.
-    after(MyBasicState),
-    // Run this state's on flush systems before resolving the listed states.
-    before(MyCustomState, UselessState),
+    // Run this state's on-flush hooks after the listed states.
+    after(BasicState, RawState),
+    // Run this state's on-flush hooks before the listed states.
+    before(CustomState),
 )]
-struct MyDerivedState;
+struct DerivedState;
 
 // Skip the derive entirely to fully customize your state type (see below).
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-struct MyCustomState;
+struct CustomState;
 
-impl State for MyCustomState {
+impl State for CustomState {
     type Storage = StateBuffer<Self>;
 }
 
 // This will be called from `app.add_state`, `init_state`, and `insert_state`.
-impl AddState for MyCustomState {
+impl AddState for CustomState {
     type AddStorage = Self::Storage;
 
     fn add_state(app: &mut App) {
+        // You'll probably want to insert these resources:
         app.init_resource::<CurrentState<Self>>()
             .init_resource::<TriggerStateFlush<Self>>()
+            // The derive macro's plugins can be added if desired:
             .add_plugins((
                 ResolveStatePlugin::<Self>::default()
-                    .after::<MyBasicState>()
-                    .after::<MyDerivedState>()
-                    .before::<UselessState>(),
+                    .after::<BasicState>()
+                    .after::<RawState>()
+                    .after::<DerivedState>(),
                 DetectChangePlugin::<Self>::default(),
                 FlushEventPlugin::<Self>::default(),
                 BevyStatePlugin::<Self>::default(),
                 ApplyFlushPlugin::<Self>::default(),
             ));
 
-        // ... some more custom configuration on app ...
+        // ... and more customization on `app` ...
     }
-}
-
-// TODO: This is confusing.
-// A fully stripped down state type that does nothing.
-struct UselessState;
-
-impl State for UselessState {
-    type Storage = StateBuffer<Self>;
 }
