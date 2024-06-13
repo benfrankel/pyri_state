@@ -16,6 +16,7 @@ use crate::{
         StateFlush, StateFlushEvent, StateHook,
     },
     state::{CurrentState, State},
+    storage::StateStorage,
 };
 
 /// A plugin that adds the [`StateFlush`] schedule to the [`MainScheduleOrder`].
@@ -33,65 +34,50 @@ impl Plugin for StatePlugin {
 /// An extension trait for [`App`] that provides methods for adding [`State`] types.
 pub trait AppExtState {
     /// Initialize `S` with empty storage.
-    fn add_state<S: AddState>(&mut self) -> &mut Self;
+    fn add_state<S: AddState<Storage: AddStateStorage>>(&mut self) -> &mut Self;
 
     /// Initialize `S` with default storage.
-    fn init_state<S: AddState>(&mut self) -> &mut Self
-    where
-        S::AddStorage: FromWorld;
+    fn init_state<S: AddState<Storage: AddStateStorage + FromWorld>>(&mut self) -> &mut Self;
 
     /// Initialize `S` with specific storage.
-    fn insert_state<T: AddStateStorage>(&mut self, storage: T) -> &mut Self;
+    fn insert_state<T: AddStateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self;
 }
 
 impl AppExtState for App {
-    fn add_state<S: AddState>(&mut self) -> &mut Self {
+    fn add_state<S: AddState<Storage: AddStateStorage>>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
-            S::AddStorage::add_state_storage(self, None);
+            S::Storage::add_state_storage(self, None);
             S::add_state(self);
         }
         self
     }
 
-    fn init_state<S: AddState>(&mut self) -> &mut Self
-    where
-        S::AddStorage: FromWorld,
-    {
+    fn init_state<S: AddState<Storage: AddStateStorage + FromWorld>>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
-            let storage = S::AddStorage::from_world(self.world_mut());
-            S::AddStorage::add_state_storage(self, Some(storage));
+            let storage = S::Storage::from_world(self.world_mut());
+            S::Storage::add_state_storage(self, Some(storage));
             S::add_state(self);
         }
         self
     }
 
-    fn insert_state<T: AddStateStorage>(&mut self, storage: T) -> &mut Self {
-        if !self
-            .world()
-            .contains_resource::<CurrentState<T::AddState>>()
-        {
+    fn insert_state<T: AddStateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self {
+        if !self.world().contains_resource::<CurrentState<T::State>>() {
             T::add_state_storage(self, Some(storage));
-            T::AddState::add_state(self);
+            T::State::add_state(self);
         }
         self
     }
 }
 
 /// A data type that can add a [`StateStorage`](crate::storage::StateStorage) to an [`App`].
-pub trait AddStateStorage: Sized {
-    /// The [`State`] type stored in the `StateStorage`.
-    type AddState: AddState;
-
+pub trait AddStateStorage: Sized + StateStorage {
     /// Add the state storage, or empty storage if `None`.
     fn add_state_storage(app: &mut App, storage: Option<Self>);
 }
 
 /// A [`State`] type that can be added to an [`App`].
 pub trait AddState: State {
-    /// An [`AddStateStorage`] for this state type's
-    /// [`StateStorage`](crate::storage::StateStorage).
-    type AddStorage: AddStateStorage;
-
     /// Add this state type to the app.
     ///
     /// The following plugins may be useful when implementing this method:
@@ -101,6 +87,7 @@ pub trait AddState: State {
     /// - [`FlushEventPlugin<Self>`]
     /// - [`LogFlushPlugin<Self>`](crate::extra::debug::LogFlushPlugin)
     /// - [`BevyStatePlugin<Self>`](crate::extra::bevy_state::BevyStatePlugin)
+    /// - [`EntityScopePlugin<Self>`](crate::extra::entity_scope::EntityScopePlugin)
     /// - [`ApplyFlushPlugin<Self>`]
     fn add_state(app: &mut App);
 }

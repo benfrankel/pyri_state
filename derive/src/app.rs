@@ -94,8 +94,6 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
 
     quote! {
         impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {
-            type AddStorage = Self::Storage;
-
             fn add_state(app: &mut #app_ty) {
                 app.init_resource::<#current_state_ty<Self>>()
                     .init_resource::<#trigger_state_flush_ty<Self>>()

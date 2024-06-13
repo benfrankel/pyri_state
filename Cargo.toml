@@ -2,7 +2,7 @@
 name = "pyri_state"
 version = "0.2.0"
 edition = "2021"
-description = "A flexible alternative to `bevy_state`"
+description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
 license = "MIT OR Apache-2.0"
 keywords = ["ecs", "game", "bevy"]

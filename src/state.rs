@@ -51,7 +51,7 @@ use crate::{
 /// - [`StateMutExtDefault`]
 pub trait State: 'static + Send + Sync + Sized {
     /// The [`StateStorage`] type that describes how this state will be stored in the ECS world.
-    type Storage: StateStorage<Self>;
+    type Storage: StateStorage<State = Self>;
 
     /// The [`AnyStatePattern`] for this state type.
     const ANY: AnyStatePattern<Self> = AnyStatePattern(PhantomData);
@@ -112,10 +112,7 @@ pub trait State: 'static + Send + Sync + Sized {
 ///
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait StateMut: State {
-    /// This is the same type as `<Self as State>::Storage` but with an additional [`StateStorageMut`] bound.
-    type StorageMut: StateStorageMut<Self>;
-
+pub trait StateMut: State<Storage: StateStorageMut> {
     /// A system that disables the next state.
     fn disable(mut state: NextStateMut<Self>) {
         state.set(None);
@@ -291,7 +288,7 @@ impl<S: State> TriggerStateFlush<S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextStateRef<'w, 's, S: State>(
-    StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorage<S>>::Param>,
+    StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorage>::Param>,
 );
 
 impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
@@ -336,7 +333,7 @@ impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextStateMut<'w, 's, S: StateMut> {
-    next: StaticSystemParam<'w, 's, <<S as StateMut>::StorageMut as StateStorageMut<S>>::ParamMut>,
+    next: StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorageMut>::ParamMut>,
     trigger: ResMut<'w, TriggerStateFlush<S>>,
 }
 
@@ -366,17 +363,17 @@ impl<'w, 's, S: StateMut + Default> NextStateMut<'w, 's, S> {
 impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        S::StorageMut::get_state_from_mut(&self.next)
+        S::Storage::get_state_from_mut(&self.next)
     }
 
     /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        S::StorageMut::get_state_mut(&mut self.next)
+        S::Storage::get_state_mut(&mut self.next)
     }
 
     /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
-        S::StorageMut::set_state(&mut self.next, state)
+        S::Storage::set_state(&mut self.next, state)
     }
 
     /// Get a read-only reference to the next state, or panic if it's disabled.

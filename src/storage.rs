@@ -38,38 +38,41 @@ use crate::{
 /// #[state(storage(StateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
-pub trait StateStorage<S: State> {
+pub trait StateStorage {
+    /// The stored [`State`] type.
+    type State: State;
+
     /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;
 
     /// Get a read-only reference to the next state, or `None` if disabled.
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S>;
+    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
 }
 
 /// A [`StateStorage`] type that allows `S` to be mutated directly as a [`StateMut`].
 ///
 /// Use [`NextStateMut`](crate::state::NextStateMut) or [`StateFlushMut`](crate::state::StateFlushMut)
 /// in a system for mutable access to the next state.
-pub trait StateStorageMut<S: State>: StateStorage<S> {
+pub trait StateStorageMut: StateStorage {
     /// A [`SystemParam`] with mutable access to the next state.
     type ParamMut: SystemParam;
 
     /// Get a reference to the next state, or `None` if disabled.
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S>;
+    fn get_state_from_mut<'s>(
+        param: &'s SystemParamItem<Self::ParamMut>,
+    ) -> Option<&'s Self::State>;
 
     /// Get a mutable reference to the next state, or `None` if disabled.
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S>;
+    fn get_state_mut<'s>(
+        param: &'s mut SystemParamItem<Self::ParamMut>,
+    ) -> Option<&'s mut Self::State>;
 
     /// Set the next state to a new value, or `None` to disable.
-    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>);
+    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<Self::State>);
 }
 
-impl<S: State> StateMut for S
-where
-    S::Storage: StateStorageMut<S>,
-{
-    type StorageMut = S::Storage;
-}
+// A `State` is `StateMut` if its `StateStorage` is `StateStorageMut`
+impl<S: State<Storage: StateStorageMut>> StateMut for S {}
 
 /// The default [`StateStorage`] type, storing the next state in a resource.
 #[derive(Resource, Debug)]
@@ -83,36 +86,38 @@ pub struct StateBuffer<S: State>(
     pub Option<S>,
 );
 
-impl<S: State> StateStorage<S> for StateBuffer<S> {
+impl<S: State> StateStorage for StateBuffer<S> {
+    type State = S;
+
     type Param = SRes<Self>;
 
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
         param.get()
     }
 }
 
-impl<S: State> StateStorageMut<S> for StateBuffer<S> {
+impl<S: State> StateStorageMut for StateBuffer<S> {
     type ParamMut = SResMut<Self>;
 
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S> {
+    fn get_state_from_mut<'s>(
+        param: &'s SystemParamItem<Self::ParamMut>,
+    ) -> Option<&'s Self::State> {
         param.get()
     }
 
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S> {
+    fn get_state_mut<'s>(
+        param: &'s mut SystemParamItem<Self::ParamMut>,
+    ) -> Option<&'s mut Self::State> {
         param.get_mut()
     }
 
-    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
+    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<Self::State>) {
         param.set(state);
     }
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::extra::app::AddState<AddStorage = Self>> crate::extra::app::AddStateStorage
-    for StateBuffer<S>
-{
-    type AddState = S;
-
+impl<S: State> crate::extra::app::AddStateStorage for StateBuffer<S> {
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
         app.insert_resource(storage.unwrap_or_else(StateBuffer::disabled));
     }

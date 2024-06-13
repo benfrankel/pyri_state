@@ -66,8 +66,6 @@ impl State for CustomState {
 
 // This will be called from `app.add_state`, `init_state`, and `insert_state`.
 impl AddState for CustomState {
-    type AddStorage = Self::Storage;
-
     fn add_state(app: &mut App) {
         // You'll probably want to insert these resources:
         app.init_resource::<CurrentState<Self>>()

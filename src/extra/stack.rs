@@ -33,36 +33,38 @@ pub struct StateStack<S: State> {
     bases: Vec<usize>,
 }
 
-impl<S: State> StateStorage<S> for StateStack<S> {
+impl<S: State> StateStorage for StateStack<S> {
+    type State = S;
+
     type Param = SRes<Self>;
 
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
         param.get()
     }
 }
 
-impl<S: State> StateStorageMut<S> for StateStack<S> {
+impl<S: State> StateStorageMut for StateStack<S> {
     type ParamMut = SResMut<Self>;
 
-    fn get_state_from_mut<'s>(param: &'s SystemParamItem<Self::ParamMut>) -> Option<&'s S> {
+    fn get_state_from_mut<'s>(
+        param: &'s SystemParamItem<Self::ParamMut>,
+    ) -> Option<&'s Self::State> {
         param.get()
     }
 
-    fn get_state_mut<'s>(param: &'s mut SystemParamItem<Self::ParamMut>) -> Option<&'s mut S> {
+    fn get_state_mut<'s>(
+        param: &'s mut SystemParamItem<Self::ParamMut>,
+    ) -> Option<&'s mut Self::State> {
         param.get_mut()
     }
 
-    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
+    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<Self::State>) {
         param.set(state);
     }
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::extra::app::AddState<AddStorage = Self>> crate::extra::app::AddStateStorage
-    for StateStack<S>
-{
-    type AddState = S;
-
+impl<S: State> crate::extra::app::AddStateStorage for StateStack<S> {
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
         app.insert_resource(storage.unwrap_or_else(StateStack::empty));
     }

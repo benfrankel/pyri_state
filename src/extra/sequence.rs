@@ -25,20 +25,18 @@ pub struct StateSequence<S: State> {
     index: usize,
 }
 
-impl<S: State> StateStorage<S> for StateSequence<S> {
+impl<S: State> StateStorage for StateSequence<S> {
+    type State = S;
+
     type Param = SRes<Self>;
 
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
         param.get()
     }
 }
 
 #[cfg(feature = "bevy_app")]
-impl<S: crate::extra::app::AddState<AddStorage = Self>> crate::extra::app::AddStateStorage
-    for StateSequence<S>
-{
-    type AddState = S;
-
+impl<S: State> crate::extra::app::AddStateStorage for StateSequence<S> {
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
         app.insert_resource(storage.unwrap_or_else(StateSequence::empty));
     }

@@ -3,7 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use bevy_ecs::system::lifetimeless::{SRes, SResMut};
 use pyri_state::{
-    extra::app::{AddState, AddStateStorage},
+    extra::app::AddStateStorage,
     prelude::*,
     storage::{StateStorage, StateStorageMut},
 };
@@ -58,7 +58,9 @@ pub struct StateSwap<S: State>([Option<S>; 2]);
 // Impl `StateStorage<S>` to enable getting the next state from your storage type.
 // This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type,
 // and attaches run conditions such as `S::will_be_enabled`.
-impl<S: State> StateStorage<S> for StateSwap<S> {
+impl<S: State> StateStorage for StateSwap<S> {
+    type State = S;
+
     type Param = SRes<Self>;
 
     fn get_state<'s>(param: &'s bevy_ecs::system::SystemParamItem<Self::Param>) -> Option<&'s S> {
@@ -69,7 +71,7 @@ impl<S: State> StateStorage<S> for StateSwap<S> {
 // Impl `StateStorageMut<S>` to enable setting the next state for your storage type.
 // This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
 // and attaches systems such as `S::disable`.
-impl<S: State> StateStorageMut<S> for StateSwap<S> {
+impl<S: State> StateStorageMut for StateSwap<S> {
     type ParamMut = SResMut<Self>;
 
     fn get_state_from_mut<'s>(
@@ -90,9 +92,7 @@ impl<S: State> StateStorageMut<S> for StateSwap<S> {
 }
 
 // Impl `AddStateStorage<S>` to enable `app.add_state::<S>()`, etc.
-impl<S: AddState<AddStorage = Self>> AddStateStorage for StateSwap<S> {
-    type AddState = S;
-
+impl<S: State> AddStateStorage for StateSwap<S> {
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
         app.insert_resource(storage.unwrap_or_else(|| StateSwap([None, None])));
     }
