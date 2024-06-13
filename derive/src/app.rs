@@ -17,9 +17,6 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let crate_extra_path = concat(crate_path.clone(), "extra");
     let crate_app_path = concat(crate_extra_path.clone(), "app");
     let add_state_trait = concat(crate_app_path.clone(), "AddState");
-    let crate_state_path = concat(crate_path.clone(), "state");
-    let current_state_ty = concat(crate_state_path.clone(), "CurrentState");
-    let trigger_state_flush_ty = concat(crate_state_path.clone(), "TriggerStateFlush");
 
     // Construct resolve state plugin.
     let resolve_state = {
@@ -95,17 +92,15 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     quote! {
         impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {
             fn add_state(app: &mut #app_ty) {
-                app.init_resource::<#current_state_ty<Self>>()
-                    .init_resource::<#trigger_state_flush_ty<Self>>()
-                    .add_plugins((
-                        #resolve_state
-                        #detect_change
-                        #flush_event
-                        #log_flush
-                        #bevy_state
-                        #entity_scope
-                        #apply_flush
-                    ));
+                app.add_plugins((
+                    #resolve_state
+                    #detect_change
+                    #flush_event
+                    #log_flush
+                    #bevy_state
+                    #entity_scope
+                    #apply_flush
+                ));
             }
         }
     }

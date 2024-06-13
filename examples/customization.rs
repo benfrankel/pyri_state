@@ -7,9 +7,10 @@ use pyri_state::{
             AddState, ApplyFlushPlugin, DetectChangePlugin, FlushEventPlugin, ResolveStatePlugin,
         },
         bevy_state::BevyStatePlugin,
+        debug::LogFlushPlugin,
+        entity_scope::EntityScopePlugin,
     },
     prelude::*,
-    state::TriggerStateFlush,
 };
 
 fn main() {
@@ -67,20 +68,19 @@ impl State for CustomState {
 // This will be called from `app.add_state`, `init_state`, and `insert_state`.
 impl AddState for CustomState {
     fn add_state(app: &mut App) {
-        // You'll probably want to insert these resources:
-        app.init_resource::<CurrentState<Self>>()
-            .init_resource::<TriggerStateFlush<Self>>()
-            // The derive macro's plugins can be added if desired:
-            .add_plugins((
-                ResolveStatePlugin::<Self>::default()
-                    .after::<BasicState>()
-                    .after::<RawState>()
-                    .after::<DerivedState>(),
-                DetectChangePlugin::<Self>::default(),
-                FlushEventPlugin::<Self>::default(),
-                BevyStatePlugin::<Self>::default(),
-                ApplyFlushPlugin::<Self>::default(),
-            ));
+        // Plugins from the derive macro can still be added if desired:
+        app.add_plugins((
+            ResolveStatePlugin::<Self>::default()
+                .after::<BasicState>()
+                .after::<RawState>()
+                .after::<DerivedState>(),
+            DetectChangePlugin::<Self>::default(),
+            FlushEventPlugin::<Self>::default(),
+            LogFlushPlugin::<Self>::default(),
+            BevyStatePlugin::<Self>::default(),
+            EntityScopePlugin::<Self>::default(),
+            ApplyFlushPlugin::<Self>::default(),
+        ));
 
         // ... and more customization on `app` ...
     }

@@ -15,7 +15,7 @@ use crate::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
         StateFlush, StateFlushEvent, StateHook,
     },
-    state::{CurrentState, State},
+    state::{CurrentState, State, TriggerStateFlush},
     storage::StateStorage,
 };
 
@@ -43,11 +43,17 @@ pub trait AppExtState {
     fn insert_state<T: AddStateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self;
 }
 
+fn insert_state_helper<T: AddStateStorage<State: AddState>>(app: &mut App, storage: Option<T>) {
+    app.init_resource::<CurrentState<T::State>>()
+        .init_resource::<TriggerStateFlush<T::State>>();
+    T::add_state_storage(app, storage);
+    T::State::add_state(app);
+}
+
 impl AppExtState for App {
     fn add_state<S: AddState<Storage: AddStateStorage>>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
-            S::Storage::add_state_storage(self, None);
-            S::add_state(self);
+            insert_state_helper(self, None::<S::Storage>);
         }
         self
     }
@@ -55,16 +61,14 @@ impl AppExtState for App {
     fn init_state<S: AddState<Storage: AddStateStorage + FromWorld>>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
             let storage = S::Storage::from_world(self.world_mut());
-            S::Storage::add_state_storage(self, Some(storage));
-            S::add_state(self);
+            insert_state_helper(self, Some(storage));
         }
         self
     }
 
     fn insert_state<T: AddStateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<T::State>>() {
-            T::add_state_storage(self, Some(storage));
-            T::State::add_state(self);
+            insert_state_helper(self, Some(storage));
         }
         self
     }
