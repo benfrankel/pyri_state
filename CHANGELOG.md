@@ -1,9 +1,9 @@
 # Version 0.2.0
 
-- Updated to bevy 0.14.0
-- Wrote [documentation](https://docs.rs/pyri_state/latest/pyri_state/)
-- Wrote [interactive examples](/examples/)
-- Implemented state pattern-matching:
+- **Updated to bevy 0.14.0**
+- **Wrote [documentation](https://docs.rs/pyri_state/latest/pyri_state/)**
+- **Wrote [interactive examples](/examples/)**
+- **Implemented state pattern-matching:**
     - Added `pattern` module
     - Added `state!` macro
     - Added `StatePattern` trait
@@ -17,7 +17,7 @@
     - Added `FnStateTransPattern` type
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
-- Implemented state storage:
+- **Implemented custom state storage:**
     - Added `storage` module
     - Added `storage(...)` derive macro option
     - Added `StateStorage` trait
@@ -32,27 +32,27 @@
     - Added `extra` module
     - Moved `app` -> `extra::app` module
     - Moved `BevyState` and related items into new `extra::bevy_state` module
-    - Implemented state scoping for entities:
+    - **Implemented state scoping for entities:**
         - Added `entity_scope` feature flag
         - Added `StateScope` component
         - Added `schedule_entity_scope` function
         - Added `EntityScopePlugin` plugin
-    - Implemented flush logging:
+    - **Implemented state flush logging:**
         - Added `debug` feature flag
         - Added `StateDebugSettings` resource
         - Added `log_flush` derive macro option
         - Added `LogFlushPlugin` plugin
         - Added `schedule_log_flush` function
-    - Implemented state stack storage:
+    - **Implemented state stack storage:**
         - Added `stack` feature flag
         - Added `StateStack` resource
         - Added `StateStackMut` extension trait
         - Added `StateStackMutExtClone` extension trait
-    - Implemented state sequence storage:
+    - **Implemented state sequence storage:**
         - Added `sequence` feature flag
         - Added `StateSequence` resource
         - Added `StateSequenceMut` extension trait
-    - Implemented split state definition:
+    - **Implemented split state definition:**
         - Added `split` feature flag
         - Added `SplitState` type alias
         - Added `add_to_split_state!` macro
@@ -85,4 +85,4 @@
 
 # Version 0.1.0
 
-- Initial release
+- **Initial release**
