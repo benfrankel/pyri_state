@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.2.0"
+version = "0.2.0-rc.0"
 edition = "2021"
 description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -45,7 +45,7 @@ bevy_hierarchy = { version = "0.14.0-rc.3", optional = true }
 bevy_log = { version = "0.14.0-rc.3", optional = true }
 bevy_reflect = { version = "0.14.0-rc.3", optional = true }
 bevy_state = { version = "0.14.0-rc.3", optional = true }
-pyri_state_derive = { version = "0.2", path = "derive" }
+pyri_state_derive = { version = "0.2.0-rc.0", path = "derive" }
 
 [dev-dependencies]
 bevy = { version = "0.14.0-rc.3", default-features = false, features = [
