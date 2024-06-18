@@ -28,6 +28,9 @@ impl Plugin for StatePlugin {
             .world_mut()
             .resource_mut::<MainScheduleOrder>()
             .insert_after(PreUpdate, StateFlush);
+
+        #[cfg(feature = "bevy_state")]
+        app.add_plugins(bevy_state::app::StatesPlugin);
     }
 }
 

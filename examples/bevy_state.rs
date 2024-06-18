@@ -3,18 +3,12 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-use bevy_asset_loader::prelude::*;
 use iyes_progress::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .init_state::<GameState>()
-        .init_collection::<GameAssets>()
-        .add_loading_state(
-            LoadingState::new(BevyState(Some(GameState::LoadingGame)))
-                .load_collection::<GameAssets>(),
-        )
         .add_plugins(
             ProgressPlugin::new(BevyState(Some(GameState::LoadingGame)))
                 // Changes to BevyState<GameState> will propagate to GameState.
@@ -42,6 +36,3 @@ enum GameState {
     LoadingGame,
     PlayingGame,
 }
-
-#[derive(AssetCollection, Resource, Default)]
-struct GameAssets {}
