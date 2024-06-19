@@ -53,7 +53,7 @@ bevy = { version = "0.14.0-rc.3", default-features = false, features = [
     "x11",
     "multi_threaded",
 ] }
-# TODO: `bevy_asset_loader` is incompatible with `pyri_state` unfortunately, because it injects the `bevy/bevy_state` feature
-#       into your game, which is incompatible with `pyri_state`.
+# TODO: `bevy_asset_loader` is incompatible with `pyri_state`, unfortunately.
+#       (see https://github.com/NiklasEi/bevy_asset_loader/issues/219)
 #bevy_asset_loader = { git = "https://github.com/NiklasEi/bevy_asset_loader", branch = "bevy_main" }
 iyes_progress = { git = "https://github.com/NiklasEi/iyes_progress", branch = "update_bevy_main_for_0_14_cycle" }

@@ -25,7 +25,7 @@ pub struct StateFlush;
 
 /// A suite of system sets in the [`StateFlush`] schedule for each [`State`] type `S`.
 ///
-/// Configured by default[*](pyri_state_derive::State) by
+/// Configured [by default](pyri_state_derive::State) by
 /// [`ResolveStatePlugin<S>`](crate::extra::app::ResolveStatePlugin) as follows:
 ///
 /// 1. [`Resolve`](Self::Resolve) (before or after other `Resolve` system sets based on
@@ -107,7 +107,7 @@ pub struct ApplyFlushSet;
 
 /// An event sent whenever the [`State`] type `S` flushes.
 ///
-/// Added by default[*](pyri_state_derive::State) by
+/// Added [by default](pyri_state_derive::State) by
 /// [`FlushEventPlugin<S>`](crate::extra::app::FlushEventPlugin).
 #[derive(Event)]
 pub struct StateFlushEvent<S: State> {

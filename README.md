@@ -23,6 +23,10 @@ Read the [documentation](https://docs.rs/pyri_state/latest/pyri_state) or check 
 | 0.14           | 0.2                  |
 | 0.13           | 0.1                  |
 
+# License
+
+This crate is available under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-Apache-2.0) at your choice.
+
 # Remaining tasks
 
 - [ ] Unit tests

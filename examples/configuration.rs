@@ -40,11 +40,13 @@ struct RawState;
     detect_change,
     // Send an event on flush (requires Clone).
     flush_event,
-    // Log on exit, transition, and enter (requires Debug).
+    // Log on flush (requires Debug).
     log_flush,
     // Include a BevyState wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     // (see `ecosystem_compatibility` example for more information)
     bevy_state,
+    // Despawn entities marked with `StateScope<Self>` on any exit.
+    entity_scope,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
     // Swap out the default `StateBuffer<Self>` for a custom storage type.

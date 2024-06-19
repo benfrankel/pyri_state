@@ -1,6 +1,9 @@
 //! State configuration tools.
 //!
 //! Enable the `bevy_app` feature flag to use this module.
+//!
+//! See the [derive macro](pyri_state_derive::State) for an easy way to impl [`AddState`] and
+//! enable the plugins provided by this module.
 
 use std::marker::PhantomData;
 
@@ -77,7 +80,7 @@ impl AppExtState for App {
     }
 }
 
-/// A data type that can add a [`StateStorage`](crate::storage::StateStorage) to an [`App`].
+/// A [`StateStorage`] type that can be added to an [`App`].
 pub trait AddStateStorage: Sized + StateStorage {
     /// Add the state storage, or empty storage if `None`.
     fn add_state_storage(app: &mut App, storage: Option<Self>);

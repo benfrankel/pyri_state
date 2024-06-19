@@ -1,5 +1,8 @@
 //! `pyri_state` is a `bevy_state` alternative offering flexible change detection & scheduling.
 //!
+//! **NOTE:** This crate is incompatible with the `bevy/bevy_state` feature, so make sure it's
+//! disabled.
+//!
 //! # Overview
 //!
 //! 1. The current state is stored in a [`CurrentState`](state::CurrentState) resource.
@@ -9,16 +12,14 @@
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
-//! 5. Tools are provided for [state configuration](extra::app), [debugging](extra::debug),
-//! [pattern-matching](pattern), [and more](extra).
+//! 5. Tools are provided for state [configuration](extra::app), [debugging](extra::debug),
+//! [pattern-matching](pattern), and [more](extra).
 //!
 //! # Getting started
 //!
 //! Import the [prelude] to bring traits and common types into scope:
 //!
 //! ```rust
-//! // Note: Disable the `bevy_state` feature of `bevy` to avoid prelude interference.
-//! //use bevy::prelude::*;
 //! use pyri_state::prelude::*;
 //! ```
 //!
@@ -141,7 +142,7 @@ pub mod prelude {
     ///     detect_change,
     ///     // Send an event on flush (requires Clone).
     ///     flush_event,
-    ///     // Log on exit, transition, and enter (requires Debug).
+    ///     // Log on flush (requires Debug).
     ///     log_flush,
     ///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     ///     bevy_state,
@@ -151,9 +152,9 @@ pub mod prelude {
     ///     apply_flush,
     ///     // Swap out the default `StateBuffer<Self>` for a custom storage type.
     ///     storage(StateStack<Self>),
-    ///     // Run this state's on flush systems after resolving the listed states.
+    ///     // Run this state's on-flush hooks after the listed states.
     ///     after(GameState),
-    ///     // Run this state's on flush systems before resolving the listed states.
+    ///     // Run this state's on-flush hooks before the listed states.
     ///     before(RawState),
     /// )]
     /// struct ConfiguredState;

@@ -38,12 +38,12 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]
-// The default storage is `StateBuffer<Self>` (newtyped `Option<Self>`).
+// The default storage is `StateBuffer<Self>`, which is a newtyped `Option<Self>`.
 //#[state(storage(StateBuffer<Self>))]
 struct MyBufferedState;
 
 #[derive(State, Clone, PartialEq, Eq, Debug, Default)]
-// You can easily swap in a `StateStack<Self>` instead.
+// You can easily swap in a `StateStack<Self>` instead, for example.
 #[state(log_flush, storage(StateStack<Self>))]
 enum MyStackedState {
     #[default]
@@ -51,26 +51,23 @@ enum MyStackedState {
     B,
 }
 
-// You can create your own fully custom state storage type:
+// You can define your own fully custom storage type:
 #[derive(Resource)]
 pub struct StateSwap<S: State>([Option<S>; 2]);
 
-// Impl `StateStorage<S>` to enable getting the next state from your storage type.
-// This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type,
-// and attaches run conditions such as `S::will_be_enabled`.
+// Impl `StateStorage` to mark your type as a valid state storage type.
 impl<S: State> StateStorage for StateSwap<S> {
     type State = S;
 
     type Param = SRes<Self>;
 
+    // This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type.
     fn get_state<'s>(param: &'s bevy_ecs::system::SystemParamItem<Self::Param>) -> Option<&'s S> {
         param.0[0].as_ref()
     }
 }
 
-// Impl `StateStorageMut<S>` to enable setting the next state for your storage type.
-// This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
-// and attaches systems such as `S::disable`.
+// Impl `StateStorageMut` to support setting the next state through your storage type.
 impl<S: State> StateStorageMut for StateSwap<S> {
     type ParamMut = SResMut<Self>;
 
@@ -80,6 +77,7 @@ impl<S: State> StateStorageMut for StateSwap<S> {
         param.0[0].as_ref()
     }
 
+    // This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
     fn get_state_mut<'s>(
         param: &'s mut bevy_ecs::system::SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut S> {
@@ -91,15 +89,15 @@ impl<S: State> StateStorageMut for StateSwap<S> {
     }
 }
 
-// Impl `AddStateStorage<S>` to enable `app.add_state::<S>()`, etc.
+// Impl `AddStateStorage` to support `app.add_state`, `init_state`, and `insert_state`.
 impl<S: State> AddStateStorage for StateSwap<S> {
     fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
         app.insert_resource(storage.unwrap_or_else(|| StateSwap([None, None])));
     }
 }
 
-// Define a custom trait to associate extra systems and run conditions with any
-// state using your storage.
+// Define a custom extension trait to attach extra systems and run conditions to
+// state types using your storage type.
 pub trait StateSwapMut: State {
     fn swap(mut swap: ResMut<StateSwap<Self>>) {
         let [left, right] = &mut swap.0;
