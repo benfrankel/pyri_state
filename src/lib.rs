@@ -80,20 +80,20 @@ pub mod storage;
 pub mod prelude {
     pub use crate::{
         pattern::{
-            StatePattern, StatePatternExtClone, StatePatternExtEq, StateTransPattern,
-            StateTransPatternExtClone,
+            StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
+            StateTransPattern as _, StateTransPatternExtClone as _,
         },
         schedule::{StateFlush, StateFlushEvent},
         state,
         state::{
             CurrentState, NextStateMut, NextStateRef, State, StateFlushMut, StateFlushRef,
-            StateMut, StateMutExtClone, StateMutExtDefault,
+            StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
         },
         storage::StateBuffer,
     };
 
     #[cfg(feature = "bevy_app")]
-    pub use crate::extra::app::{AppExtState, StatePlugin};
+    pub use crate::extra::app::{AppExtState as _, StatePlugin};
 
     #[cfg(feature = "bevy_state")]
     pub use crate::extra::bevy_state::BevyState;
@@ -102,15 +102,13 @@ pub mod prelude {
     pub use crate::extra::debug::StateDebugSettings;
 
     #[cfg(feature = "stack")]
-    pub use crate::extra::stack::{StateStack, StateStackMut, StateStackMutExtClone};
+    pub use crate::extra::stack::{StateStack, StateStackMut as _, StateStackMutExtClone as _};
 
     #[cfg(feature = "sequence")]
-    pub use crate::extra::sequence::{StateSequence, StateSequenceMut};
+    pub use crate::extra::sequence::{StateSequence, StateSequenceMut as _};
 
     #[cfg(feature = "split")]
-    pub use crate::add_to_split_state;
-    #[cfg(feature = "split")]
-    pub use crate::extra::split::SplitState;
+    pub use crate::{add_to_split_state, extra::split::SplitState};
 
     /// A derive macro for the [`State`] and [`AddState`](crate::extra::app::AddState) traits.
     ///
