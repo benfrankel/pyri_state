@@ -22,7 +22,6 @@
     - Added `storage(...)` derive macro option
     - Added `StateStorage` trait
     - Added `StateStorageMut` trait
-    - Added `AddStateStorage` trait
     - Added `NextStateRef` system param
     - Added `NextStateMut` system param
     - Replaced `NextState_` with `StateBuffer` and `TriggerStateFlush` resources
@@ -69,7 +68,7 @@
     - Renamed `init_state_` -> `init_state` method
     - Renamed `insert_state_` -> `insert_state` method
 - Replaced configs with plugins:
-    - Replaced `GetStateConfig` and `ConfigureState` with `AddState` (and `AddStateStorage`) traits
+    - Replaced `GetStateConfig` and `ConfigureState` with `AddState` trait
     - Renamed `StateConfigResolveState` -> `ResolveStatePlugin` plugin
     - Renamed `StateConfigDetectChange` -> `DetectChangePlugin` plugin
     - Renamed `StateConfigSendEvent` -> `FlushEventPlugin` plugin

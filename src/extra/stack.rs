@@ -7,10 +7,7 @@
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    system::{
-        lifetimeless::{SRes, SResMut},
-        ResMut, Resource, SystemParamItem,
-    },
+    system::{ResMut, Resource, SystemParamItem},
     world::{FromWorld, World},
 };
 
@@ -36,37 +33,46 @@ pub struct StateStack<S: State> {
 impl<S: State> StateStorage for StateStack<S> {
     type State = S;
 
-    type Param = SRes<Self>;
+    type Param = ();
 
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
-        param.get()
+    fn empty() -> Self {
+        Self {
+            stack: Vec::new(),
+            bases: Vec::new(),
+        }
+    }
+
+    fn get_state<'s>(
+        &'s self,
+        _param: &'s SystemParamItem<Self::Param>,
+    ) -> Option<&'s Self::State> {
+        self.get()
     }
 }
 
 impl<S: State> StateStorageMut for StateStack<S> {
-    type ParamMut = SResMut<Self>;
+    type ParamMut = ();
 
     fn get_state_from_mut<'s>(
-        param: &'s SystemParamItem<Self::ParamMut>,
+        &'s self,
+        _param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s Self::State> {
-        param.get()
+        self.get()
     }
 
     fn get_state_mut<'s>(
-        param: &'s mut SystemParamItem<Self::ParamMut>,
+        &'s mut self,
+        _param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut Self::State> {
-        param.get_mut()
+        self.get_mut()
     }
 
-    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<Self::State>) {
-        param.set(state);
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> crate::extra::app::AddStateStorage for StateStack<S> {
-    fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
-        app.insert_resource(storage.unwrap_or_else(StateStack::empty));
+    fn set_state(
+        &mut self,
+        _param: &mut SystemParamItem<Self::ParamMut>,
+        state: Option<Self::State>,
+    ) {
+        self.set(state);
     }
 }
 
@@ -77,14 +83,6 @@ impl<S: State + FromWorld> FromWorld for StateStack<S> {
 }
 
 impl<S: State> StateStack<S> {
-    /// Create an empty `StateStack`.
-    pub fn empty() -> Self {
-        Self {
-            stack: Vec::new(),
-            bases: Vec::new(),
-        }
-    }
-
     /// Create a new `StateStack` with an initial state.
     pub fn new(state: S) -> Self {
         Self {

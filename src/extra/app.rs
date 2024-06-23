@@ -40,31 +40,33 @@ impl Plugin for StatePlugin {
 /// An extension trait for [`App`] that provides methods for adding [`State`] types.
 pub trait AppExtState {
     /// Initialize `S` with empty storage.
-    fn add_state<S: AddState<Storage: AddStateStorage>>(&mut self) -> &mut Self;
+    ///
+    /// Calls [`S::Storage::empty`](StateStorage::empty).
+    fn add_state<S: AddState>(&mut self) -> &mut Self;
 
     /// Initialize `S` with default storage.
-    fn init_state<S: AddState<Storage: AddStateStorage + FromWorld>>(&mut self) -> &mut Self;
+    fn init_state<S: AddState<Storage: FromWorld>>(&mut self) -> &mut Self;
 
     /// Initialize `S` with specific storage.
-    fn insert_state<T: AddStateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self;
+    fn insert_state<T: StateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self;
 }
 
-fn insert_state_helper<T: AddStateStorage<State: AddState>>(app: &mut App, storage: Option<T>) {
+fn insert_state_helper<T: StateStorage<State: AddState>>(app: &mut App, storage: Option<T>) {
     app.init_resource::<CurrentState<T::State>>()
-        .init_resource::<TriggerStateFlush<T::State>>();
-    T::add_state_storage(app, storage);
+        .init_resource::<TriggerStateFlush<T::State>>()
+        .insert_resource(storage.unwrap_or_else(T::empty));
     T::State::add_state(app);
 }
 
 impl AppExtState for App {
-    fn add_state<S: AddState<Storage: AddStateStorage>>(&mut self) -> &mut Self {
+    fn add_state<S: AddState>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
             insert_state_helper(self, None::<S::Storage>);
         }
         self
     }
 
-    fn init_state<S: AddState<Storage: AddStateStorage + FromWorld>>(&mut self) -> &mut Self {
+    fn init_state<S: AddState<Storage: FromWorld>>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
             let storage = S::Storage::from_world(self.world_mut());
             insert_state_helper(self, Some(storage));
@@ -72,18 +74,12 @@ impl AppExtState for App {
         self
     }
 
-    fn insert_state<T: AddStateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self {
+    fn insert_state<T: StateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<T::State>>() {
             insert_state_helper(self, Some(storage));
         }
         self
     }
-}
-
-/// A [`StateStorage`] type that can be added to an [`App`].
-pub trait AddStateStorage: Sized + StateStorage {
-    /// Add the state storage, or empty storage if `None`.
-    fn add_state_storage(app: &mut App, storage: Option<Self>);
 }
 
 /// A [`State`] type that can be added to an [`App`].

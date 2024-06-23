@@ -9,10 +9,7 @@
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    system::{
-        lifetimeless::{SRes, SResMut},
-        ReadOnlySystemParam, Resource, SystemParam, SystemParamItem,
-    },
+    system::{ReadOnlySystemParam, Resource, SystemParam, SystemParamItem},
     world::{FromWorld, World},
 };
 
@@ -38,15 +35,20 @@ use crate::{
 /// #[state(storage(StateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
-pub trait StateStorage {
+pub trait StateStorage: Resource {
     /// The stored [`State`] type.
     type State: State;
 
     /// A [`ReadOnlySystemParam`] with read-only access to the next state.
     type Param: ReadOnlySystemParam;
 
+    /// Create an empty storage.
+    ///
+    /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
+    fn empty() -> Self;
+
     /// Get a read-only reference to the next state, or `None` if disabled.
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
+    fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
 }
 
 /// A [`StateStorage`] type that allows `S` to be mutated directly as a [`StateMut`].
@@ -59,16 +61,22 @@ pub trait StateStorageMut: StateStorage {
 
     /// Get a reference to the next state, or `None` if disabled.
     fn get_state_from_mut<'s>(
+        &'s self,
         param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s Self::State>;
 
     /// Get a mutable reference to the next state, or `None` if disabled.
     fn get_state_mut<'s>(
+        &'s mut self,
         param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut Self::State>;
 
     /// Set the next state to a new value, or `None` to disable.
-    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<Self::State>);
+    fn set_state(
+        &mut self,
+        param: &mut SystemParamItem<Self::ParamMut>,
+        state: Option<Self::State>,
+    );
 }
 
 // A `State` is `StateMut` if its `StateStorage` is `StateStorageMut`
@@ -89,37 +97,43 @@ pub struct StateBuffer<S: State>(
 impl<S: State> StateStorage for StateBuffer<S> {
     type State = S;
 
-    type Param = SRes<Self>;
+    type Param = ();
 
-    fn get_state<'s>(param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
-        param.get()
+    fn empty() -> Self {
+        Self::disabled()
+    }
+
+    fn get_state<'s>(
+        &'s self,
+        _param: &'s SystemParamItem<Self::Param>,
+    ) -> Option<&'s Self::State> {
+        self.get()
     }
 }
 
 impl<S: State> StateStorageMut for StateBuffer<S> {
-    type ParamMut = SResMut<Self>;
+    type ParamMut = ();
 
     fn get_state_from_mut<'s>(
-        param: &'s SystemParamItem<Self::ParamMut>,
+        &'s self,
+        _param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s Self::State> {
-        param.get()
+        self.get()
     }
 
     fn get_state_mut<'s>(
-        param: &'s mut SystemParamItem<Self::ParamMut>,
+        &'s mut self,
+        _param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut Self::State> {
-        param.get_mut()
+        self.get_mut()
     }
 
-    fn set_state(param: &mut SystemParamItem<Self::ParamMut>, state: Option<Self::State>) {
-        param.set(state);
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> crate::extra::app::AddStateStorage for StateBuffer<S> {
-    fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
-        app.insert_resource(storage.unwrap_or_else(StateBuffer::disabled));
+    fn set_state(
+        &mut self,
+        _param: &mut SystemParamItem<Self::ParamMut>,
+        state: Option<Self::State>,
+    ) {
+        self.set(state);
     }
 }
 

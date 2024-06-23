@@ -1,9 +1,9 @@
 // Swap out or define your own state storage type.
 
-use bevy::{input::common_conditions::input_just_pressed, prelude::*};
-use bevy_ecs::system::lifetimeless::{SRes, SResMut};
+use bevy::{
+    ecs::system::SystemParamItem, input::common_conditions::input_just_pressed, prelude::*,
+};
 use pyri_state::{
-    extra::app::AddStateStorage,
     prelude::*,
     storage::{StateStorage, StateStorageMut},
 };
@@ -59,40 +59,40 @@ pub struct StateSwap<S: State>([Option<S>; 2]);
 impl<S: State> StateStorage for StateSwap<S> {
     type State = S;
 
-    type Param = SRes<Self>;
+    type Param = ();
+
+    // This is used in `app.add_state`.
+    fn empty() -> Self {
+        Self([None, None])
+    }
 
     // This allows `NextStateRef<S>` and `StateRef<S>` to interface with your storage type.
-    fn get_state<'s>(param: &'s bevy_ecs::system::SystemParamItem<Self::Param>) -> Option<&'s S> {
-        param.0[0].as_ref()
+    fn get_state<'s>(&'s self, _param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+        self.0[0].as_ref()
     }
 }
 
 // Impl `StateStorageMut` to support setting the next state through your storage type.
 impl<S: State> StateStorageMut for StateSwap<S> {
-    type ParamMut = SResMut<Self>;
+    type ParamMut = ();
 
     fn get_state_from_mut<'s>(
-        param: &'s bevy_ecs::system::SystemParamItem<Self::ParamMut>,
+        &'s self,
+        _param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s S> {
-        param.0[0].as_ref()
+        self.0[0].as_ref()
     }
 
     // This allows `NextStateMut<S>` and `StateMut<S>` to interface with your storage type,
     fn get_state_mut<'s>(
-        param: &'s mut bevy_ecs::system::SystemParamItem<Self::ParamMut>,
+        &'s mut self,
+        _param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut S> {
-        param.0[0].as_mut()
+        self.0[0].as_mut()
     }
 
-    fn set_state(param: &mut bevy_ecs::system::SystemParamItem<Self::ParamMut>, state: Option<S>) {
-        param.0[0] = state;
-    }
-}
-
-// Impl `AddStateStorage` to support `app.add_state`, `init_state`, and `insert_state`.
-impl<S: State> AddStateStorage for StateSwap<S> {
-    fn add_state_storage(app: &mut bevy_app::App, storage: Option<Self>) {
-        app.insert_resource(storage.unwrap_or_else(|| StateSwap([None, None])));
+    fn set_state(&mut self, _param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
+        self.0[0] = state;
     }
 }
 

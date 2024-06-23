@@ -287,14 +287,15 @@ impl<S: State> TriggerStateFlush<S> {
 /// }
 /// ```
 #[derive(SystemParam)]
-pub struct NextStateRef<'w, 's, S: State>(
-    StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorage>::Param>,
-);
+pub struct NextStateRef<'w, 's, S: State> {
+    res: Res<'w, <S as State>::Storage>,
+    param: StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorage>::Param>,
+}
 
 impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        S::Storage::get_state(&self.0)
+        S::Storage::get_state(&self.res, &self.param)
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.
@@ -333,7 +334,8 @@ impl<'w, 's, S: State> NextStateRef<'w, 's, S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextStateMut<'w, 's, S: StateMut> {
-    next: StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorageMut>::ParamMut>,
+    res: ResMut<'w, <S as State>::Storage>,
+    param: StaticSystemParam<'w, 's, <<S as State>::Storage as StateStorageMut>::ParamMut>,
     trigger: ResMut<'w, TriggerStateFlush<S>>,
 }
 
@@ -363,17 +365,17 @@ impl<'w, 's, S: StateMut + Default> NextStateMut<'w, 's, S> {
 impl<'w, 's, S: StateMut> NextStateMut<'w, 's, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        S::Storage::get_state_from_mut(&self.next)
+        S::Storage::get_state_from_mut(&self.res, &self.param)
     }
 
     /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        S::Storage::get_state_mut(&mut self.next)
+        S::Storage::get_state_mut(&mut self.res, &mut self.param)
     }
 
     /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
-        S::Storage::set_state(&mut self.next, state)
+        S::Storage::set_state(&mut self.res, &mut self.param, state)
     }
 
     /// Get a read-only reference to the next state, or panic if it's disabled.
