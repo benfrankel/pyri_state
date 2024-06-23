@@ -12,13 +12,15 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        // Add the `Page` state with the provided sequence.
-        .insert_state(StateSequence::new([
+        // Add the `Page` sequence.
+        .insert_resource(StateSequence::new([
             None,
             Some(Page::A),
             Some(Page::B),
             Some(Page::C),
         ]))
+        // Add the `Page` state, initially pointing to index 0 of the sequence.
+        .init_state::<Page>()
         .add_systems(
             Update,
             // Set up page navigation.
@@ -35,8 +37,8 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
-// Configure `Page` to use `StateSequence` instead of `StateBuffer` for storage.
-#[state(log_flush, storage(StateSequence<Self>))]
+// Configure `Page` to use `StateSequenceIndex` instead of `StateBuffer` for storage.
+#[state(log_flush, storage(StateSequenceIndex<Self>))]
 enum Page {
     A,
     B,

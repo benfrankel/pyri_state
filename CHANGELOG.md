@@ -50,7 +50,8 @@
     - **Implemented state sequence storage:**
         - Added `sequence` feature flag
         - Added `StateSequence` resource
-        - Added `StateSequenceMut` extension trait
+        - Added `StateSequenceIndex` resource
+        - Added `StateSequenceIndexMut` extension trait
     - **Implemented split state definition:**
         - Added `split` feature flag
         - Added `SplitState` type alias

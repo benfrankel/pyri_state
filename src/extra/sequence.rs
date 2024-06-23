@@ -4,151 +4,181 @@
 //!
 //! This can be used to implement phases in a turn-based game, for example.
 
+use std::marker::PhantomData;
+
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
-use bevy_ecs::system::{ResMut, Resource, SystemParamItem};
+use bevy_ecs::system::{lifetimeless::SRes, Res, ResMut, Resource, SystemParamItem};
 
 use crate::{state::State, storage::StateStorage};
 
-/// A [`StateStorage`] type that stores the [`State`] type `S` in a fixed sequence with an
-/// index to the next state.
+/// A [`Resource`] that stores a sequence of the [`State`] type `S`.
 ///
-/// Using this as storage unlocks the [`StateSequenceMut`] extension trait for `S`.
+/// Indexed into by the [`StateStorage`] type [`StateSequenceIndex<S>`].
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct StateSequence<S: State> {
-    sequence: Vec<Option<S>>,
-    index: usize,
-}
-
-impl<S: State> StateStorage for StateSequence<S> {
-    type State = S;
-
-    type Param = ();
-
-    fn empty() -> Self {
-        Self {
-            sequence: vec![None],
-            index: 0,
-        }
-    }
-
-    fn get_state<'s>(
-        &'s self,
-        _param: &'s SystemParamItem<Self::Param>,
-    ) -> Option<&'s Self::State> {
-        self.get()
-    }
-}
+pub struct StateSequence<S: State>(
+    /// The sequence of states.
+    pub Vec<Option<S>>,
+);
 
 impl<S: State> StateSequence<S> {
-    /// Create a new `StateSequence` from a sequence of states.
-    ///
-    /// Use [`Self::at`] to set the initial index to something other than 0.
+    /// Create a new `StateSequence` from a sequence of `Option<S>`.
     pub fn new(sequence: impl Into<Vec<Option<S>>>) -> Self {
-        let sequence = sequence.into();
-        assert!(!sequence.is_empty());
+        Self(sequence.into())
+    }
+}
 
-        Self { sequence, index: 0 }
+/// A [`StateStorage`] type that stores the [`State`] type `S` as an index into
+/// an external [`StateSequence<S>`] resource.
+///
+/// Using this as storage unlocks the [`StateSequenceIndexMut`] extension trait for `S`.
+#[derive(Resource, Debug)]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Resource)
+)]
+pub struct StateSequenceIndex<S: State>(
+    /// The index into the sequence, or `None` if not in the sequence.
+    pub Option<usize>,
+    PhantomData<S>,
+);
+
+impl<S: State> StateStorage for StateSequenceIndex<S> {
+    type State = S;
+
+    type Param = SRes<StateSequence<Self::State>>;
+
+    fn empty() -> Self {
+        Self(None, PhantomData)
     }
 
-    /// Set the initial index and clamp within bounds.
-    pub fn at(mut self, index: isize) -> Self {
-        self.seek(index);
-        self
+    fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
+        self.0
+            .and_then(|index| param.0.get(index))
+            .and_then(Option::as_ref)
     }
+}
 
-    /// Get a read-only reference to the next state.
-    pub fn get(&self) -> Option<&S> {
-        self.sequence[self.index].as_ref()
+impl<S: State> Default for StateSequenceIndex<S> {
+    fn default() -> Self {
+        Self(Some(0), PhantomData)
+    }
+}
+
+impl<S: State> StateSequenceIndex<S> {
+    /// Create a new `StateSequenceIndex` from an initial index, clamped within bounds.
+    pub fn new(index: isize, len: usize) -> Self {
+        let mut this = Self::empty();
+        this.seek(index, len);
+        this
     }
 
     /// Set the sequence index and clamp within bounds.
-    pub fn seek(&mut self, to: isize) {
-        self.index = to.clamp(0, self.sequence.len() as isize - 1) as usize;
+    pub fn seek(&mut self, to: isize, len: usize) {
+        self.0 = (len > 0).then(|| to.clamp(0, len as isize - 1) as usize);
     }
 
     /// Adjust the sequence index and clamp within bounds.
-    pub fn step(&mut self, by: isize) {
-        self.seek(self.index as isize + by);
+    pub fn step(&mut self, by: isize, len: usize) {
+        self.seek(self.0.unwrap_or_default() as isize + by, len);
     }
 
     /// Step the sequence index forwards by 1 and clamp within bounds.
-    pub fn next(&mut self) {
-        self.step(1);
+    pub fn next(&mut self, len: usize) {
+        self.step(1, len);
     }
 
     /// Step the sequence index backwards by 1 and clamp within bounds.
-    pub fn prev(&mut self) {
-        self.step(-1);
+    pub fn prev(&mut self, len: usize) {
+        self.step(-1, len);
     }
 
     /// Set the sequence index and wrap within bounds.
-    pub fn wrapping_seek(&mut self, to: isize) {
-        self.index = to.rem_euclid(self.sequence.len() as isize) as usize;
+    pub fn wrapping_seek(&mut self, to: isize, len: usize) {
+        self.0 = (len > 0).then(|| to.rem_euclid(len as isize) as usize);
     }
 
     /// Adjust the sequence index and wrap within bounds.
-    pub fn wrapping_step(&mut self, by: isize) {
-        self.wrapping_seek(self.index as isize + by);
+    pub fn wrapping_step(&mut self, by: isize, len: usize) {
+        self.wrapping_seek(self.0.unwrap_or_default() as isize + by, len);
     }
 
     /// Step the sequence index forwards by 1 and wrap within bounds.
-    pub fn wrapping_next(&mut self) {
-        self.wrapping_step(1);
+    pub fn wrapping_next(&mut self, len: usize) {
+        self.wrapping_step(1, len);
     }
 
     /// Step the sequence index backwards by 1 and wrap within bounds.
-    pub fn wrapping_prev(&mut self) {
-        self.wrapping_step(-1);
+    pub fn wrapping_prev(&mut self, len: usize) {
+        self.wrapping_step(-1, len);
     }
 }
 
-/// An extension trait for [`State`] types with [`StateSequence`] storage.
-pub trait StateSequenceMut: State {
+/// An extension trait for [`State`] types with [`StateSequenceIndex`] storage.
+pub trait StateSequenceIndexMut: State {
     /// A system that sets the sequence index and clamps within bounds.
-    fn seek(to: isize) -> impl 'static + Send + Sync + Fn(ResMut<StateSequence<Self>>) {
-        move |mut sequence| sequence.seek(to)
+    fn seek(
+        to: isize,
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
+    {
+        move |mut index, sequence| index.seek(to, sequence.0.len())
     }
 
     /// A system that adjusts the sequence index and clamps within bounds.
-    fn step(by: isize) -> impl 'static + Send + Sync + Fn(ResMut<StateSequence<Self>>) {
-        move |mut sequence| sequence.step(by)
+    fn step(
+        by: isize,
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
+    {
+        move |mut index, sequence| index.step(by, sequence.0.len())
     }
 
     /// A system that steps the sequence index forwards by 1 and clamps within bounds.
-    fn next(mut sequence: ResMut<StateSequence<Self>>) {
-        sequence.step(1);
+    fn next(mut index: ResMut<StateSequenceIndex<Self>>, sequence: Res<StateSequence<Self>>) {
+        index.step(1, sequence.0.len());
     }
 
     /// A system that steps the sequence index backwards by 1 and clamps within bounds.
-    fn prev(mut sequence: ResMut<StateSequence<Self>>) {
-        sequence.step(-1);
+    fn prev(mut index: ResMut<StateSequenceIndex<Self>>, sequence: Res<StateSequence<Self>>) {
+        index.step(-1, sequence.0.len());
     }
 
     /// A system that sets the sequence index and wraps within bounds.
-    fn wrapping_seek(to: isize) -> impl 'static + Send + Sync + Fn(ResMut<StateSequence<Self>>) {
-        move |mut sequence| sequence.wrapping_seek(to)
+    fn wrapping_seek(
+        to: isize,
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
+    {
+        move |mut index, sequence| index.wrapping_seek(to, sequence.0.len())
     }
 
     /// A system that adjusts the sequence index and wraps within bounds.
-    fn wrapping_step(by: isize) -> impl 'static + Send + Sync + Fn(ResMut<StateSequence<Self>>) {
-        move |mut sequence| sequence.wrapping_step(by)
+    fn wrapping_step(
+        by: isize,
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
+    {
+        move |mut index, sequence| index.wrapping_step(by, sequence.0.len())
     }
 
     /// A system that steps the sequence index forwards by 1 and wraps within bounds.
-    fn wrapping_next(mut sequence: ResMut<StateSequence<Self>>) {
-        sequence.wrapping_step(1);
+    fn wrapping_next(
+        mut index: ResMut<StateSequenceIndex<Self>>,
+        sequence: Res<StateSequence<Self>>,
+    ) {
+        index.wrapping_step(1, sequence.0.len());
     }
 
     /// A system that steps the sequence index backwards by 1 and wraps within bounds.
-    fn wrapping_prev(mut sequence: ResMut<StateSequence<Self>>) {
-        sequence.wrapping_step(-1);
+    fn wrapping_prev(
+        mut index: ResMut<StateSequenceIndex<Self>>,
+        sequence: Res<StateSequence<Self>>,
+    ) {
+        index.wrapping_step(-1, sequence.0.len());
     }
 }
 
-impl<S: State<Storage = StateSequence<S>>> StateSequenceMut for S {}
+impl<S: State<Storage = StateSequenceIndex<S>>> StateSequenceIndexMut for S {}

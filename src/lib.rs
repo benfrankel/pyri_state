@@ -105,7 +105,9 @@ pub mod prelude {
     pub use crate::extra::stack::{StateStack, StateStackMut as _, StateStackMutExtClone as _};
 
     #[cfg(feature = "sequence")]
-    pub use crate::extra::sequence::{StateSequence, StateSequenceMut as _};
+    pub use crate::extra::sequence::{
+        StateSequence, StateSequenceIndex, StateSequenceIndexMut as _,
+    };
 
     #[cfg(feature = "split")]
     pub use crate::{add_to_split_state, extra::split::SplitState};
