@@ -11,10 +11,7 @@ use bevy_ecs::{
     world::{FromWorld, World},
 };
 
-use crate::{
-    state::State,
-    storage::{StateStorage, StateStorageMut},
-};
+use crate::state::{State, StateStorage, StateStorageMut};
 
 /// A [`StateStorage`] type that stores the [`State`] type `S` in a stack with the next state on top.
 ///

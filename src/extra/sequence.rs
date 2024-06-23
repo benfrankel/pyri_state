@@ -10,7 +10,7 @@ use std::marker::PhantomData;
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::system::{lifetimeless::SRes, Res, ResMut, Resource, SystemParamItem};
 
-use crate::{state::State, storage::StateStorage};
+use crate::state::{State, StateStorage};
 
 /// A [`Resource`] that stores a sequence of the [`State`] type `S`.
 ///

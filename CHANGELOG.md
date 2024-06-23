@@ -18,15 +18,17 @@
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
 - **Implemented custom state storage:**
-    - Added `storage` module
     - Added `storage(...)` derive macro option
     - Added `StateStorage` trait
     - Added `StateStorageMut` trait
+    - Replaced `NextState_` resource with `StateBuffer` and `TriggerStateFlush` resources
     - Added `NextStateRef` system param
     - Added `NextStateMut` system param
-    - Replaced `NextState_` with `StateBuffer` and `TriggerStateFlush` resources
     - Renamed `StateRef` -> `StateFlushRef` system param
     - Renamed `StateMut` -> `StateFlushMut` system param
+- **TODO: Implemented states as components:**
+    - Added `access` module
+    - Added `GlobalStates` marker component
 - Implemented extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
@@ -57,7 +59,6 @@
         - Added `SplitState` type alias
         - Added `add_to_split_state!` macro
 - Adjusted state traits:
-    - Merged `buffer` -> `state` module
     - Removed `State_` trait
     - Renamed `RawState` -> `State` trait
     - Added `StateMut` extension trait

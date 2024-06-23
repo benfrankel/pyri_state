@@ -13,7 +13,10 @@ use bevy_ecs::{
     system::{Res, ResMut},
 };
 
-use crate::state::{CurrentState, NextStateRef, State, StateFlushRef, TriggerStateFlush};
+use crate::{
+    access::{NextStateRef, StateFlushRef},
+    state::{CurrentState, State, TriggerStateFlush},
+};
 
 /// The schedule that handles all [`State`] flush logic, added after
 /// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::extra::app::StatePlugin).

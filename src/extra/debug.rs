@@ -16,9 +16,10 @@ use bevy_ecs::{
 use bevy_log::info;
 
 use crate::{
+    access::{NextStateRef, StateFlushRef},
     pattern::{StatePattern, StateTransPattern},
     schedule::{was_triggered, StateHook},
-    state::{CurrentState, NextStateRef, State, StateFlushRef},
+    state::{CurrentState, State},
 };
 
 /// A resource that controls the behavior of [state debugging tools](crate::extra::debug).

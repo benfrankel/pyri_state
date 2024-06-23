@@ -50,8 +50,9 @@ use bevy_ecs::{
 use bevy_state::state::{NextState, States};
 
 use crate::{
+    access::{NextStateMut, NextStateRef},
     schedule::StateHook,
-    state::{NextStateMut, NextStateRef, State, StateMut},
+    state::{State, StateMut},
 };
 
 /// A wrapper around the [`State`] type `S` for compatibility with the Bevy ecosystem.

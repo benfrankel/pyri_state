@@ -6,8 +6,8 @@
 //! # Overview
 //!
 //! 1. The current state is stored in a [`CurrentState`](state::CurrentState) resource.
-//! 2. The next state is stored in a [`StateBuffer`](storage::StateBuffer) resource by default
-//! (see [storage] for more information).
+//! 2. The next state is stored in a [`StateBuffer`](buffer::StateBuffer) resource by default
+//! (see [`StateStorage`](state::StateStorage) for more information).
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
@@ -65,11 +65,11 @@
 extern crate self as pyri_state;
 
 pub mod access;
+pub mod buffer;
 pub mod extra;
 pub mod pattern;
 pub mod schedule;
 pub mod state;
-pub mod storage;
 
 /// Re-exported traits and common types.
 ///
@@ -80,7 +80,8 @@ pub mod storage;
 /// ```
 pub mod prelude {
     pub use crate::{
-        access::GlobalStates,
+        access::{GlobalStates, NextStateMut, NextStateRef, StateFlushMut, StateFlushRef},
+        buffer::StateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
@@ -88,10 +89,8 @@ pub mod prelude {
         schedule::{StateFlush, StateFlushEvent},
         state,
         state::{
-            CurrentState, NextStateMut, NextStateRef, State, StateFlushMut, StateFlushRef,
-            StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
+            CurrentState, State, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
         },
-        storage::StateBuffer,
     };
 
     #[cfg(feature = "bevy_app")]

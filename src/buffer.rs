@@ -1,86 +1,16 @@
-//! State storage types and traits.
-//!
-//! Provided [`StateStorage`] types:
-//!
-//! - [`StateBuffer`] (default)
-//! - [`StateStack`](crate::extra::stack::StateStack)
-//! - [`StateSequence`](crate::extra::sequence::StateSequence)
+//! A simple state buffer storage type.
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    system::{ReadOnlySystemParam, Resource, SystemParam, SystemParamItem},
+    system::{Resource, SystemParamItem},
     world::{FromWorld, World},
 };
 
 use crate::{
     pattern::StatePattern,
-    state::{State, StateMut},
+    state::{State, StateStorage, StateStorageMut},
 };
-
-/// A type that describes how the [`State`] type `S` will be stored in the ECS world.
-///
-/// Use [`NextStateRef`](crate::state::NextStateRef) or [`StateFlushRef`](crate::state::StateFlushRef)
-/// in a system for read-only access to the next state.
-///
-/// See [`StateStorageMut`] for mutable storage.
-///
-/// # Example
-///
-/// The default storage type is [`StateBuffer`]. You can set a different storage type in the
-/// [derive macro](pyri_state_derive::State):
-///
-/// ```rust
-/// #[derive(State, Clone, PartialEq, Eq)]
-/// #[state(storage(StateStack<Self>))]
-/// enum MenuState { ... }
-/// ```
-pub trait StateStorage: Resource {
-    /// The stored [`State`] type.
-    type State: State;
-
-    /// A [`ReadOnlySystemParam`] with read-only access to the next state.
-    type Param: ReadOnlySystemParam;
-
-    /// Create an empty storage.
-    ///
-    /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
-    fn empty() -> Self;
-
-    /// Get a read-only reference to the next state, or `None` if disabled.
-    fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
-}
-
-/// A [`StateStorage`] type that allows `S` to be mutated directly as a [`StateMut`].
-///
-/// Use [`NextStateMut`](crate::state::NextStateMut) or [`StateFlushMut`](crate::state::StateFlushMut)
-/// in a system for mutable access to the next state.
-pub trait StateStorageMut: StateStorage {
-    /// A [`SystemParam`] with mutable access to the next state.
-    type ParamMut: SystemParam;
-
-    /// Get a reference to the next state, or `None` if disabled.
-    fn get_state_from_mut<'s>(
-        &'s self,
-        param: &'s SystemParamItem<Self::ParamMut>,
-    ) -> Option<&'s Self::State>;
-
-    /// Get a mutable reference to the next state, or `None` if disabled.
-    fn get_state_mut<'s>(
-        &'s mut self,
-        param: &'s mut SystemParamItem<Self::ParamMut>,
-    ) -> Option<&'s mut Self::State>;
-
-    /// Set the next state to a new value, or `None` to disable.
-    fn set_state(
-        &mut self,
-        param: &mut SystemParamItem<Self::ParamMut>,
-        state: Option<Self::State>,
-    );
-}
-
-// A `State` is `StateMut` if its `StateStorage` is `StateStorageMut`
-impl<S: State<Storage: StateStorageMut>> StateMut for S {}
 
 /// The default [`StateStorage`] type, storing the next state in a resource.
 #[derive(Resource, Debug)]

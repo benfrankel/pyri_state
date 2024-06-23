@@ -20,8 +20,7 @@ use crate::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
         StateFlush, StateFlushEvent, StateHook,
     },
-    state::{CurrentState, State, TriggerStateFlush},
-    storage::StateStorage,
+    state::{CurrentState, State, StateStorage, TriggerStateFlush},
 };
 
 /// A plugin that performs the required setup for [`State`] types to function:

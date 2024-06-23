@@ -11,8 +11,9 @@ use bevy_ecs::{
 };
 
 use crate::{
+    access::{NextStateRef, StateFlushRef},
     schedule::StateHook,
-    state::{CurrentState, NextStateRef, State, StateFlushRef},
+    state::{CurrentState, State},
 };
 
 /// A type that can match a subset of values of the [`State`] type `S`.

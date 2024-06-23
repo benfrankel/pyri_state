@@ -5,7 +5,7 @@ use bevy::{
 };
 use pyri_state::{
     prelude::*,
-    storage::{StateStorage, StateStorageMut},
+    state::{StateStorage, StateStorageMut},
 };
 
 fn main() {
