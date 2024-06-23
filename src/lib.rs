@@ -64,6 +64,7 @@
 // Allow macros to refer to this crate as `pyri_state` internally.
 extern crate self as pyri_state;
 
+pub mod access;
 pub mod extra;
 pub mod pattern;
 pub mod schedule;
@@ -79,6 +80,7 @@ pub mod storage;
 /// ```
 pub mod prelude {
     pub use crate::{
+        access::GlobalStates,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
