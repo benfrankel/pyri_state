@@ -1,4 +1,4 @@
-//! Keep track of a [`State`] type's history in a [`StateStack`].
+//! Store the [`NextState`] as a [`StateStack`].
 //!
 //! Enable the `stack` feature flag to use this module.
 //!
@@ -11,11 +11,11 @@ use bevy_ecs::{
     world::{FromWorld, World},
 };
 
-use crate::state::{State, StateStorage, StateStorageMut};
+use crate::state::{NextState, NextStateMut, State};
 
-/// A [`StateStorage`] type that stores the [`State`] type `S` in a stack with the next state on top.
+/// A [`NextState`] type that stores the [`State`] type `S` in a stack with the next state on top.
 ///
-/// Using this as storage unlocks the [`StateStackMut`] extension trait for `S`.
+/// Using this as [`State::Next`] unlocks the [`StateStackMut`] extension trait for `S`.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -27,7 +27,7 @@ pub struct StateStack<S: State> {
     bases: Vec<usize>,
 }
 
-impl<S: State> StateStorage for StateStack<S> {
+impl<S: State> NextState for StateStack<S> {
     type State = S;
 
     type Param = ();
@@ -47,7 +47,7 @@ impl<S: State> StateStorage for StateStack<S> {
     }
 }
 
-impl<S: State> StateStorageMut for StateStack<S> {
+impl<S: State> NextStateMut for StateStack<S> {
     type ParamMut = ();
 
     fn get_state_from_mut<'s>(
@@ -153,7 +153,7 @@ impl<S: State> StateStack<S> {
     }
 }
 
-/// An extension trait for [`State`] types with [`StateStack`] storage.
+/// An extension trait for [`State`] types with [`StateStack`] as their [`NextState`] type.
 ///
 /// See the following extension traits with additional bounds on `Self`:
 ///
@@ -180,7 +180,7 @@ pub trait StateStackMut: State {
     }
 }
 
-impl<S: State<Storage = StateStack<S>>> StateStackMut for S {}
+impl<S: State<Next = StateStack<S>>> StateStackMut for S {}
 
 /// An extension trait for [`StateStackMut`] types that are also [`Clone`].
 pub trait StateStackMutExtClone: StateStackMut + Clone {

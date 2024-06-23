@@ -1,4 +1,4 @@
-//! Navigate a fixed [`StateSequence`] by index.
+//! Store the [`NextState`] as a [`StateSequenceIndex`] that reads from a [`StateSequence`].
 //!
 //! Enable the `sequence` feature flag to use this module.
 //!
@@ -10,11 +10,11 @@ use std::marker::PhantomData;
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::system::{lifetimeless::SRes, Res, ResMut, Resource, SystemParamItem};
 
-use crate::state::{State, StateStorage};
+use crate::state::{NextState, State};
 
 /// A [`Resource`] that stores a sequence of the [`State`] type `S`.
 ///
-/// Indexed into by the [`StateStorage`] type [`StateSequenceIndex<S>`].
+/// Indexed into by the [`NextState`] type [`StateSequenceIndex<S>`].
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -33,10 +33,10 @@ impl<S: State> StateSequence<S> {
     }
 }
 
-/// A [`StateStorage`] type that stores the [`State`] type `S` as an index into
+/// A [`NextState`] type that stores the [`State`] type `S` as an index into
 /// an external [`StateSequence<S>`] resource.
 ///
-/// Using this as storage unlocks the [`StateSequenceIndexMut`] extension trait for `S`.
+/// Using this as [`State::Next`] unlocks the [`StateSequenceIndexMut`] extension trait for `S`.
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -49,7 +49,7 @@ pub struct StateSequenceIndex<S: State>(
     PhantomData<S>,
 );
 
-impl<S: State> StateStorage for StateSequenceIndex<S> {
+impl<S: State> NextState for StateSequenceIndex<S> {
     type State = S;
 
     type Param = SRes<StateSequence<Self::State>>;
@@ -120,7 +120,7 @@ impl<S: State> StateSequenceIndex<S> {
     }
 }
 
-/// An extension trait for [`State`] types with [`StateSequenceIndex`] storage.
+/// An extension trait for [`State`] types with [`StateSequenceIndex`] as their [`NextState`] type.
 pub trait StateSequenceIndexMut: State {
     /// A system that sets the sequence index and clamps within bounds.
     fn seek(
@@ -181,4 +181,4 @@ pub trait StateSequenceIndexMut: State {
     }
 }
 
-impl<S: State<Storage = StateSequenceIndex<S>>> StateSequenceIndexMut for S {}
+impl<S: State<Next = StateSequenceIndex<S>>> StateSequenceIndexMut for S {}

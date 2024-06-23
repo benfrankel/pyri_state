@@ -17,17 +17,18 @@
     - Added `FnStateTransPattern` type
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
-- **Implemented custom state storage:**
-    - Added `storage(...)` derive macro option
-    - Added `StateStorage` trait
-    - Added `StateStorageMut` trait
-    - Replaced `NextState_` resource with `StateBuffer` and `TriggerStateFlush` resources
-    - Added `NextStateRef` system param
-    - Added `NextStateMut` system param
-    - Renamed `StateRef` -> `StateFlushRef` system param
-    - Renamed `StateMut` -> `StateFlushMut` system param
+- **Implemented custom next state storage:**
+    - Added `next(...)` derive macro option
+    - Added `NextState` trait
+    - Added `NextStateMut` trait
+    - Replaced `NextState_` resource with `TriggerStateFlush` and `StateBuffer` resources
+    - Added `NextRef` system param
+    - Added `NextMut` system param
+    - Renamed `StateRef` -> `FlushRef` system param
+    - Renamed `StateMut` -> `FlushMut` system param
 - **TODO: Implemented states as components:**
     - Added `access` module
+    - Moved system params into new `access` module
     - Added `GlobalStates` marker component
 - Implemented extra features:
     - Added `extra` module
@@ -44,17 +45,17 @@
         - Added `log_flush` derive macro option
         - Added `LogFlushPlugin` plugin
         - Added `schedule_log_flush` function
-    - **Implemented state stack storage:**
+    - **Implemented state stack as a next state storage type:**
         - Added `stack` feature flag
         - Added `StateStack` resource
         - Added `StateStackMut` extension trait
         - Added `StateStackMutExtClone` extension trait
-    - **Implemented state sequence storage:**
+    - **Implemented state sequence as a next state storage type:**
         - Added `sequence` feature flag
         - Added `StateSequence` resource
         - Added `StateSequenceIndex` resource
         - Added `StateSequenceIndexMut` extension trait
-    - **Implemented split state definition:**
+    - **Implemented split state helper:**
         - Added `split` feature flag
         - Added `SplitState` type alias
         - Added `add_to_split_state!` macro

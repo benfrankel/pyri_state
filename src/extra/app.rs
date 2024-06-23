@@ -20,7 +20,7 @@ use crate::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
         StateFlush, StateFlushEvent, StateHook,
     },
-    state::{CurrentState, State, StateStorage, TriggerStateFlush},
+    state::{CurrentState, NextState, State, TriggerStateFlush},
 };
 
 /// A plugin that performs the required setup for [`State`] types to function:
@@ -51,44 +51,44 @@ impl Plugin for StatePlugin {
 
 /// An extension trait for [`App`] that provides methods for adding [`State`] types.
 pub trait AppExtState {
-    /// Initialize `S` with empty storage.
+    /// Initialize `S` with empty next state.
     ///
-    /// Calls [`S::Storage::empty`](StateStorage::empty).
+    /// Calls [`S::Next::empty`](NextState::empty).
     fn add_state<S: AddState>(&mut self) -> &mut Self;
 
-    /// Initialize `S` with default storage.
-    fn init_state<S: AddState<Storage: FromWorld>>(&mut self) -> &mut Self;
+    /// Initialize `S` with default next state.
+    fn init_state<S: AddState<Next: FromWorld>>(&mut self) -> &mut Self;
 
-    /// Initialize `S` with specific storage.
-    fn insert_state<T: StateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self;
+    /// Initialize `S` with specific next state.
+    fn insert_state<T: NextState<State: AddState>>(&mut self, next: T) -> &mut Self;
 }
 
-fn insert_state_helper<T: StateStorage<State: AddState>>(app: &mut App, storage: Option<T>) {
+fn insert_state_helper<T: NextState<State: AddState>>(app: &mut App, next: Option<T>) {
     app.init_resource::<CurrentState<T::State>>()
         .init_resource::<TriggerStateFlush<T::State>>()
-        .insert_resource(storage.unwrap_or_else(T::empty));
+        .insert_resource(next.unwrap_or_else(T::empty));
     T::State::add_state(app);
 }
 
 impl AppExtState for App {
     fn add_state<S: AddState>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
-            insert_state_helper(self, None::<S::Storage>);
+            insert_state_helper(self, None::<S::Next>);
         }
         self
     }
 
-    fn init_state<S: AddState<Storage: FromWorld>>(&mut self) -> &mut Self {
+    fn init_state<S: AddState<Next: FromWorld>>(&mut self) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<S>>() {
-            let storage = S::Storage::from_world(self.world_mut());
-            insert_state_helper(self, Some(storage));
+            let next = S::Next::from_world(self.world_mut());
+            insert_state_helper(self, Some(next));
         }
         self
     }
 
-    fn insert_state<T: StateStorage<State: AddState>>(&mut self, storage: T) -> &mut Self {
+    fn insert_state<T: NextState<State: AddState>>(&mut self, next: T) -> &mut Self {
         if !self.world().contains_resource::<CurrentState<T::State>>() {
-            insert_state_helper(self, Some(storage));
+            insert_state_helper(self, Some(next));
         }
         self
     }

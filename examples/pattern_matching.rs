@@ -29,7 +29,7 @@ fn main() {
                 Level::when(|x, y| y.0 > x.0).on_enter(play_progress_sfx),
                 // Randomly generate the next level before loading it, if necessary.
                 Level::ANY.on_enter(generate_new_level.before(load_new_level).run_if(
-                    |level: NextStateRef<Level>, meta: Res<LevelMeta>| {
+                    |level: NextRef<Level>, meta: Res<LevelMeta>| {
                         !meta.generated[level.unwrap().0]
                     },
                 )),
@@ -82,7 +82,7 @@ fn tear_down_old_level(_level: Res<CurrentState<Level>>) {
     info!("tear_down_old_level")
 }
 
-fn load_new_level(_level: NextStateRef<Level>) {
+fn load_new_level(_level: NextRef<Level>) {
     info!("load_new_level")
 }
 
@@ -106,7 +106,7 @@ fn spawn_easter_egg() {
     info!("spawn_easter_egg");
 }
 
-fn generate_new_level(level: NextStateRef<Level>, mut meta: ResMut<LevelMeta>) {
+fn generate_new_level(level: NextRef<Level>, mut meta: ResMut<LevelMeta>) {
     info!("generate_new_level");
     meta.generated[level.unwrap().0] = true;
 }

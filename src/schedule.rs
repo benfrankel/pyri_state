@@ -14,7 +14,7 @@ use bevy_ecs::{
 };
 
 use crate::{
-    access::{NextStateRef, StateFlushRef},
+    access::{FlushRef, NextRef},
     state::{CurrentState, State, TriggerStateFlush},
 };
 
@@ -169,13 +169,13 @@ pub fn schedule_resolve_state<S: State>(
 pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
-            .run_if(|state: StateFlushRef<S>| matches!(state.get(), (x, y) if x != y))
+            .run_if(|state: FlushRef<S>| matches!(state.get(), (x, y) if x != y))
             .in_set(StateHook::<S>::Trigger),
     );
 }
 
 fn send_flush_event<S: State + Clone>(
-    state: StateFlushRef<S>,
+    state: FlushRef<S>,
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
     let (old, new) = state.get();
@@ -192,7 +192,7 @@ pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
 }
 
-fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: NextStateRef<S>) {
+fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: NextRef<S>) {
     current.0 = next.get().cloned();
 }
 

@@ -11,7 +11,7 @@ use bevy_ecs::{
 };
 
 use crate::{
-    access::{NextStateRef, StateFlushRef},
+    access::{NextRef, FlushRef},
     schedule::StateHook,
     state::{CurrentState, State},
 };
@@ -51,7 +51,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Build a run condition that checks if `S` will become disabled from a matching state if triggered.
-    fn will_disable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
+    fn will_disable(self) -> impl 'static + Send + Sync + Fn(FlushRef<S>) -> bool {
         move |state| state.will_disable(&self)
     }
 
@@ -63,7 +63,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Build a run condition that checks if `S` will enter into a matching state if triggered.
-    fn will_enter(self) -> impl 'static + Send + Sync + Fn(NextStateRef<S>) -> bool {
+    fn will_enter(self) -> impl 'static + Send + Sync + Fn(NextRef<S>) -> bool {
         move |state| state.will_be_in(&self)
     }
 
@@ -75,7 +75,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Build a run condition that checks if `S` will become enabled in a matching state if triggered.
-    fn will_enable(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
+    fn will_enable(self) -> impl 'static + Send + Sync + Fn(FlushRef<S>) -> bool {
         move |state| state.will_enable(&self)
     }
 
@@ -109,7 +109,7 @@ impl<S: State, P: StatePattern<S> + Clone> StatePatternExtClone<S> for P {}
 /// An extension trait for [`StatePattern<S>`] when `S` also implements `Eq`.
 pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     /// Build a run condition that checks if `S` will refresh in a matching state if triggered.
-    fn will_refresh(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
+    fn will_refresh(self) -> impl 'static + Send + Sync + Fn(FlushRef<S>) -> bool {
         move |state| state.will_refresh(&self)
     }
 
@@ -191,7 +191,7 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     fn matches(&self, old: &S, new: &S) -> bool;
 
     /// Build a run condition that checks if `S` will undergo a matching transition if triggered.
-    fn will_trans(self) -> impl 'static + Send + Sync + Fn(StateFlushRef<S>) -> bool {
+    fn will_trans(self) -> impl 'static + Send + Sync + Fn(FlushRef<S>) -> bool {
         move |state| state.will_trans(&self)
     }
 

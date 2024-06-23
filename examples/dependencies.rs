@@ -48,8 +48,8 @@ enum SquareColor {
 }
 
 fn compute_square_color(
-    board: NextStateRef<CheckerboardSquare>,
-    mut color: NextStateMut<SquareColor>,
+    board: NextRef<CheckerboardSquare>,
+    mut color: NextMut<SquareColor>,
 ) {
     color.set(board.get().map(|board| {
         if board.row + board.col % 2 == 0 {

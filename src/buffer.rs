@@ -1,4 +1,4 @@
-//! A simple state buffer storage type.
+//! Store the [`NextState`] as a [`StateBuffer`].
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
@@ -9,10 +9,13 @@ use bevy_ecs::{
 
 use crate::{
     pattern::StatePattern,
-    state::{State, StateStorage, StateStorageMut},
+    state::{NextState, NextStateMut, State},
 };
 
-/// The default [`StateStorage`] type, storing the next state in a resource.
+/// A [`NextState`] type that stores the [`State`] type `S` in an [`Option<S>`].
+///
+/// This is the default [`State::Next`] type set by the
+/// [derive macro](pyri_state_derive::State).
 #[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
@@ -24,7 +27,7 @@ pub struct StateBuffer<S: State>(
     pub Option<S>,
 );
 
-impl<S: State> StateStorage for StateBuffer<S> {
+impl<S: State> NextState for StateBuffer<S> {
     type State = S;
 
     type Param = ();
@@ -41,7 +44,7 @@ impl<S: State> StateStorage for StateBuffer<S> {
     }
 }
 
-impl<S: State> StateStorageMut for StateBuffer<S> {
+impl<S: State> NextStateMut for StateBuffer<S> {
     type ParamMut = ();
 
     fn get_state_from_mut<'s>(

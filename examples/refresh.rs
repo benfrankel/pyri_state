@@ -43,14 +43,14 @@ impl Level {
     }
 }
 
-fn go_to_prev_level(mut level: NextStateMut<Level>) {
+fn go_to_prev_level(mut level: NextMut<Level>) {
     level.unwrap_mut().prev();
 }
 
-fn go_to_next_level(mut level: NextStateMut<Level>) {
+fn go_to_next_level(mut level: NextMut<Level>) {
     level.unwrap_mut().next();
 }
 
 // Dummy systems:
 fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}
-fn set_up_new_level(_level: NextStateRef<Level>) {}
+fn set_up_new_level(_level: NextRef<Level>) {}

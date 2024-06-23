@@ -7,7 +7,7 @@
 //!
 //! 1. The current state is stored in a [`CurrentState`](state::CurrentState) resource.
 //! 2. The next state is stored in a [`StateBuffer`](buffer::StateBuffer) resource by default
-//! (see [`StateStorage`](state::StateStorage) for more information).
+//! (see [`NextState`](state::NextState) for more information).
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
@@ -80,7 +80,7 @@ pub mod state;
 /// ```
 pub mod prelude {
     pub use crate::{
-        access::{GlobalStates, NextStateMut, NextStateRef, StateFlushMut, StateFlushRef},
+        access::{FlushMut, FlushRef, GlobalStates, NextMut, NextRef},
         buffer::StateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
@@ -151,8 +151,8 @@ pub mod prelude {
     ///     entity_scope,
     ///     // Clone the next state into the current state on flush (requires Clone).
     ///     apply_flush,
-    ///     // Swap out the default `StateBuffer<Self>` for a custom storage type.
-    ///     storage(StateStack<Self>),
+    ///     // Swap out the default `StateBuffer<Self>` for a custom `NextState` type.
+    ///     next(StateStack<Self>),
     ///     // Run this state's on-flush hooks after the listed states.
     ///     after(GameState),
     ///     // Run this state's on-flush hooks before the listed states.

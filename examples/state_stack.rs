@@ -46,8 +46,8 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
-// Configure `Menu` to use `StateStack` instead of `StateBuffer` for storage.
-#[state(log_flush, storage(StateStack<Self>))]
+// Configure `Menu` to use `StateStack` instead of `StateBuffer` as its `NextState` type.
+#[state(log_flush, next(StateStack<Self>))]
 enum Menu {
     Main,
     MainOverlay,

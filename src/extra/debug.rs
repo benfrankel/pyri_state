@@ -16,7 +16,7 @@ use bevy_ecs::{
 use bevy_log::info;
 
 use crate::{
-    access::{NextStateRef, StateFlushRef},
+    access::{NextRef, FlushRef},
     pattern::{StatePattern, StateTransPattern},
     schedule::{was_triggered, StateHook},
     state::{CurrentState, State},
@@ -60,7 +60,7 @@ impl<S: State + Debug> Default for LogFlushPlugin<S> {
     }
 }
 
-fn log_state_flush<S: State + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
+fn log_state_flush<S: State + Debug>(frame: Res<FrameCount>, state: FlushRef<S>) {
     let frame = frame.0;
     let ty = type_name::<S>();
     let (old, new) = state.get();
@@ -74,14 +74,14 @@ fn log_state_exit<S: State + Debug>(frame: Res<FrameCount>, old: Res<CurrentStat
     info!("[Frame {frame}] {ty} exit:  {old:?}");
 }
 
-fn log_state_trans<S: State + Debug>(frame: Res<FrameCount>, state: StateFlushRef<S>) {
+fn log_state_trans<S: State + Debug>(frame: Res<FrameCount>, state: FlushRef<S>) {
     let frame = frame.0;
     let ty = type_name::<S>();
     let (old, new) = state.unwrap();
     info!("[Frame {frame}] {ty} trans: {old:?} -> {new:?}");
 }
 
-fn log_state_enter<S: State + Debug>(frame: Res<FrameCount>, new: NextStateRef<S>) {
+fn log_state_enter<S: State + Debug>(frame: Res<FrameCount>, new: NextRef<S>) {
     let frame = frame.0;
     let ty = type_name::<S>();
     let new = new.unwrap();

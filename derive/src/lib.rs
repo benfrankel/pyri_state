@@ -43,10 +43,10 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     let crate_state_path = concat(crate_path.clone(), "state");
     let state_trait = concat(crate_state_path.clone(), "State");
 
-    // Construct storage type.
-    let storage_ty = if let Some(storage) = attrs.storage.as_ref() {
+    // Construct NextState type.
+    let next_ty = if let Some(next) = attrs.next.as_ref() {
         quote! {
-            #storage
+            #next
         }
     } else {
         let crate_buffer_path = concat(crate_path.clone(), "buffer");
@@ -60,7 +60,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     // Construct State impl.
     quote! {
         impl #impl_generics #state_trait for #ty_name #ty_generics #where_clause {
-            type Storage = #storage_ty;
+            type Next = #next_ty;
         }
     }
     .into()
@@ -68,7 +68,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
 
 #[derive(Default)]
 struct StateAttrs {
-    storage: Option<Type>,
+    next: Option<Type>,
     after: Punctuated<Type, Token![,]>,
     before: Punctuated<Type, Token![,]>,
     no_defaults: bool,
@@ -104,8 +104,8 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                         .expect("invalid before states");
                 }
 
-                Meta::List(meta) if meta.path.is_ident("storage") => {
-                    state_attrs.storage = Some(meta.parse_args().expect("invalid state storage"));
+                Meta::List(meta) if meta.path.is_ident("next") => {
+                    state_attrs.next = Some(meta.parse_args().expect("invalid next state type"));
                 }
 
                 Meta::Path(path) => {

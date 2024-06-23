@@ -61,20 +61,20 @@ impl Debug for ColorMode {
     }
 }
 
-fn enable_red(mut color: NextStateMut<ColorMode>) {
+fn enable_red(mut color: NextMut<ColorMode>) {
     color.unwrap_mut().red = true;
 }
 
-fn disable_red(mut color: NextStateMut<ColorMode>) {
+fn disable_red(mut color: NextMut<ColorMode>) {
     color.unwrap_mut().red = false;
 }
 
-fn toggle_green(mut color: NextStateMut<ColorMode>) {
+fn toggle_green(mut color: NextMut<ColorMode>) {
     let color = color.unwrap_mut();
     color.green = !color.green;
 }
 
-fn toggle_blue(mut color: NextStateMut<ColorMode>) {
+fn toggle_blue(mut color: NextMut<ColorMode>) {
     let color = color.unwrap_mut();
     color.blue = !color.blue;
 }

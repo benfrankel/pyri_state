@@ -24,17 +24,17 @@ default = [
 bevy_app = ["dep:bevy_app", "pyri_state_derive/bevy_app"]
 # Derive `Reflect` for the types in this crate.
 bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
-# Enable `BevyState` as an ecosystem compatibility tool.
+# Enable the `BevyState` wrapper type for ecosystem compatibility.
 bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 # Enable state debugging tools (e.g. on-flush logging).
 debug = ["dep:bevy_core", "dep:bevy_log", "pyri_state_derive/debug"]
 # Enable the `StateScope` component.
 entity_scope = ["dep:bevy_hierarchy", "pyri_state_derive/entity_scope"]
-# Enable the `StateSequence` storage type.
+# Enable the `StateSequenceIndex` next state type.
 sequence = []
-# Enable split states as a code organization tool.
+# Enable the `SplitState` code organization tool.
 split = []
-# Enable the `StateStack` storage type.
+# Enable the `StateStack` next state type.
 stack = []
 
 [dependencies]

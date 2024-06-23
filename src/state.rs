@@ -1,6 +1,6 @@
 //! State traits and resources.
 //!
-//! Provided [`StateStorage`] types:
+//! Provided [`NextState`] types:
 //!
 //! - [`StateBuffer`](crate::buffer::StateBuffer) (default)
 //! - [`StateStack`](crate::extra::stack::StateStack)
@@ -13,7 +13,7 @@ use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::system::{ReadOnlySystemParam, Res, ResMut, Resource, SystemParam, SystemParamItem};
 
 use crate::{
-    access::{NextStateMut, NextStateRef, StateFlushMut},
+    access::{FlushMut, NextMut, NextRef},
     pattern::{
         AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern, StatePattern,
     },
@@ -22,7 +22,7 @@ use crate::{
 /// A data type that can be used as a state.
 ///
 /// The current state will be stored in the [`CurrentState`] resource,
-/// and the next state will be stored in the specified [`StateStorage`].
+/// and the next state will be stored in the specified [`NextState`] resource.
 ///
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
@@ -32,20 +32,20 @@ use crate::{
 ///
 /// enum MenuState { ... }
 /// impl State for MenuState {
-///     type Storage = StateBuffer<Self>;
+///     type Next = StateBuffer<Self>;
 /// }
 /// ```
 ///
 /// The derive macro would also implement [`AddState`](crate::extra::app::AddState) for `MenuState`.
 ///
-/// See the following extension traits with additional bounds on `Self` and [`Self::Storage`](State::Storage):
+/// See the following extension traits with additional bounds on `Self` and [`Self::Next`](State::Next):
 ///
 /// - [`StateMut`]
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
 pub trait State: 'static + Send + Sync + Sized {
-    /// The [`StateStorage`] type that describes how this state will be stored in the ECS world.
-    type Storage: StateStorage<State = Self>;
+    /// The [`NextState`] type that determines the next state for this state type.
+    type Next: NextState<State = Self>;
 
     /// The [`AnyStatePattern`] for this state type.
     const ANY: AnyStatePattern<Self> = AnyStatePattern(PhantomData);
@@ -80,12 +80,12 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     /// A run condition that checks if the next state will be disabled.
-    fn will_be_disabled(next: NextStateRef<Self>) -> bool {
+    fn will_be_disabled(next: NextRef<Self>) -> bool {
         next.get().is_none()
     }
 
     /// A run condition that checks if the next state will be enabled.
-    fn will_be_enabled(next: NextStateRef<Self>) -> bool {
+    fn will_be_enabled(next: NextRef<Self>) -> bool {
         next.get().is_some()
     }
 
@@ -100,15 +100,15 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 }
 
-/// An extension trait for [`State`] types with [mutable storage](StateStorageMut).
+/// An extension trait for [`State`] types with [mutable `NextState`](NextStateMut).
 ///
 /// See the following extension traits with additional bounds on `Self`:
 ///
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait StateMut: State<Storage: StateStorageMut> {
+pub trait StateMut: State<Next: NextStateMut> {
     /// A system that disables the next state.
-    fn disable(mut state: NextStateMut<Self>) {
+    fn disable(mut state: NextMut<Self>) {
         state.set(None);
     }
 }
@@ -116,7 +116,7 @@ pub trait StateMut: State<Storage: StateStorageMut> {
 /// An extension trait for [`StateMut`] types that also implement [`Clone`].
 pub trait StateMutExtClone: StateMut + Clone {
     /// Build a system that enables the next state with a specific value if it's disabled.
-    fn enable(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
+    fn enable(self) -> impl Fn(NextMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             if state.will_be_disabled() {
                 state.enter(self.clone());
@@ -125,7 +125,7 @@ pub trait StateMutExtClone: StateMut + Clone {
     }
 
     /// Build a system that toggles the next state between disabled and enabled with a specific value.
-    fn toggle(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
+    fn toggle(self) -> impl Fn(NextMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             if state.will_be_disabled() {
                 state.enter(self.clone());
@@ -136,19 +136,19 @@ pub trait StateMutExtClone: StateMut + Clone {
     }
 
     /// Build a system that enables the next state with a specific value.
-    fn enter(self) -> impl Fn(NextStateMut<Self>) + 'static + Send + Sync {
+    fn enter(self) -> impl Fn(NextMut<Self>) + 'static + Send + Sync {
         move |mut state| {
             state.set(Some(self.clone()));
         }
     }
 
     /// A system that resets the next state to the current state and relaxes the trigger to flush.
-    fn reset(mut state: StateFlushMut<Self>) {
+    fn reset(mut state: FlushMut<Self>) {
         state.reset();
     }
 
     /// A system that resets the next state to the current state and triggers a flush.
-    fn refresh(mut state: StateFlushMut<Self>) {
+    fn refresh(mut state: FlushMut<Self>) {
         state.refresh();
     }
 }
@@ -158,17 +158,17 @@ impl<S: StateMut + Clone> StateMutExtClone for S {}
 /// An extension trait for [`StateMut`] types that also implement [`Default`].
 pub trait StateMutExtDefault: StateMut + Default {
     /// A system that enables the next state with the default value if it's disabled.
-    fn enable_default(mut state: NextStateMut<Self>) {
+    fn enable_default(mut state: NextMut<Self>) {
         state.enable_default();
     }
 
     /// A system that toggles the next state between disabled and enabled with the default value.
-    fn toggle_default(mut state: NextStateMut<Self>) {
+    fn toggle_default(mut state: NextMut<Self>) {
         state.toggle_default();
     }
 
     /// A system that enables the next state with the default value.
-    fn enter_default(mut state: NextStateMut<Self>) {
+    fn enter_default(mut state: NextMut<Self>) {
         state.enter_default();
     }
 }
@@ -177,7 +177,7 @@ impl<S: StateMut + Default> StateMutExtDefault for S {}
 
 /// A resource that contains the current value of the [`State`] type `S`.
 ///
-/// Use [`StateFlushRef`](crate::access::StateFlushRef) or [`StateFlushMut`] in a system to access
+/// Use [`FlushRef`](crate::access::FlushRef) or [`FlushMut`] in a system to access
 /// the next state alongside the current state.
 #[derive(Resource, Debug)]
 #[cfg_attr(
@@ -267,29 +267,31 @@ impl<S: State> TriggerStateFlush<S> {
 
 /// A resource that determines the next state for the [`State`] type `S`.
 ///
-/// Use [`NextStateRef`] or [`StateFlushRef`](crate::access::StateFlushRef)
+/// Use [`NextRef`] or [`FlushRef`](crate::access::FlushRef)
 /// in a system for read-only access to the next state.
 ///
-/// See [`StateStorageMut`] for mutable storage.
+/// See [`NextStateMut`] for mutable next state types.
 ///
 /// # Example
 ///
-/// The default storage type is [`StateBuffer`](crate::buffer::StateBuffer). You can
-/// set a different storage type in the [derive macro](pyri_state_derive::State):
+/// The default next state type is [`StateBuffer`](crate::buffer::StateBuffer). You can
+/// set a different next state type in the [derive macro](pyri_state_derive::State):
 ///
 /// ```rust
 /// #[derive(State, Clone, PartialEq, Eq)]
-/// #[state(storage(StateStack<Self>))]
+/// #[state(next(StateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
-pub trait StateStorage: Resource {
+pub trait NextState: Resource {
     /// The stored [`State`] type.
     type State: State;
 
-    /// A [`ReadOnlySystemParam`] with read-only access to the next state.
+    /// A [`ReadOnlySystemParam`] to help access the next state if needed.
+    ///
+    /// If the next state is stored within `Self`, this can be set to `()`.
     type Param: ReadOnlySystemParam;
 
-    /// Create an empty storage.
+    /// Create an empty next state resource.
     ///
     /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
     fn empty() -> Self;
@@ -298,11 +300,13 @@ pub trait StateStorage: Resource {
     fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
 }
 
-/// A [`StateStorage`] type that allows `S` to be mutated directly as a [`StateMut`].
+/// A [`NextState`] type that allows `S` to be mutated directly as a [`StateMut`].
 ///
-/// Use [`NextStateMut`] or [`StateFlushMut`] in a system for mutable access to the next state.
-pub trait StateStorageMut: StateStorage {
-    /// A [`SystemParam`] with mutable access to the next state.
+/// Use [`NextMut`] or [`FlushMut`] in a system for mutable access to the next state.
+pub trait NextStateMut: NextState {
+    /// A [`SystemParam`] to help mutably access the next state if needed.
+    ///
+    /// If the next state is stored within `Self`, this can be set to `()`.
     type ParamMut: SystemParam;
 
     /// Get a reference to the next state, or `None` if disabled.
@@ -325,5 +329,5 @@ pub trait StateStorageMut: StateStorage {
     );
 }
 
-// A `State` is `StateMut` if its `StateStorage` is `StateStorageMut`
-impl<S: State<Storage: StateStorageMut>> StateMut for S {}
+// A `State` is `StateMut` if its `NextState` is `NextStateMut`
+impl<S: State<Next: NextStateMut>> StateMut for S {}

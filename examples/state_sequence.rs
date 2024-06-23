@@ -37,8 +37,8 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Debug)]
-// Configure `Page` to use `StateSequenceIndex` instead of `StateBuffer` for storage.
-#[state(log_flush, storage(StateSequenceIndex<Self>))]
+// Configure `Page` to use `StateSequenceIndex` instead of `StateBuffer` as its `NextState` type.
+#[state(log_flush, next(StateSequenceIndex<Self>))]
 enum Page {
     A,
     B,

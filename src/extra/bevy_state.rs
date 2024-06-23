@@ -50,7 +50,7 @@ use bevy_ecs::{
 use bevy_state::state::{NextState, States};
 
 use crate::{
-    access::{NextStateMut, NextStateRef},
+    access::{NextMut, NextRef},
     schedule::StateHook,
     state::{State, StateMut},
 };
@@ -78,13 +78,13 @@ pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash +
     schedule: &mut Schedule,
 ) {
     let update_bevy_state =
-        |pyri_state: NextStateRef<S>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
+        |pyri_state: NextRef<S>, mut bevy_state: ResMut<NextState<BevyState<S>>>| {
             if matches!(bevy_state.as_ref(), NextState::Unchanged) {
                 bevy_state.set(BevyState(pyri_state.get().cloned()));
             }
         };
 
-    let update_pyri_state = |mut pyri_state: NextStateMut<S>,
+    let update_pyri_state = |mut pyri_state: NextMut<S>,
                              bevy_state: Res<NextState<BevyState<S>>>| {
         if let NextState::Pending(bevy_state) = bevy_state.as_ref() {
             pyri_state.trigger().set(bevy_state.0.clone());

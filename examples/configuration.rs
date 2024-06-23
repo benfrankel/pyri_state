@@ -49,9 +49,9 @@ struct RawState;
     entity_scope,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
-    // Swap out the default `StateBuffer<Self>` for a custom storage type.
-    // (see `custom_storage` example for more information)
-    storage(StateStack<Self>),
+    // Swap out the default `StateBuffer<Self>` for a custom `NextState` type.
+    // (see `custom_next_state` example for more information)
+    next(StateStack<Self>),
     // Run this state's on-flush hooks after the listed states.
     after(BasicState, RawState),
     // Run this state's on-flush hooks before the listed states.
@@ -64,7 +64,7 @@ struct DerivedState;
 struct CustomState;
 
 impl State for CustomState {
-    type Storage = StateBuffer<Self>;
+    type Next = StateBuffer<Self>;
 }
 
 // This will be called from `app.add_state`, `init_state`, and `insert_state`.
