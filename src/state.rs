@@ -10,10 +10,10 @@ use std::{fmt::Debug, marker::PhantomData};
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
-use bevy_ecs::system::{ReadOnlySystemParam, Res, ResMut, Resource, SystemParam, SystemParamItem};
+use bevy_ecs::system::{ReadOnlySystemParam, ResMut, Resource, SystemParam, SystemParamItem};
 
 use crate::{
-    access::{FlushMut, NextMut, NextRef},
+    access::{CurrentRef, FlushMut, NextMut, NextRef},
     pattern::{
         AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern, StatePattern,
     },
@@ -70,12 +70,12 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     /// A run condition that checks if the current state is disabled.
-    fn is_disabled(state: Res<CurrentState<Self>>) -> bool {
+    fn is_disabled(state: CurrentRef<Self>) -> bool {
         state.is_disabled()
     }
 
     /// A run condition that checks if the current state is enabled.
-    fn is_enabled(state: Res<CurrentState<Self>>) -> bool {
+    fn is_enabled(state: CurrentRef<Self>) -> bool {
         state.is_enabled()
     }
 
@@ -212,9 +212,24 @@ impl<S: State> CurrentState<S> {
         self.0.as_ref()
     }
 
-    /// Get a read-only reference to the current state, or panic if it's disabled.
+    /// Get a mutable reference to the current state, or `None` if disabled.
+    pub fn get_mut(&mut self) -> Option<&mut S> {
+        self.0.as_mut()
+    }
+
+    /// Set the current state to a new value, or `None` to disable.
+    pub fn set(&mut self, state: Option<S>) {
+        self.0 = state;
+    }
+
+    /// Get a read-only reference to the current state, or panic if disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
+    }
+
+    /// Get a mutable reference to the current state, or panic if disabled.
+    pub fn unwrap_mut(&mut self) -> &mut S {
+        self.get_mut().unwrap()
     }
 
     /// Check if the current state is disabled.

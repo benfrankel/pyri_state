@@ -10,12 +10,12 @@ use bevy_ecs::{
         common_conditions::not, InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs,
         Schedule, ScheduleLabel, SystemSet,
     },
-    system::{Res, ResMut},
+    system::Res,
 };
 
 use crate::{
-    access::{FlushRef, NextRef},
-    state::{CurrentState, State, TriggerStateFlush},
+    access::{CurrentMut, FlushRef, NextRef},
+    state::{State, TriggerStateFlush},
 };
 
 /// The schedule that handles all [`State`] flush logic, added after
@@ -192,8 +192,8 @@ pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
 }
 
-fn apply_flush<S: State + Clone>(mut current: ResMut<CurrentState<S>>, next: NextRef<S>) {
-    current.0 = next.get().cloned();
+fn apply_flush<S: State + Clone>(mut current: CurrentMut<S>, next: NextRef<S>) {
+    current.set(next.get().cloned());
 }
 
 /// Add an apply flush system for the [`State`] type `S` to a schedule.

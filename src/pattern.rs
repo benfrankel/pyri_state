@@ -5,15 +5,12 @@
 
 use std::marker::PhantomData;
 
-use bevy_ecs::{
-    schedule::{IntoSystemConfigs, SystemConfigs},
-    system::Res,
-};
+use bevy_ecs::schedule::{IntoSystemConfigs, SystemConfigs};
 
 use crate::{
-    access::{NextRef, FlushRef},
+    access::{CurrentRef, FlushRef, NextRef},
     schedule::StateHook,
-    state::{CurrentState, State},
+    state::State,
 };
 
 /// A type that can match a subset of values of the [`State`] type `S`.
@@ -29,7 +26,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn matches(&self, state: &S) -> bool;
 
     /// Build a run condition that checks if `S` is in a matching state.
-    fn will_update(self) -> impl 'static + Send + Sync + Fn(Res<CurrentState<S>>) -> bool {
+    fn will_update(self) -> impl 'static + Send + Sync + Fn(CurrentRef<S>) -> bool {
         self.will_exit()
     }
 
@@ -39,7 +36,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Build a run condition that checks if `S` will exit a matching state if triggered.
-    fn will_exit(self) -> impl 'static + Send + Sync + Fn(Res<CurrentState<S>>) -> bool {
+    fn will_exit(self) -> impl 'static + Send + Sync + Fn(CurrentRef<S>) -> bool {
         move |state| state.is_in(&self)
     }
 

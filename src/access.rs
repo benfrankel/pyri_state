@@ -3,13 +3,13 @@
 //! Use the following [`SystemParam`] types to access the [`State`] type `S` in your systems
 //! and run conditions:
 //!
-//! | State          | Read-only access                       | Mutable access                             |
-//! | -------------- | -------------------------------------- | ------------------------------------------ |
-//! | Current        | [`Res<CurrentState<S>>`](CurrentState) | [`ResMut<CurrentState<S>>`](CurrentState)* |
-//! | Next           | [`NextRef<S>`]                         | [`NextMut<S>`]                             |
-//! | Current & Next | [`FlushRef<S>`]                        | [`FlushMut<S>`]                            |
+//! | State          | Read-only access  | Mutable access     |
+//! | -------------- | ----------------- | ------------------ |
+//! | Current        | [`CurrentRef<S>`] | [`CurrentMut<S>`]* |
+//! | Next           | [`NextRef<S>`]    | [`NextMut<S>`]     |
+//! | Current & Next | [`FlushRef<S>`]   | [`FlushMut<S>`]    |
 //!
-//! \* Don't mutate the current state directly unless you know what you're doing.
+//! \* NOTE: Don't mutate the current state directly unless you know what you're doing.
 
 use bevy_ecs::{
     component::Component,
@@ -26,6 +26,85 @@ use crate::{
 #[derive(Component, Debug)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 pub struct GlobalStates;
+
+/// A [`SystemParam`] with read-only access to the current value of the [`State`] type `S`.
+#[derive(SystemParam)]
+pub struct CurrentRef<'w, S: State>(Res<'w, CurrentState<S>>);
+
+impl<'w, 's, S: State> CurrentRef<'w, S> {
+    /// Get a read-only reference to the current state, or `None` if disabled.
+    pub fn get(&self) -> Option<&S> {
+        self.0.get()
+    }
+
+    /// Get a read-only reference to the current state, or panic if disabled.
+    pub fn unwrap(&self) -> &S {
+        self.get().unwrap()
+    }
+
+    /// Check if the current state is disabled.
+    pub fn is_disabled(&self) -> bool {
+        self.get().is_none()
+    }
+
+    /// Check if the current state is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.get().is_some()
+    }
+
+    /// Check if the current state is enabled and matches a specific [`StatePattern`].
+    pub fn is_in<P: StatePattern<S>>(&self, pattern: &P) -> bool {
+        matches!(self.get(), Some(x) if pattern.matches(x))
+    }
+}
+
+/// A [`SystemParam`] with mutable access to the current value of the [`State`] type `S`.
+///
+/// NOTE: Don't mutate the current state directly unless you know what you're doing.
+#[derive(SystemParam)]
+pub struct CurrentMut<'w, S: State>(ResMut<'w, CurrentState<S>>);
+
+impl<'w, 's, S: State> CurrentMut<'w, S> {
+    /// Get a read-only reference to the current state, or `None` if disabled.
+    pub fn get(&self) -> Option<&S> {
+        self.0.get()
+    }
+
+    /// Get a mutable reference to the current state, or `None` if disabled.
+    pub fn get_mut(&mut self) -> Option<&mut S> {
+        self.0.get_mut()
+    }
+
+    /// Set the current state to a new value, or `None` to disable.
+    pub fn set(&mut self, state: Option<S>) {
+        self.0.set(state)
+    }
+
+    /// Get a read-only reference to the current state, or panic if disabled.
+    pub fn unwrap(&self) -> &S {
+        self.get().unwrap()
+    }
+
+    /// Get a mutable reference to the current state, or panic if disabled.
+    pub fn unwrap_mut(&mut self) -> &mut S {
+        self.get_mut().unwrap()
+    }
+
+    /// Check if the current state is disabled.
+    pub fn is_disabled(&self) -> bool {
+        self.get().is_none()
+    }
+
+    /// Check if the current state is enabled.
+    pub fn is_enabled(&self) -> bool {
+        self.get().is_some()
+    }
+
+    /// Check if the current state is enabled and matches a specific [`StatePattern`].
+    pub fn is_in<P: StatePattern<S>>(&self, pattern: &P) -> bool {
+        matches!(self.get(), Some(x) if pattern.matches(x))
+    }
+}
 
 /// A [`SystemParam`] with read-only access to the next value of the [`State`] type `S`.
 ///
@@ -134,12 +213,12 @@ impl<'w, 's, S: StateMut> NextMut<'w, 's, S> {
         S::Next::set_state(&mut self.res, &mut self.param, state)
     }
 
-    /// Get a read-only reference to the next state, or panic if it's disabled.
+    /// Get a read-only reference to the next state, or panic if disabled.
     pub fn unwrap(&self) -> &S {
         self.get().unwrap()
     }
 
-    /// Get a mutable reference to the next state, or panic if it's disabled.
+    /// Get a mutable reference to the next state, or panic if disabled.
     pub fn unwrap_mut(&mut self) -> &mut S {
         self.get_mut().unwrap()
     }
@@ -213,7 +292,7 @@ impl<'w, 's, S: StateMut> NextMut<'w, 's, S> {
 #[derive(SystemParam)]
 pub struct FlushRef<'w, 's, S: State> {
     /// A system parameter with read-only access to the current state.
-    pub current: Res<'w, CurrentState<S>>,
+    pub current: CurrentRef<'w, S>,
     /// A system parameter with read-only access to the next state.
     pub next: NextRef<'w, 's, S>,
 }
@@ -283,7 +362,7 @@ impl<'w, 's, S: State> FlushRef<'w, 's, S> {
 #[derive(SystemParam)]
 pub struct FlushMut<'w, 's, S: StateMut> {
     /// A system parameter with read-only access to the current state.
-    pub current: Res<'w, CurrentState<S>>,
+    pub current: CurrentRef<'w, S>,
     /// A system parameter with mutable access to the next state.
     pub next: NextMut<'w, 's, S>,
 }
@@ -291,12 +370,12 @@ pub struct FlushMut<'w, 's, S: StateMut> {
 impl<'w, 's, S: StateMut + Clone> FlushMut<'w, 's, S> {
     /// Set the next state to remain in the current state with no flush.
     pub fn reset(&mut self) {
-        self.next.relax().set(self.current.0.clone());
+        self.next.relax().set(self.current.get().cloned());
     }
 
     /// Set the next state to flush to the current state.
     pub fn refresh(&mut self) {
-        self.next.trigger().set(self.current.0.clone());
+        self.next.trigger().set(self.current.get().cloned());
     }
 }
 

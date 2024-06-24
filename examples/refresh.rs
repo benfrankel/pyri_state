@@ -52,5 +52,5 @@ fn go_to_next_level(mut level: NextMut<Level>) {
 }
 
 // Dummy systems:
-fn tear_down_old_level(_level: Res<CurrentState<Level>>) {}
+fn tear_down_old_level(_level: CurrentRef<Level>) {}
 fn set_up_new_level(_level: NextRef<Level>) {}

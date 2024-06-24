@@ -29,9 +29,7 @@ fn main() {
                 Level::when(|x, y| y.0 > x.0).on_enter(play_progress_sfx),
                 // Randomly generate the next level before loading it, if necessary.
                 Level::ANY.on_enter(generate_new_level.before(load_new_level).run_if(
-                    |level: NextRef<Level>, meta: Res<LevelMeta>| {
-                        !meta.generated[level.unwrap().0]
-                    },
+                    |level: NextRef<Level>, meta: Res<LevelMeta>| !meta.generated[level.unwrap().0],
                 )),
             ),
         )
@@ -78,7 +76,7 @@ impl Default for LevelMeta {
     }
 }
 
-fn tear_down_old_level(_level: Res<CurrentState<Level>>) {
+fn tear_down_old_level(_level: CurrentRef<Level>) {
     info!("tear_down_old_level")
 }
 

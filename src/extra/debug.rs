@@ -16,10 +16,10 @@ use bevy_ecs::{
 use bevy_log::info;
 
 use crate::{
-    access::{NextRef, FlushRef},
+    access::{CurrentRef, FlushRef, NextRef},
     pattern::{StatePattern, StateTransPattern},
     schedule::{was_triggered, StateHook},
-    state::{CurrentState, State},
+    state::State,
 };
 
 /// A resource that controls the behavior of [state debugging tools](crate::extra::debug).
@@ -67,7 +67,7 @@ fn log_state_flush<S: State + Debug>(frame: Res<FrameCount>, state: FlushRef<S>)
     info!("[Frame {frame}] {ty} flush: {old:?} -> {new:?}");
 }
 
-fn log_state_exit<S: State + Debug>(frame: Res<FrameCount>, old: Res<CurrentState<S>>) {
+fn log_state_exit<S: State + Debug>(frame: Res<FrameCount>, old: CurrentRef<S>) {
     let frame = frame.0;
     let ty = type_name::<S>();
     let old = old.unwrap();

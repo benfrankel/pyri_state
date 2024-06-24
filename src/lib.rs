@@ -12,8 +12,8 @@
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
-//! 5. Tools are provided for state [configuration](extra::app), [debugging](extra::debug),
-//! [pattern-matching](pattern), and [more](extra).
+//! 5. Tools are provided for state [configuration](extra::app), [access],
+//! [pattern-matching](pattern), [debugging](extra::debug), and [more](extra).
 //!
 //! # Getting started
 //!
@@ -80,7 +80,7 @@ pub mod state;
 /// ```
 pub mod prelude {
     pub use crate::{
-        access::{FlushMut, FlushRef, GlobalStates, NextMut, NextRef},
+        access::{CurrentMut, CurrentRef, FlushMut, FlushRef, GlobalStates, NextMut, NextRef},
         buffer::StateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,

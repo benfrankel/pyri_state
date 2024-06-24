@@ -29,6 +29,8 @@
 - **TODO: Implemented states as components:**
     - Added `access` module
     - Moved system params into new `access` module
+    - Added `CurrentRef` system param
+    - Added `CurrentMut` system param
     - Added `GlobalStates` marker component
 - Implemented extra features:
     - Added `extra` module
