@@ -31,7 +31,7 @@ pub struct GlobalStates;
 #[derive(SystemParam)]
 pub struct CurrentRef<'w, S: State>(Res<'w, CurrentState<S>>);
 
-impl<'w, 's, S: State> CurrentRef<'w, S> {
+impl<S: State> CurrentRef<'_, S> {
     /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         self.0.get()
@@ -64,7 +64,7 @@ impl<'w, 's, S: State> CurrentRef<'w, S> {
 #[derive(SystemParam)]
 pub struct CurrentMut<'w, S: State>(ResMut<'w, CurrentState<S>>);
 
-impl<'w, 's, S: State> CurrentMut<'w, S> {
+impl<S: State> CurrentMut<'_, S> {
     /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
         self.0.get()
@@ -123,14 +123,14 @@ impl<'w, 's, S: State> CurrentMut<'w, S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextRef<'w, 's, S: State> {
-    res: Res<'w, <S as State>::Next>,
-    param: StaticSystemParam<'w, 's, <<S as State>::Next as NextState>::Param>,
+    next: Res<'w, <S as State>::Next>,
+    next_param: StaticSystemParam<'w, 's, <<S as State>::Next as NextState>::Param>,
 }
 
-impl<'w, 's, S: State> NextRef<'w, 's, S> {
+impl<S: State> NextRef<'_, '_, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        S::Next::get_state(&self.res, &self.param)
+        self.next.get_state(&self.next_param)
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.
@@ -169,12 +169,12 @@ impl<'w, 's, S: State> NextRef<'w, 's, S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextMut<'w, 's, S: StateMut> {
-    res: ResMut<'w, <S as State>::Next>,
-    param: StaticSystemParam<'w, 's, <<S as State>::Next as NextStateMut>::ParamMut>,
+    next: ResMut<'w, <S as State>::Next>,
+    next_param: StaticSystemParam<'w, 's, <<S as State>::Next as NextStateMut>::ParamMut>,
     trigger: ResMut<'w, TriggerStateFlush<S>>,
 }
 
-impl<'w, 's, S: StateMut + Default> NextMut<'w, 's, S> {
+impl<S: StateMut + Default> NextMut<'_, '_, S> {
     /// Enable the next state with the default value if it's disabled.
     pub fn enable_default(&mut self) {
         if self.will_be_disabled() {
@@ -197,20 +197,20 @@ impl<'w, 's, S: StateMut + Default> NextMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: StateMut> NextMut<'w, 's, S> {
+impl<S: StateMut> NextMut<'_, '_, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        S::Next::get_state_from_mut(&self.res, &self.param)
+        self.next.get_state_from_mut(&self.next_param)
     }
 
     /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        S::Next::get_state_mut(&mut self.res, &mut self.param)
+        self.next.get_state_mut(&mut self.next_param)
     }
 
     /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
-        S::Next::set_state(&mut self.res, &mut self.param, state)
+        self.next.set_state(&mut self.next_param, state);
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.
@@ -297,7 +297,7 @@ pub struct FlushRef<'w, 's, S: State> {
     pub next: NextRef<'w, 's, S>,
 }
 
-impl<'w, 's, S: State + Eq> FlushRef<'w, 's, S> {
+impl<S: State + Eq> FlushRef<'_, '_, S> {
     /// Check if `S` will refresh in a state that matches a specific pattern if triggered.
     pub fn will_refresh<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(
@@ -307,7 +307,7 @@ impl<'w, 's, S: State + Eq> FlushRef<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: State> FlushRef<'w, 's, S> {
+impl<S: State> FlushRef<'_, '_, S> {
     /// Get read-only references to the current and next states, or `None` if disabled.
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
@@ -355,8 +355,8 @@ impl<'w, 's, S: State> FlushRef<'w, 's, S> {
 ///
 /// ```rust
 /// fn copy_red_to_green(mut color: FlushMut<ColorState>) {
-///     let (old, new) = color.unwrap_mut();
-///     new.green = old.red;
+///     let (current, next) = color.unwrap_mut();
+///     next.green = current.red;
 /// }
 /// ```
 #[derive(SystemParam)]
@@ -367,7 +367,7 @@ pub struct FlushMut<'w, 's, S: StateMut> {
     pub next: NextMut<'w, 's, S>,
 }
 
-impl<'w, 's, S: StateMut + Clone> FlushMut<'w, 's, S> {
+impl<S: StateMut + Clone> FlushMut<'_, '_, S> {
     /// Set the next state to remain in the current state with no flush.
     pub fn reset(&mut self) {
         self.next.relax().set(self.current.get().cloned());
@@ -379,7 +379,7 @@ impl<'w, 's, S: StateMut + Clone> FlushMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: StateMut + Eq> FlushMut<'w, 's, S> {
+impl<S: StateMut + Eq> FlushMut<'_, '_, S> {
     /// Check if `S` will refresh in a state that matches a specific pattern if triggered.
     pub fn will_refresh<P: StatePattern<S>>(&mut self, pattern: &P) -> bool {
         matches!(
@@ -389,7 +389,7 @@ impl<'w, 's, S: StateMut + Eq> FlushMut<'w, 's, S> {
     }
 }
 
-impl<'w, 's, S: StateMut> FlushMut<'w, 's, S> {
+impl<S: StateMut> FlushMut<'_, '_, S> {
     /// Get read-only references to the current and next states, or `None` if disabled.
     pub fn get(&self) -> (Option<&S>, Option<&S>) {
         (self.current.get(), self.next.get())
