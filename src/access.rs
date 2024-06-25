@@ -1,4 +1,4 @@
-//! TODO: Module-level docs
+//! System parameters to access current and next states.
 //!
 //! Use the following [`SystemParam`] types to access the [`State`] type `S` in your systems
 //! and run conditions:
