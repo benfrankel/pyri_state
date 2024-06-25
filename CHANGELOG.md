@@ -24,14 +24,6 @@
     - Replaced `NextState_` resource with `TriggerStateFlush` and `StateBuffer` resources
     - Added `NextRef` system param
     - Added `NextMut` system param
-    - Renamed `StateRef` -> `FlushRef` system param
-    - Renamed `StateMut` -> `FlushMut` system param
-- **TODO: Implemented states as components:**
-    - Added `access` module
-    - Moved system params into new `access` module
-    - Added `CurrentRef` system param
-    - Added `CurrentMut` system param
-    - Added `GlobalStates` marker component
 - Implemented extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
@@ -86,6 +78,13 @@
     - Renamed `StateFlushEvent` fields: `before` -> `old` and `after` -> `new`
     - Renamed `schedule_send_event` -> `schedule_flush_event` function
     - Renamed `send_event` -> `flush_event` derive macro option
+- Adjusted system params:
+    - Added `access` module
+    - Moved system params into new `access` module
+    - Added `CurrentRef` system param
+    - Added `CurrentMut` system param
+    - Renamed `StateRef` -> `FlushRef` system param
+    - Renamed `StateMut` -> `FlushMut` system param
 
 # Version 0.1.0
 

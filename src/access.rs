@@ -21,11 +21,12 @@ use crate::{
     state::{CurrentState, NextState, NextStateMut, State, StateMut, TriggerStateFlush},
 };
 
+// TODO: Make this `pub` as part of "states as components"
 /// A marker [`Component`] for the global states entity spawned by
 /// [`StatePlugin`](crate::extra::app::StatePlugin).
 #[derive(Component, Debug)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
-pub struct GlobalStates;
+struct GlobalStates;
 
 /// A [`SystemParam`] with read-only access to the current value of the [`State`] type `S`.
 #[derive(SystemParam)]

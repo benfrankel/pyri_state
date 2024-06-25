@@ -80,7 +80,7 @@ pub mod state;
 /// ```
 pub mod prelude {
     pub use crate::{
-        access::{CurrentMut, CurrentRef, FlushMut, FlushRef, GlobalStates, NextMut, NextRef},
+        access::{CurrentMut, CurrentRef, FlushMut, FlushRef, NextMut, NextRef},
         buffer::StateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,

@@ -8,14 +8,12 @@
 use std::marker::PhantomData;
 
 use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
-use bevy_core::Name;
 use bevy_ecs::{
     schedule::{InternedSystemSet, SystemSet},
     world::FromWorld,
 };
 
 use crate::{
-    access::GlobalStates,
     schedule::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
         StateFlush, StateFlushEvent, StateHook,
@@ -26,7 +24,6 @@ use crate::{
 /// A plugin that performs the required setup for [`State`] types to function:
 ///
 /// - Adds the [`StateFlush`] schedule to the [`MainScheduleOrder`] after [`PreUpdate`].
-/// - Spawns the [`GlobalStates`] entity.
 /// - Adds the [`bevy_state` plugin](bevy_state::app::StatesPlugin) if the
 /// `bevy_state` feature is enabled.
 pub struct StatePlugin;
@@ -39,9 +36,10 @@ impl Plugin for StatePlugin {
             .resource_mut::<MainScheduleOrder>()
             .insert_after(PreUpdate, StateFlush);
 
+        // TODO: Uncomment this as part of "states as components"
         // Spawn the `GlobalStates` entity.
-        app.world_mut()
-            .spawn((Name::new("GlobalStates"), GlobalStates));
+        /*app.world_mut()
+        .spawn((Name::new("GlobalStates"), GlobalStates));*/
 
         // Add the `bevy_state` plugin.
         #[cfg(feature = "bevy_state")]
