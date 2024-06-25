@@ -1,4 +1,4 @@
-//! State traits and resources.
+//! State traits and components.
 //!
 //! Provided [`NextState`] types:
 //!
@@ -8,12 +8,14 @@
 
 use std::{fmt::Debug, marker::PhantomData};
 
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
-use bevy_ecs::system::{ReadOnlySystemParam, ResMut, Resource, SystemParam, SystemParamItem};
+use bevy_ecs::{
+    component::Component,
+    query::With,
+    system::{Query, ReadOnlySystemParam, SystemParam, SystemParamItem},
+};
 
 use crate::{
-    access::{CurrentRef, FlushMut, NextMut, NextRef},
+    access::{CurrentRef, FlushMut, GlobalStates, NextMut, NextRef},
     pattern::{
         AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern, StatePattern,
     },
@@ -21,8 +23,8 @@ use crate::{
 
 /// A data type that can be used as a state.
 ///
-/// The current state will be stored in the [`CurrentState`] resource,
-/// and the next state will be stored in the specified [`NextState`] resource.
+/// The current state will be stored in the [`CurrentState`] component,
+/// and the next state will be stored in the specified [`NextState`] component.
 ///
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
@@ -90,13 +92,13 @@ pub trait State: 'static + Send + Sync + Sized {
     }
 
     /// A system that triggers this state type to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    fn trigger(mut trigger: ResMut<TriggerStateFlush<Self>>) {
-        trigger.trigger();
+    fn trigger(mut trigger: Query<&mut TriggerStateFlush<Self>, With<GlobalStates>>) {
+        trigger.single_mut().trigger();
     }
 
     /// A system that resets the trigger for this state type to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    fn relax(mut trigger: ResMut<TriggerStateFlush<Self>>) {
-        trigger.relax();
+    fn relax(mut trigger: Query<&mut TriggerStateFlush<Self>, With<GlobalStates>>) {
+        trigger.single_mut().relax();
     }
 }
 
@@ -175,16 +177,12 @@ pub trait StateMutExtDefault: StateMut + Default {
 
 impl<S: StateMut + Default> StateMutExtDefault for S {}
 
-/// A resource that contains the current value of the [`State`] type `S`.
+/// A [`Component`] that contains the current value of the [`State`] type `S`.
 ///
 /// Use [`FlushRef`](crate::access::FlushRef) or [`FlushMut`] in a system to access
 /// the next state alongside the current state.
-#[derive(Resource, Debug)]
-#[cfg_attr(
-    feature = "bevy_reflect",
-    derive(bevy_reflect::Reflect),
-    reflect(Resource)
-)]
+#[derive(Component, Debug)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 pub struct CurrentState<S: State>(
     /// The current state, or `None` if disabled.
     pub Option<S>,
@@ -248,14 +246,10 @@ impl<S: State> CurrentState<S> {
     }
 }
 
-/// A resource that determines whether the [`State`] type `S` will flush in the
+/// A [`Component`] that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
-#[derive(Resource, Debug)]
-#[cfg_attr(
-    feature = "bevy_reflect",
-    derive(bevy_reflect::Reflect),
-    reflect(Resource)
-)]
+#[derive(Component, Debug)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 pub struct TriggerStateFlush<S: State>(
     /// The flush flag. If true, `S` will flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
     pub bool,
@@ -280,7 +274,7 @@ impl<S: State> TriggerStateFlush<S> {
     }
 }
 
-/// A resource that determines the next state for the [`State`] type `S`.
+/// A [`Component`] that determines the next state for the [`State`] type `S`.
 ///
 /// Use [`NextRef`] or [`FlushRef`](crate::access::FlushRef)
 /// in a system for read-only access to the next state.
@@ -297,7 +291,7 @@ impl<S: State> TriggerStateFlush<S> {
 /// #[state(next(StateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
-pub trait NextState: Resource {
+pub trait NextState: Component {
     /// The stored [`State`] type.
     type State: State;
 
@@ -306,7 +300,7 @@ pub trait NextState: Resource {
     /// If the next state is stored within `Self`, this can be set to `()`.
     type Param: ReadOnlySystemParam;
 
-    /// Create an empty next state resource.
+    /// Create an empty next state component.
     ///
     /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
     fn empty() -> Self;

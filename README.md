@@ -31,4 +31,3 @@ This crate is available under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICEN
 
 - [ ] Unit tests
 - [ ] How does flushing states once per frame interact with `FixedUpdate`?
-- [ ] Component states?

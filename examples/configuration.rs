@@ -4,7 +4,8 @@ use bevy::prelude::*;
 use pyri_state::{
     extra::{
         app::{
-            AddState, ApplyFlushPlugin, DetectChangePlugin, FlushEventPlugin, ResolveStatePlugin,
+            ApplyFlushPlugin, DetectChangePlugin, FlushEventPlugin, RegisterState,
+            ResolveStatePlugin,
         },
         bevy_state::BevyStatePlugin,
         debug::LogFlushPlugin,
@@ -68,8 +69,8 @@ impl State for CustomState {
 }
 
 // This will be called from `app.add_state`, `init_state`, and `insert_state`.
-impl AddState for CustomState {
-    fn add_state(app: &mut App) {
+impl RegisterState for CustomState {
+    fn register_state(app: &mut App) {
         // Plugins from the derive macro can still be added if desired:
         app.add_plugins((
             ResolveStatePlugin::<Self>::default()

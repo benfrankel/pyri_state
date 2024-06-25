@@ -52,7 +52,7 @@ enum MyStackedState {
 }
 
 // You can define your own fully custom next state type:
-#[derive(Resource)]
+#[derive(Component)]
 pub struct StateSwap<S: State>([Option<S>; 2]);
 
 impl<S: State> NextState for StateSwap<S> {
@@ -95,10 +95,10 @@ impl<S: State> NextStateMut for StateSwap<S> {
 }
 
 // Define a custom extension trait to attach extra systems and run conditions to
-// state types using your next state type.
+// `State` types using your `NextState` type.
 pub trait StateSwapMut: State {
-    fn swap(mut swap: ResMut<StateSwap<Self>>) {
-        let [left, right] = &mut swap.0;
+    fn swap(mut swap: Query<&mut StateSwap<Self>, With<GlobalStates>>) {
+        let [left, right] = &mut swap.single_mut().0;
         std::mem::swap(left, right);
     }
 }

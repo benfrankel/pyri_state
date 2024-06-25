@@ -6,15 +6,16 @@ use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
     event::{Event, EventWriter},
+    query::With,
     schedule::{
         common_conditions::not, InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs,
         Schedule, ScheduleLabel, SystemSet,
     },
-    system::Res,
+    system::Query,
 };
 
 use crate::{
-    access::{CurrentMut, FlushRef, NextRef},
+    access::{CurrentMut, FlushRef, GlobalStates, NextRef},
     state::{State, TriggerStateFlush},
 };
 
@@ -120,8 +121,10 @@ pub struct StateFlushEvent<S: State> {
     pub new: Option<S>,
 }
 
-pub(crate) fn was_triggered<S: State>(trigger: Res<TriggerStateFlush<S>>) -> bool {
-    trigger.0
+pub(crate) fn was_triggered<S: State>(
+    trigger: Query<&TriggerStateFlush<S>, With<GlobalStates>>,
+) -> bool {
+    trigger.single().0
 }
 
 /// Configure [`StateHook<S>`] system sets for the [`State`] type `S` in a schedule.

@@ -5,7 +5,7 @@ use syn::{parse_str, punctuated::Punctuated, DeriveInput, Path, Token};
 
 use crate::{util::concat, StateAttrs};
 
-pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> TokenStream {
+pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
     let ty_name = &input.ident;
 
@@ -16,9 +16,9 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
     let crate_extra_path = concat(crate_path.clone(), "extra");
     let crate_app_path = concat(crate_extra_path.clone(), "app");
-    let add_state_trait = concat(crate_app_path.clone(), "AddState");
+    let register_state_trait = concat(crate_app_path.clone(), "RegisterState");
 
-    // Construct resolve state plugin.
+    // Construct `ResolveStatePlugin`.
     let resolve_state = {
         let bevy_ecs_path = bevy_macro_utils::BevyManifest::default().get_path("bevy_ecs");
         let bevy_ecs_schedule_path = concat(bevy_ecs_path, "schedule");
@@ -90,8 +90,8 @@ pub(crate) fn derive_add_state_helper(input: &DeriveInput, attrs: &StateAttrs) -
     let apply_flush = simple_plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush);
 
     quote! {
-        impl #impl_generics #add_state_trait for #ty_name #ty_generics #where_clause {
-            fn add_state(app: &mut #app_ty) {
+        impl #impl_generics #register_state_trait for #ty_name #ty_generics #where_clause {
+            fn register_state(app: &mut #app_ty) {
                 app.add_plugins((
                     #resolve_state
                     #detect_change

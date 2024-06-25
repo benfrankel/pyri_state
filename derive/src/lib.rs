@@ -13,22 +13,22 @@ use crate::util::concat;
 
 #[proc_macro_derive(State, attributes(state))]
 pub fn derive_state(input: TokenStream) -> TokenStream {
-    // Parse the type and #[state(...)] attributes.
+    // Parse the type and `#[state(...)]` attributes.
     let input = parse_macro_input!(input as DeriveInput);
     let attrs = parse_state_attrs(&input).expect("Failed to parse state attributes");
 
-    // Construct State impl.
+    // Construct `State` impl.
     let impl_state = derive_state_helper(&input, &attrs);
 
-    // Construct AddState impl.
+    // Construct `RegisterState` impl.
     #[cfg(not(feature = "bevy_app"))]
-    let impl_add_state = quote! {};
+    let impl_register_state = quote! {};
     #[cfg(feature = "bevy_app")]
-    let impl_add_state = app::derive_add_state_helper(&input, &attrs);
+    let impl_register_state = app::derive_register_state_helper(&input, &attrs);
 
     quote! {
         #impl_state
-        #impl_add_state
+        #impl_register_state
     }
     .into()
 }
@@ -43,7 +43,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     let crate_state_path = concat(crate_path.clone(), "state");
     let state_trait = concat(crate_state_path.clone(), "State");
 
-    // Construct NextState type.
+    // Construct `NextState` type.
     let next_ty = if let Some(next) = attrs.next.as_ref() {
         quote! {
             #next
@@ -57,7 +57,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
         }
     };
 
-    // Construct State impl.
+    // Construct `State` impl.
     quote! {
         impl #impl_generics #state_trait for #ty_name #ty_generics #where_clause {
             type Next = #next_ty;
@@ -80,7 +80,7 @@ struct StateAttrs {
     apply_flush: bool,
 }
 
-// Parse #[state(...)] attributes.
+// Parse `#[state(...)]` attributes.
 fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
     let mut state_attrs = StateAttrs::default();
 
@@ -130,7 +130,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
         }
     }
 
-    // Enable defaults.
+    // Enable default options.
     if !state_attrs.no_defaults {
         state_attrs.detect_change = true;
         state_attrs.flush_event = true;

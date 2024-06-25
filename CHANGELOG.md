@@ -17,13 +17,14 @@
     - Added `FnStateTransPattern` type
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
+- **Implemented states as components:**
+    - Added `GlobalStates` marker component
+    - Made `CurrentState` a component instead of a resource
 - **Implemented custom next state storage:**
     - Added `next(...)` derive macro option
     - Added `NextState` trait
     - Added `NextStateMut` trait
-    - Replaced `NextState_` resource with `TriggerStateFlush` and `StateBuffer` resources
-    - Added `NextRef` system param
-    - Added `NextMut` system param
+    - Replaced `NextState_` resource with `TriggerStateFlush` and `StateBuffer` components
 - Implemented extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
@@ -41,13 +42,13 @@
         - Added `schedule_log_flush` function
     - **Implemented state stack as a next state storage type:**
         - Added `stack` feature flag
-        - Added `StateStack` resource
+        - Added `StateStack` component
         - Added `StateStackMut` extension trait
         - Added `StateStackMutExtClone` extension trait
     - **Implemented state sequence as a next state storage type:**
         - Added `sequence` feature flag
         - Added `StateSequence` resource
-        - Added `StateSequenceIndex` resource
+        - Added `StateSequenceIndex` component
         - Added `StateSequenceIndexMut` extension trait
     - **Implemented split state helper:**
         - Added `split` feature flag
@@ -61,11 +62,12 @@
     - Renamed `RawStateExtDefault` -> `StateMutExtDefault` extension trait
     - Removed `RawStateExtEq` extension trait (see `StatePatternExtEq` instead)
 - Adjusted `AppExtState`:
+    - Added `register_state` method
     - Renamed `add_state_` -> `add_state` method
     - Renamed `init_state_` -> `init_state` method
     - Renamed `insert_state_` -> `insert_state` method
 - Replaced configs with plugins:
-    - Replaced `GetStateConfig` and `ConfigureState` with `AddState` trait
+    - Replaced `GetStateConfig` and `ConfigureState` with `RegisterState` trait
     - Renamed `StateConfigResolveState` -> `ResolveStatePlugin` plugin
     - Renamed `StateConfigDetectChange` -> `DetectChangePlugin` plugin
     - Renamed `StateConfigSendEvent` -> `FlushEventPlugin` plugin
@@ -83,6 +85,8 @@
     - Moved system params into new `access` module
     - Added `CurrentRef` system param
     - Added `CurrentMut` system param
+    - Added `NextRef` system param
+    - Added `NextMut` system param
     - Renamed `StateRef` -> `FlushRef` system param
     - Renamed `StateMut` -> `FlushMut` system param
 

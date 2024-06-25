@@ -10,10 +10,11 @@ use std::marker::PhantomData;
 use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
 use bevy_ecs::{
     schedule::{InternedSystemSet, SystemSet},
-    world::FromWorld,
+    world::{FromWorld, World},
 };
 
 use crate::{
+    access::GlobalStatesEntity,
     schedule::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
         StateFlush, StateFlushEvent, StateHook,
@@ -24,6 +25,7 @@ use crate::{
 /// A plugin that performs the required setup for [`State`] types to function:
 ///
 /// - Adds the [`StateFlush`] schedule to the [`MainScheduleOrder`] after [`PreUpdate`].
+/// - Spawns the [`GlobalStates`](crate::access::GlobalStates) entity.
 /// - Adds the [`bevy_state` plugin](bevy_state::app::StatesPlugin) if the
 /// `bevy_state` feature is enabled.
 pub struct StatePlugin;
@@ -36,10 +38,8 @@ impl Plugin for StatePlugin {
             .resource_mut::<MainScheduleOrder>()
             .insert_after(PreUpdate, StateFlush);
 
-        // TODO: Uncomment this as part of "states as components"
         // Spawn the `GlobalStates` entity.
-        /*app.world_mut()
-        .spawn((Name::new("GlobalStates"), GlobalStates));*/
+        app.init_resource::<GlobalStatesEntity>();
 
         // Add the `bevy_state` plugin.
         #[cfg(feature = "bevy_state")]
@@ -49,52 +49,72 @@ impl Plugin for StatePlugin {
 
 /// An extension trait for [`App`] that provides methods for adding [`State`] types.
 pub trait AppExtState {
+    /// Register `S` without initializing it.
+    fn register_state<S: RegisterState>(&mut self) -> &mut Self;
+
     /// Initialize `S` with empty next state.
     ///
     /// Calls [`S::Next::empty`](NextState::empty).
-    fn add_state<S: AddState>(&mut self) -> &mut Self;
+    fn add_state<S: RegisterState>(&mut self) -> &mut Self;
 
     /// Initialize `S` with default next state.
-    fn init_state<S: AddState<Next: FromWorld>>(&mut self) -> &mut Self;
+    fn init_state<S: RegisterState<Next: FromWorld>>(&mut self) -> &mut Self;
 
     /// Initialize `S` with specific next state.
-    fn insert_state<T: NextState<State: AddState>>(&mut self, next: T) -> &mut Self;
+    fn insert_state<T: NextState<State: RegisterState>>(&mut self, next: T) -> &mut Self;
 }
 
-fn insert_state_helper<T: NextState<State: AddState>>(app: &mut App, next: Option<T>) {
-    app.init_resource::<CurrentState<T::State>>()
-        .init_resource::<TriggerStateFlush<T::State>>()
-        .insert_resource(next.unwrap_or_else(T::empty));
-    T::State::add_state(app);
+fn state_exists<S: State>(world: &World) -> bool {
+    let global = world.resource::<GlobalStatesEntity>().0;
+    world.entity(global).contains::<CurrentState<S>>()
+}
+
+fn insert_state_helper<T: NextState<State: RegisterState>>(app: &mut App, next: Option<T>) {
+    let global = app.world().resource::<GlobalStatesEntity>().0;
+    app.world_mut().entity_mut(global).insert((
+        CurrentState::<T::State>::default(),
+        next.unwrap_or_else(T::empty),
+        TriggerStateFlush::<T::State>::default(),
+    ));
 }
 
 impl AppExtState for App {
-    fn add_state<S: AddState>(&mut self) -> &mut Self {
-        if !self.world().contains_resource::<CurrentState<S>>() {
-            insert_state_helper(self, None::<S::Next>);
+    fn register_state<S: RegisterState>(&mut self) -> &mut Self {
+        if !state_exists::<S>(self.world()) {
+            S::register_state(self);
         }
         self
     }
 
-    fn init_state<S: AddState<Next: FromWorld>>(&mut self) -> &mut Self {
-        if !self.world().contains_resource::<CurrentState<S>>() {
+    fn add_state<S: RegisterState>(&mut self) -> &mut Self {
+        if !state_exists::<S>(self.world()) {
+            insert_state_helper(self, None::<S::Next>);
+            S::register_state(self);
+        }
+        self
+    }
+
+    fn init_state<S: RegisterState<Next: FromWorld>>(&mut self) -> &mut Self {
+        if !state_exists::<S>(self.world()) {
             let next = S::Next::from_world(self.world_mut());
             insert_state_helper(self, Some(next));
+            S::register_state(self);
         }
         self
     }
 
-    fn insert_state<T: NextState<State: AddState>>(&mut self, next: T) -> &mut Self {
-        if !self.world().contains_resource::<CurrentState<T::State>>() {
-            insert_state_helper(self, Some(next));
+    fn insert_state<T: NextState<State: RegisterState>>(&mut self, next: T) -> &mut Self {
+        insert_state_helper(self, Some(next));
+        if !state_exists::<T::State>(self.world()) {
+            T::State::register_state(self);
         }
         self
     }
 }
 
-/// A [`State`] type that can be added to an [`App`].
-pub trait AddState: State {
-    /// Add this state type to the app.
+/// A [`State`] type that can be registered with an [`App`].
+pub trait RegisterState: State {
+    /// Register this state type with the app.
     ///
     /// The following plugins may be useful when implementing this method:
     ///
@@ -105,7 +125,7 @@ pub trait AddState: State {
     /// - [`BevyStatePlugin<Self>`](crate::extra::bevy_state::BevyStatePlugin)
     /// - [`EntityScopePlugin<Self>`](crate::extra::entity_scope::EntityScopePlugin)
     /// - [`ApplyFlushPlugin<Self>`]
-    fn add_state(app: &mut App);
+    fn register_state(app: &mut App);
 }
 
 /// A plugin that configures the [`StateHook<S>`] system sets for the [`State`] type `S`
