@@ -24,7 +24,7 @@ fn main() {
         .run();
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Component, Clone, PartialEq, Eq, Default)]
 enum GameState {
     #[default]
     Splash,
@@ -32,7 +32,7 @@ enum GameState {
 }
 
 // Substate of GameState::Playing
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Component, Clone, PartialEq, Eq, Default)]
 #[state(after(GameState))]
 struct CheckerboardSquare {
     row: u8,
@@ -40,17 +40,14 @@ struct CheckerboardSquare {
 }
 
 // Computed from CheckerboardSquare
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State, Component, Clone, PartialEq, Eq)]
 #[state(after(CheckerboardSquare))]
 enum SquareColor {
     Black,
     White,
 }
 
-fn compute_square_color(
-    board: NextRef<CheckerboardSquare>,
-    mut color: NextMut<SquareColor>,
-) {
+fn compute_square_color(board: NextRef<CheckerboardSquare>, mut color: NextMut<SquareColor>) {
     color.set(board.get().map(|board| {
         if board.row + board.col % 2 == 0 {
             SquareColor::Black

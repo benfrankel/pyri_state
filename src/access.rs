@@ -19,12 +19,12 @@ use bevy_ecs::{
     entity::Entity,
     query::With,
     system::{Query, Resource, StaticSystemParam, SystemParam},
-    world::{FromWorld, World},
+    world::{FromWorld, Mut, World},
 };
 
 use crate::{
     pattern::{StatePattern, StateTransPattern},
-    state::{CurrentState, NextState, NextStateMut, State, StateMut, TriggerStateFlush},
+    state::{NextState, NextStateMut, State, StateMut, TriggerStateFlush},
 };
 
 /// A marker [`Component`] for the global states entity spawned by
@@ -47,18 +47,16 @@ impl FromWorld for GlobalStatesEntity {
     }
 }
 
-// TODO: Manually impl `SystemParam` to skip the query and contain `&CurrentState<S>` directly (if that's possible).
+// TODO: Manually impl `SystemParam` to skip the query and contain `Option<&S>` directly (if that's possible).
 // TODO: Manually impl `QueryData` as well.
 /// A [`SystemParam`] with read-only access to the current value of the [`State`] type `S`.
 #[derive(SystemParam)]
-pub struct CurrentRef<'w, 's, S: State>(
-    Query<'w, 's, &'static CurrentState<S>, With<GlobalStates>>,
-);
+pub struct CurrentRef<'w, 's, S: State>(Query<'w, 's, &'static S, With<GlobalStates>>);
 
 impl<S: State> CurrentRef<'_, '_, S> {
     /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.0.single().get()
+        self.0.get_single().ok()
     }
 
     /// Get a read-only reference to the current state, or panic if disabled.
@@ -68,12 +66,12 @@ impl<S: State> CurrentRef<'_, '_, S> {
 
     /// Check if the current state is disabled.
     pub fn is_disabled(&self) -> bool {
-        self.get().is_none()
+        self.0.is_empty()
     }
 
     /// Check if the current state is enabled.
     pub fn is_enabled(&self) -> bool {
-        self.get().is_some()
+        !self.0.is_empty()
     }
 
     /// Check if the current state is enabled and matches a specific [`StatePattern`].
@@ -86,19 +84,17 @@ impl<S: State> CurrentRef<'_, '_, S> {
 ///
 /// NOTE: Don't mutate the current state directly unless you know what you're doing.
 #[derive(SystemParam)]
-pub struct CurrentMut<'w, 's, S: State>(
-    Query<'w, 's, &'static mut CurrentState<S>, With<GlobalStates>>,
-);
+pub struct CurrentMut<'w, 's, S: State>(Query<'w, 's, &'static mut S, With<GlobalStates>>);
 
 impl<S: State> CurrentMut<'_, '_, S> {
     /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.0.single().get()
+        self.0.get_single().ok()
     }
 
-    /// Set the current state to a new value, or `None` to disable.
-    pub fn set(&mut self, state: Option<S>) {
-        self.0.single_mut().set(state)
+    /// Get a mutable reference to the current state, or `None` if disabled.
+    pub fn get_mut(&mut self) -> Option<&mut S> {
+        self.0.get_single_mut().map(Mut::into_inner).ok()
     }
 
     /// Get a read-only reference to the current state, or panic if disabled.
@@ -106,14 +102,19 @@ impl<S: State> CurrentMut<'_, '_, S> {
         self.get().unwrap()
     }
 
+    /// Get a mutable reference to the current state, or panic if disabled.
+    pub fn unwrap_mut(&mut self) -> &mut S {
+        self.get_mut().unwrap()
+    }
+
     /// Check if the current state is disabled.
     pub fn is_disabled(&self) -> bool {
-        self.get().is_none()
+        self.0.is_empty()
     }
 
     /// Check if the current state is enabled.
     pub fn is_enabled(&self) -> bool {
-        self.get().is_some()
+        !self.0.is_empty()
     }
 
     /// Check if the current state is enabled and matches a specific [`StatePattern`].

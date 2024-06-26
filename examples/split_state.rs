@@ -50,26 +50,23 @@ fn main() {
 }
 
 mod input {
-    use pyri_state::extra::split::SplitState;
-    use pyri_state_derive::State;
+    use super::*;
 
     // InputMode is defined as a split state in `mod input`.
-    #[derive(State, Clone, PartialEq, Eq, Debug)]
+    #[derive(State, Component, Clone, PartialEq, Eq, Debug)]
     #[state(log_flush)]
     pub struct InputMode(pub SplitState);
 }
 
 mod game {
-    use super::input::InputMode;
-    use pyri_state::add_to_split_state;
+    use super::*;
 
     // The Move and Attack states are added to InputMode in `mod game`.
     add_to_split_state!(InputMode, Move, Attack);
 }
 
 mod ui {
-    use super::input::InputMode;
-    use pyri_state::add_to_split_state;
+    use super::*;
 
     // The Menu state is added to InputMode in `mod ui`.
     add_to_split_state!(InputMode, Menu);

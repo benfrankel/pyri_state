@@ -88,9 +88,7 @@ pub mod prelude {
         },
         schedule::{StateFlush, StateFlushEvent},
         state,
-        state::{
-            CurrentState, State, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
-        },
+        state::{State, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _},
     };
 
     #[cfg(feature = "bevy_app")]

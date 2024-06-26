@@ -19,7 +19,7 @@ use crate::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
         StateFlush, StateFlushEvent, StateHook,
     },
-    state::{CurrentState, NextState, State, TriggerStateFlush},
+    state::{NextState, State, TriggerStateFlush},
 };
 
 /// A plugin that performs the required setup for [`State`] types to function:
@@ -66,13 +66,12 @@ pub trait AppExtState {
 
 fn state_exists<S: State>(world: &World) -> bool {
     let global = world.resource::<GlobalStatesEntity>().0;
-    world.entity(global).contains::<CurrentState<S>>()
+    world.entity(global).contains::<TriggerStateFlush<S>>()
 }
 
 fn insert_state_helper<T: NextState<State: RegisterState>>(app: &mut App, next: Option<T>) {
     let global = app.world().resource::<GlobalStatesEntity>().0;
     app.world_mut().entity_mut(global).insert((
-        CurrentState::<T::State>::default(),
         next.unwrap_or_else(T::empty),
         TriggerStateFlush::<T::State>::default(),
     ));

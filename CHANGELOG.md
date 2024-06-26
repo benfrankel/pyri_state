@@ -19,7 +19,7 @@
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
 - **Implemented states as components:**
     - Added `GlobalStates` marker component
-    - Made `CurrentState` a component instead of a resource
+    - Made `State` trait require `Component`
 - **Implemented custom next state storage:**
     - Added `next(...)` derive macro option
     - Added `NextState` trait

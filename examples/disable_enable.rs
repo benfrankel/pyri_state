@@ -23,7 +23,7 @@ fn main() {
         .run();
 }
 
-#[derive(State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Component, Clone, PartialEq, Eq, Debug)]
 #[state(log_flush)]
 struct Paused;
 

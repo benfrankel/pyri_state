@@ -5,18 +5,19 @@
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::{
+    entity::Entity,
     event::{Event, EventWriter},
     query::With,
     schedule::{
         common_conditions::not, InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs,
         Schedule, ScheduleLabel, SystemSet,
     },
-    system::Query,
+    system::{Commands, Query, StaticSystemParam},
 };
 
 use crate::{
-    access::{CurrentMut, FlushRef, GlobalStates, NextRef},
-    state::{State, TriggerStateFlush},
+    access::{FlushRef, GlobalStates},
+    state::{NextState, State, TriggerStateFlush},
 };
 
 /// The schedule that handles all [`State`] flush logic, added after
@@ -195,8 +196,23 @@ pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
 }
 
-fn apply_flush<S: State + Clone>(mut current: CurrentMut<S>, next: NextRef<S>) {
-    current.set(next.get().cloned());
+fn apply_flush<S: State + Clone>(
+    mut commands: Commands,
+    next_param: StaticSystemParam<<S::Next as NextState>::Param>,
+    mut state_query: Query<(Entity, Option<&mut S>, &S::Next)>,
+) {
+    for (entity, current, next) in &mut state_query {
+        match (current, next.get_state(&next_param)) {
+            (Some(mut x), Some(y)) => *x = y.clone(),
+            (Some(_), None) => {
+                commands.entity(entity).remove::<S>();
+            }
+            (None, Some(y)) => {
+                commands.entity(entity).insert(y.clone());
+            }
+            _ => (),
+        }
+    }
 }
 
 /// Add an apply flush system for the [`State`] type `S` to a schedule.

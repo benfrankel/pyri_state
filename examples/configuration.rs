@@ -24,16 +24,16 @@ fn main() {
 }
 
 // The derive macro requires `Clone`, `PartialEq`, and `Eq` by default.`
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State, Component, Clone, PartialEq, Eq)]
 struct BasicState;
 
 // They can be omitted if you disable the default options:
-#[derive(State)]
+#[derive(State, Component)]
 #[state(no_defaults)]
 struct RawState;
 
 // The built-in state plugins can be configured:
-#[derive(State, PartialEq, Eq, Clone, Hash, Debug)]
+#[derive(State, Component, Clone, PartialEq, Eq, Hash, Debug)]
 #[state(
     // Disable default plugins: detect_change, flush_event, apply_flush.
     no_defaults,
@@ -61,7 +61,7 @@ struct RawState;
 struct DerivedState;
 
 // Skip the derive entirely to fully customize your state type (see below).
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Component, Clone, PartialEq, Eq, Hash, Debug)]
 struct CustomState;
 
 impl State for CustomState {

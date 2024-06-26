@@ -16,15 +16,10 @@ use bevy_ecs::{
 
 use crate::{
     access::{CurrentRef, FlushMut, GlobalStates, NextMut, NextRef},
-    pattern::{
-        AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern, StatePattern,
-    },
+    pattern::{AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern},
 };
 
-/// A data type that can be used as a state.
-///
-/// The current state will be stored in the [`CurrentState`] component,
-/// and the next state will be stored in the specified [`NextState`] component.
+/// A [`Component`] that can be used as a state.
 ///
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
@@ -45,7 +40,7 @@ use crate::{
 /// - [`StateMut`]
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait State: 'static + Send + Sync + Sized {
+pub trait State: Component + Sized {
     /// The [`NextState`] type that determines the next state for this state type.
     type Next: NextState<State = Self>;
 
@@ -176,75 +171,6 @@ pub trait StateMutExtDefault: StateMut + Default {
 }
 
 impl<S: StateMut + Default> StateMutExtDefault for S {}
-
-/// A [`Component`] that contains the current value of the [`State`] type `S`.
-///
-/// Use [`FlushRef`](crate::access::FlushRef) or [`FlushMut`] in a system to access
-/// the next state alongside the current state.
-#[derive(Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
-pub struct CurrentState<S: State>(
-    /// The current state, or `None` if disabled.
-    pub Option<S>,
-);
-
-impl<S: State> Default for CurrentState<S> {
-    fn default() -> Self {
-        Self::disabled()
-    }
-}
-
-impl<S: State> CurrentState<S> {
-    /// Create a disabled `CurrentState`.
-    pub fn disabled() -> Self {
-        Self(None)
-    }
-
-    /// Create an enabled `CurrentState` with a specific value.
-    pub fn enabled(value: S) -> Self {
-        Self(Some(value))
-    }
-
-    /// Get a read-only reference to the current state, or `None` if disabled.
-    pub fn get(&self) -> Option<&S> {
-        self.0.as_ref()
-    }
-
-    /// Get a mutable reference to the current state, or `None` if disabled.
-    pub fn get_mut(&mut self) -> Option<&mut S> {
-        self.0.as_mut()
-    }
-
-    /// Set the current state to a new value, or `None` to disable.
-    pub fn set(&mut self, state: Option<S>) {
-        self.0 = state;
-    }
-
-    /// Get a read-only reference to the current state, or panic if disabled.
-    pub fn unwrap(&self) -> &S {
-        self.get().unwrap()
-    }
-
-    /// Get a mutable reference to the current state, or panic if disabled.
-    pub fn unwrap_mut(&mut self) -> &mut S {
-        self.get_mut().unwrap()
-    }
-
-    /// Check if the current state is disabled.
-    pub fn is_disabled(&self) -> bool {
-        self.0.is_none()
-    }
-
-    /// Check if the current state is enabled.
-    pub fn is_enabled(&self) -> bool {
-        self.0.is_some()
-    }
-
-    /// Check if the current state is enabled and matches a specific [`StatePattern`].
-    pub fn is_in<P: StatePattern<S>>(&self, pattern: &P) -> bool {
-        matches!(self.get(), Some(x) if pattern.matches(x))
-    }
-}
 
 /// A [`Component`] that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
