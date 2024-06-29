@@ -8,10 +8,9 @@ use bevy_ecs::{
 };
 
 use crate::{
-    access::{CurrentRef, FlushMut, NextMut, NextRef},
+    access::{CurrentRef, FlushMut, FlushRef, NextMut, NextRef},
     next_state::{NextState, NextStateMut, TriggerStateFlush},
     pattern::{AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern},
-    prelude::FlushRef,
 };
 
 /// A [`Resource`] that can be used as a state.
@@ -30,7 +29,7 @@ use crate::{
 /// ```
 ///
 /// The derive macro would also implement
-/// [`RegisterState`](crate::extra::app::RegisterState) for `MenuState`.
+/// [`RegisterState`](crate::setup::RegisterState) for `MenuState`.
 ///
 /// See the following extension traits with additional bounds on `Self` and [`Self::Next`](State::Next):
 ///

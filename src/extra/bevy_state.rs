@@ -41,7 +41,40 @@
 //! );
 //! ```
 
-use std::{fmt::Debug, hash::Hash, marker::PhantomData};
+#[cfg(feature = "bevy_app")]
+pub use app::*;
+
+#[cfg(feature = "bevy_app")]
+mod app {
+    use std::{fmt::Debug, hash::Hash, marker::PhantomData};
+
+    use bevy_app::{App, Plugin};
+
+    use crate::{schedule::StateFlush, state::StateMut};
+
+    use super::{schedule_bevy_state, BevyState};
+
+    /// A plugin that adds [`BevyState<S>`] propagation systems for the
+    /// [`State`](crate::state::State) type `S` to the [`StateFlush`] schedule.
+    ///
+    /// Calls [`schedule_bevy_state<S>`].
+    pub struct BevyStatePlugin<S: StateMut + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
+
+    impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {
+        fn build(&self, app: &mut App) {
+            bevy_state::app::AppExtStates::init_state::<BevyState<S>>(app);
+            schedule_bevy_state::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Default for BevyStatePlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+}
+
+use std::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
     schedule::{IntoSystemConfigs, Schedule},
@@ -64,7 +97,6 @@ pub struct BevyState<S: State + Clone + PartialEq + Eq + Hash + Debug>(
     pub Option<S>,
 );
 
-#[cfg(feature = "bevy_state")]
 impl<S: State + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
     fn default() -> Self {
         Self(None)
@@ -95,26 +127,4 @@ pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash +
         update_pyri_state.in_set(StateHook::<S>::Compute),
         update_bevy_state.in_set(StateHook::<S>::Flush),
     ));
-}
-
-/// A plugin that adds [`BevyState<S>`] propagation systems for the [`State`] type `S`
-/// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
-///
-/// Calls [`schedule_bevy_state<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct BevyStatePlugin<S: StateMut + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> bevy_app::Plugin for BevyStatePlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        bevy_state::app::AppExtStates::init_state::<BevyState<S>>(app);
-        schedule_bevy_state::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Default for BevyStatePlugin<S> {
-    fn default() -> Self {
-        Self(PhantomData)
-    }
 }

@@ -1,5 +1,76 @@
 //! Configure [`StateHook`] system sets.
 
+#[cfg(feature = "bevy_app")]
+pub use app::*;
+
+#[cfg(feature = "bevy_app")]
+mod app {
+    use std::marker::PhantomData;
+
+    use bevy_app::{App, Plugin};
+    use bevy_ecs::schedule::{InternedSystemSet, SystemSet};
+
+    use crate::state::State;
+
+    use super::{schedule_resolve_state, StateHook};
+
+    /// A plugin that configures the [`StateHook<S>`] system sets for the [`State`] type `S`
+    /// in the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    ///
+    /// To specify a dependency relative to another `State` type `T`, add
+    /// [`StateHook::<T>::Resolve`] to [`after`](Self::after) or [`before`](Self::before).
+    ///
+    /// Calls [`schedule_resolve_state<S>`].
+    pub struct ResolveStatePlugin<S: State> {
+        after: Vec<InternedSystemSet>,
+        before: Vec<InternedSystemSet>,
+        _phantom: PhantomData<S>,
+    }
+
+    impl<S: State> Plugin for ResolveStatePlugin<S> {
+        fn build(&self, app: &mut App) {
+            schedule_resolve_state::<S>(
+                app.get_schedule_mut(crate::schedule::StateFlush).unwrap(),
+                &self.after,
+                &self.before,
+            );
+        }
+    }
+
+    impl<S: State> Default for ResolveStatePlugin<S> {
+        fn default() -> Self {
+            Self {
+                after: Vec::new(),
+                before: Vec::new(),
+                _phantom: PhantomData,
+            }
+        }
+    }
+
+    impl<S: State> ResolveStatePlugin<S> {
+        /// Create a [`ResolveStatePlugin`] from `.after` and `.before` system sets.
+        pub fn new(after: Vec<InternedSystemSet>, before: Vec<InternedSystemSet>) -> Self {
+            Self {
+                after,
+                before,
+                _phantom: PhantomData,
+            }
+        }
+
+        /// Configure a `.after` system set.
+        pub fn after<T: State>(mut self) -> Self {
+            self.after.push(StateHook::<T>::Resolve.intern());
+            self
+        }
+
+        /// Configure a `.before` system set.
+        pub fn before<T: State>(mut self) -> Self {
+            self.before.push(StateHook::<T>::Resolve.intern());
+            self
+        }
+    }
+}
+
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::schedule::{InternedSystemSet, IntoSystemSetConfigs, Schedule, SystemSet};
@@ -123,64 +194,4 @@ pub fn schedule_resolve_state<S: State>(
             .chain()
             .in_set(StateHook::<S>::Flush),
     ));
-}
-
-/// A plugin that configures the [`StateHook<S>`] system sets for the [`State`] type `S`
-/// in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-///
-/// To specify a dependency relative to another `State` type `T`, add
-/// [`StateHook::<T>::Resolve`] to [`after`](Self::after) or [`before`](Self::before).
-///
-/// Calls [`schedule_resolve_state<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct ResolveStatePlugin<S: State> {
-    after: Vec<InternedSystemSet>,
-    before: Vec<InternedSystemSet>,
-    _phantom: PhantomData<S>,
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> bevy_app::Plugin for ResolveStatePlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        schedule_resolve_state::<S>(
-            app.get_schedule_mut(crate::schedule::StateFlush).unwrap(),
-            &self.after,
-            &self.before,
-        );
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> Default for ResolveStatePlugin<S> {
-    fn default() -> Self {
-        Self {
-            after: Vec::new(),
-            before: Vec::new(),
-            _phantom: PhantomData,
-        }
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> ResolveStatePlugin<S> {
-    /// Create a [`ResolveStatePlugin`] from `.after` and `.before` system sets.
-    pub fn new(after: Vec<InternedSystemSet>, before: Vec<InternedSystemSet>) -> Self {
-        Self {
-            after,
-            before,
-            _phantom: PhantomData,
-        }
-    }
-
-    /// Configure a `.after` system set.
-    pub fn after<T: State>(mut self) -> Self {
-        self.after.push(StateHook::<T>::Resolve.intern());
-        self
-    }
-
-    /// Configure a `.before` system set.
-    pub fn before<T: State>(mut self) -> Self {
-        self.before.push(StateHook::<T>::Resolve.intern());
-        self
-    }
 }

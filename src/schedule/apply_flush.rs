@@ -1,5 +1,58 @@
 //! Apply state flush by cloning the next state into the current state.
 
+#[cfg(feature = "bevy_app")]
+pub use app::*;
+
+#[cfg(feature = "bevy_app")]
+mod app {
+    use std::marker::PhantomData;
+
+    use bevy_app::{App, Plugin};
+
+    use crate::{
+        schedule::StateFlush,
+        state::{LocalState, State},
+    };
+
+    use super::{schedule_apply_flush, schedule_local_apply_flush};
+
+    /// A plugin that adds an apply flush system for the [`State`] type `S`
+    /// to the [`StateFlush`] schedule.
+    ///
+    /// Calls [`schedule_apply_flush<S>`].
+    pub struct ApplyFlushPlugin<S: State + Clone>(PhantomData<S>);
+
+    impl<S: State + Clone> Plugin for ApplyFlushPlugin<S> {
+        fn build(&self, app: &mut App) {
+            schedule_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: State + Clone> Default for ApplyFlushPlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+
+    /// A plugin that adds a local apply flush system for the [`State`] type `S`
+    /// to the [`StateFlush`] schedule.
+    ///
+    /// Calls [`schedule_local_apply_flush<S>`].
+    pub struct LocalApplyFlushPlugin<S: State + Clone>(PhantomData<S>);
+
+    impl<S: LocalState + Clone> Plugin for LocalApplyFlushPlugin<S> {
+        fn build(&self, app: &mut App) {
+            schedule_local_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: LocalState + Clone> Default for LocalApplyFlushPlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+}
+
 use std::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
@@ -85,46 +138,4 @@ pub fn schedule_local_apply_flush<S: LocalState + Clone>(schedule: &mut Schedule
             .chain()
             .in_set(ApplyFlushSet),
     );
-}
-
-/// A plugin that adds an apply flush system for the [`State`] type `S`
-/// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
-///
-/// Calls [`schedule_apply_flush<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct ApplyFlushPlugin<S: State + Clone>(std::marker::PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: State + Clone> bevy_app::Plugin for ApplyFlushPlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        schedule_apply_flush::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State + Clone> Default for ApplyFlushPlugin<S> {
-    fn default() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
-/// A plugin that adds a local apply flush system for the [`State`] type `S`
-/// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
-///
-/// Calls [`schedule_local_apply_flush<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct LocalApplyFlushPlugin<S: State + Clone>(std::marker::PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: LocalState + Clone> bevy_app::Plugin for LocalApplyFlushPlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        schedule_local_apply_flush::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: LocalState + Clone> Default for LocalApplyFlushPlugin<S> {
-    fn default() -> Self {
-        Self(std::marker::PhantomData)
-    }
 }

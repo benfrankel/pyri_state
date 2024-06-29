@@ -1,7 +1,5 @@
 //! Extra tools behind feature flags.
 
-#[cfg(feature = "bevy_app")]
-pub mod app;
 #[cfg(feature = "bevy_state")]
 pub mod bevy_state;
 #[cfg(feature = "entity_scope")]

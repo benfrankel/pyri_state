@@ -65,7 +65,7 @@ pub trait NextState: Resource {
 
     /// Create an empty next state instance.
     ///
-    /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
+    /// Used in [`AppExtState::add_state`](crate::setup::AppExtState::add_state).
     fn empty() -> Self;
 
     /// Get a read-only reference to the next state, or `None` if disabled.

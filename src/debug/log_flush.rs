@@ -1,5 +1,56 @@
 //! State flush logging tools.
 
+#[cfg(feature = "bevy_app")]
+pub use app::*;
+
+#[cfg(feature = "bevy_app")]
+mod app {
+    use std::{fmt::Debug, marker::PhantomData};
+
+    use bevy_app::{App, Plugin};
+
+    use crate::{
+        schedule::StateFlush,
+        state::{LocalState, State},
+    };
+
+    use super::{schedule_local_log_flush, schedule_log_flush};
+
+    /// A plugin that adds on-flush logging systems for the [`State`] type `S`.
+    ///
+    /// Calls [`schedule_log_flush<S>`].
+    pub struct LogFlushPlugin<S: State + Debug>(PhantomData<S>);
+
+    impl<S: State + Debug> Plugin for LogFlushPlugin<S> {
+        fn build(&self, app: &mut App) {
+            schedule_log_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: State + Debug> Default for LogFlushPlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+
+    /// A plugin that adds local on-flush logging systems for the [`State`] type `S`.
+    ///
+    /// Calls [`schedule_local_log_flush<S>`].
+    pub struct LocalLogFlushPlugin<S: LocalState + Debug>(PhantomData<S>);
+
+    impl<S: LocalState + Debug> Plugin for LocalLogFlushPlugin<S> {
+        fn build(&self, app: &mut App) {
+            schedule_local_log_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: LocalState + Debug> Default for LocalLogFlushPlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+}
+
 use std::{any::type_name, fmt::Debug};
 
 use bevy_core::FrameCount;
@@ -18,26 +69,6 @@ use crate::{
     schedule::StateHook,
     state::{LocalState, State},
 };
-
-/// A plugin that adds on-flush logging systems for the [`State`] type `S`.
-///
-/// Calls [`schedule_log_flush<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct LogFlushPlugin<S: State + Debug>(std::marker::PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: State + Debug> bevy_app::Plugin for LogFlushPlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        schedule_log_flush::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State + Debug> Default for LogFlushPlugin<S> {
-    fn default() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
 
 fn log_state_flush<S: State + Debug>(frame: Res<FrameCount>, state: FlushRef<S>) {
     let frame = frame.0;
@@ -104,26 +135,6 @@ pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
         )
             .run_if(resource_exists::<StateDebugSettings>),
     );
-}
-
-/// A plugin that adds local on-flush logging systems for the [`State`] type `S`.
-///
-/// Calls [`schedule_local_log_flush<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct LocalLogFlushPlugin<S: LocalState + Debug>(std::marker::PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: LocalState + Debug> bevy_app::Plugin for LocalLogFlushPlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        schedule_log_flush::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: LocalState + Debug> Default for LocalLogFlushPlugin<S> {
-    fn default() -> Self {
-        Self(std::marker::PhantomData)
-    }
 }
 
 fn log_local_state_flush<S: LocalState + Debug>(

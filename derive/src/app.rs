@@ -14,10 +14,10 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     let app_ty = concat(bevy_app_path.clone(), "App");
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
-    let crate_schedule_path = concat(crate_path.clone(), "schedule");
     let crate_extra_path = concat(crate_path.clone(), "extra");
-    let crate_app_path = concat(crate_extra_path.clone(), "app");
-    let register_state_trait = concat(crate_app_path.clone(), "RegisterState");
+    let crate_schedule_path = concat(crate_path.clone(), "schedule");
+    let crate_setup_path = concat(crate_path.clone(), "setup");
+    let register_state_trait = concat(crate_setup_path.clone(), "RegisterState");
 
     // Construct `ResolveStatePlugin`.
     let resolve_state = {

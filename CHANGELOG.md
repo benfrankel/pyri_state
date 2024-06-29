@@ -55,7 +55,6 @@
     - Added `schedule_log_flush` function
 - Implemented some extra features:
     - Added `extra` module
-    - Moved `app` -> `extra::app` module
     - Moved `BevyState` and related items into new `extra::bevy_state` module
     - **Implemented state scoping for entities:**
         - Added `entity_scope` feature flag
@@ -75,6 +74,7 @@
     - Renamed `RawStateExtDefault` -> `StateMutExtDefault` extension trait
     - Removed `RawStateExtEq` extension trait (see `StatePatternExtEq` instead)
 - Adjusted `AppExtState`:
+    - Renamed `app` -> `setup` module
     - Added `register_state` method
     - Renamed `add_state_` -> `add_state` method
     - Renamed `init_state_` -> `init_state` method

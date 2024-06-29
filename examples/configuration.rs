@@ -3,12 +3,13 @@
 use bevy::prelude::*;
 use pyri_state::{
     debug::log_flush::LogFlushPlugin,
-    extra::{app::RegisterState, bevy_state::BevyStatePlugin, entity_scope::EntityScopePlugin},
+    extra::{bevy_state::BevyStatePlugin, entity_scope::EntityScopePlugin},
     prelude::*,
     schedule::{
         apply_flush::ApplyFlushPlugin, detect_change::DetectChangePlugin,
         flush_event::FlushEventPlugin, resolve_state::ResolveStatePlugin,
     },
+    setup::RegisterState,
 };
 
 fn main() {

@@ -2,6 +2,38 @@
 //!
 //! Enable the `entity_scope` feature flag to use this module.
 
+#[cfg(feature = "bevy_app")]
+pub use app::*;
+
+#[cfg(feature = "bevy_app")]
+mod app {
+    use std::marker::PhantomData;
+
+    use bevy_app::{App, Plugin};
+
+    use crate::{schedule::StateFlush, state::State};
+
+    use super::schedule_entity_scope;
+
+    /// A plugin that adds a [`StateScope<S>`](super::StateScope) despawning system
+    /// for the [`State`] type `S`.
+    ///
+    /// Calls [`schedule_entity_scope<S>`].
+    pub struct EntityScopePlugin<S: State>(PhantomData<S>);
+
+    impl<S: State> Plugin for EntityScopePlugin<S> {
+        fn build(&self, app: &mut App) {
+            schedule_entity_scope::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: State> Default for EntityScopePlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+}
+
 use std::marker::PhantomData;
 
 use bevy_ecs::{
@@ -40,24 +72,4 @@ fn despawn_scoped_entities<S: State>(
 /// Used in [`EntityScopePlugin<S>`].
 pub fn schedule_entity_scope<S: State>(schedule: &mut Schedule) {
     schedule.add_systems(S::ANY.on_exit(despawn_scoped_entities::<S>));
-}
-
-/// A plugin that adds a [`StateScope<S>`] despawning system for the [`State`] type `S`.
-///
-/// Calls [`schedule_entity_scope<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct EntityScopePlugin<S: State>(PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> bevy_app::Plugin for EntityScopePlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        schedule_entity_scope::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State> Default for EntityScopePlugin<S> {
-    fn default() -> Self {
-        Self(PhantomData)
-    }
 }

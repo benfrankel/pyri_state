@@ -13,8 +13,8 @@
 //! resource and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
-//! 5. Tools are provided for state [setup](extra::app), [access],
-//! [pattern-matching](pattern), [debugging](debug), and [more](extra).
+//! 5. Tools are provided for state [setup], [access], [pattern-matching](pattern),
+//! [debugging](debug), and [more](extra).
 //!
 //! # Getting started
 //!
@@ -32,7 +32,7 @@
 //! struct Level(pub usize);
 //! ```
 //!
-//! Add [`StatePlugin`](extra::app::StatePlugin) and initialize your state type:
+//! Add [`StatePlugin`](setup::StatePlugin) and initialize your state type:
 //!
 //! ```rust
 //! app.add_plugins(StatePlugin).init_state::<Level>();
@@ -72,6 +72,7 @@ pub mod extra;
 pub mod next_state;
 pub mod pattern;
 pub mod schedule;
+pub mod setup;
 pub mod state;
 
 /// Re-exported traits and common types.
@@ -97,7 +98,7 @@ pub mod prelude {
     };
 
     #[cfg(feature = "bevy_app")]
-    pub use crate::extra::app::{AppExtState as _, StatePlugin};
+    pub use crate::setup::{AppExtState as _, StatePlugin};
 
     #[cfg(feature = "bevy_state")]
     pub use crate::extra::bevy_state::BevyState;
@@ -119,7 +120,7 @@ pub mod prelude {
     pub use crate::{add_to_split_state, extra::split::SplitState};
 
     /// A derive macro for the [`State`] and
-    /// [`RegisterState`](crate::extra::app::RegisterState) traits.
+    /// [`RegisterState`](crate::setup::RegisterState) traits.
     ///
     /// # Examples
     ///

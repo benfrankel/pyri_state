@@ -1,5 +1,62 @@
 //! Send a [`StateFlushEvent`] on state flush.
 
+#[cfg(feature = "bevy_app")]
+pub use app::*;
+
+#[cfg(feature = "bevy_app")]
+mod app {
+    use std::marker::PhantomData;
+
+    use bevy_app::{App, Plugin};
+
+    use crate::{
+        schedule::StateFlush,
+        state::{LocalState, State},
+    };
+
+    use super::{
+        schedule_flush_event, schedule_local_flush_event, LocalStateFlushEvent, StateFlushEvent,
+    };
+
+    /// A plugin that adds a [`StateFlushEvent<S>`] sending system for the [`State`] type `S`
+    /// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    ///
+    /// Calls [`schedule_flush_event<S>`].
+    pub struct FlushEventPlugin<S: State + Clone>(std::marker::PhantomData<S>);
+
+    impl<S: State + Clone> Plugin for FlushEventPlugin<S> {
+        fn build(&self, app: &mut App) {
+            app.add_event::<StateFlushEvent<S>>();
+            schedule_flush_event::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: State + Clone> Default for FlushEventPlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+
+    /// A plugin that adds a [`LocalStateFlushEvent<S>`] sending system for the [`State`] type `S`
+    /// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    ///
+    /// Calls [`schedule_local_flush_event<S>`].
+    pub struct LocalFlushEventPlugin<S: State + Clone>(PhantomData<S>);
+
+    impl<S: LocalState + Clone> Plugin for LocalFlushEventPlugin<S> {
+        fn build(&self, app: &mut App) {
+            app.add_event::<LocalStateFlushEvent<S>>();
+            schedule_local_flush_event::<S>(app.get_schedule_mut(StateFlush).unwrap());
+        }
+    }
+
+    impl<S: LocalState + Clone> Default for LocalFlushEventPlugin<S> {
+        fn default() -> Self {
+            Self(PhantomData)
+        }
+    }
+}
+
 use bevy_ecs::{
     entity::Entity,
     event::{Event, EventWriter},
@@ -83,48 +140,4 @@ fn send_local_flush_event<S: LocalState + Clone>(
 /// Used in [`LocalFlushEventPlugin<S>`].
 pub fn schedule_local_flush_event<S: LocalState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(send_local_flush_event::<S>.in_set(StateHook::<S>::Flush));
-}
-
-/// A plugin that adds a [`StateFlushEvent<S>`] sending system for the [`State`] type `S`
-/// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
-///
-/// Calls [`schedule_flush_event<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct FlushEventPlugin<S: State + Clone>(std::marker::PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: State + Clone> bevy_app::Plugin for FlushEventPlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        app.add_event::<StateFlushEvent<S>>();
-        schedule_flush_event::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: State + Clone> Default for FlushEventPlugin<S> {
-    fn default() -> Self {
-        Self(std::marker::PhantomData)
-    }
-}
-
-/// A plugin that adds a [`LocalStateFlushEvent<S>`] sending system for the [`State`] type `S`
-/// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
-///
-/// Calls [`schedule_local_flush_event<S>`].
-#[cfg(feature = "bevy_app")]
-pub struct LocalFlushEventPlugin<S: State + Clone>(std::marker::PhantomData<S>);
-
-#[cfg(feature = "bevy_app")]
-impl<S: LocalState + Clone> bevy_app::Plugin for LocalFlushEventPlugin<S> {
-    fn build(&self, app: &mut bevy_app::App) {
-        app.add_event::<LocalStateFlushEvent<S>>();
-        schedule_local_flush_event::<S>(app.get_schedule_mut(crate::schedule::StateFlush).unwrap());
-    }
-}
-
-#[cfg(feature = "bevy_app")]
-impl<S: LocalState + Clone> Default for LocalFlushEventPlugin<S> {
-    fn default() -> Self {
-        Self(std::marker::PhantomData)
-    }
 }
