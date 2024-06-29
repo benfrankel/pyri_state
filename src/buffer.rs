@@ -1,8 +1,10 @@
 //! Store the [`NextState`] as a [`StateBuffer`].
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    system::SystemParamItem,
+    system::{Resource, SystemParamItem},
     world::{FromWorld, World},
 };
 
@@ -15,8 +17,12 @@ use crate::{
 ///
 /// This is the default [`State::Next`] type set by the
 /// [derive macro](pyri_state_derive::State).
-#[derive(Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[derive(Resource, Component, Debug)]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Resource)
+)]
 pub struct StateBuffer<S: State>(
     /// The next state, or `None` if disabled.
     pub Option<S>,

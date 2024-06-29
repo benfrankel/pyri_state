@@ -4,23 +4,25 @@
 //!
 //! This can be used to implement a back button, for example.
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    query::With,
-    system::{Query, SystemParamItem},
+    system::{ResMut, Resource, SystemParamItem},
     world::{FromWorld, World},
 };
 
-use crate::{
-    access::GlobalStates,
-    state::{NextState, NextStateMut, State},
-};
+use crate::state::{NextState, NextStateMut, State};
 
 /// A [`NextState`] type that stores the [`State`] type `S` in a stack with the next state on top.
 ///
 /// Using this as [`State::Next`] unlocks the [`StateStackMut`] extension trait for `S`.
-#[derive(Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[derive(Resource, Component, Debug)]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Resource)
+)]
 pub struct StateStack<S: State> {
     stack: Vec<Option<S>>,
     bases: Vec<usize>,
@@ -159,23 +161,23 @@ impl<S: State> StateStack<S> {
 /// - [`StateStackMutExtClone`]
 pub trait StateStackMut: State {
     /// A system that pushes a new base state index to the stack.
-    fn acquire(mut stack: Query<&mut StateStack<Self>, With<GlobalStates>>) {
-        stack.single_mut().acquire();
+    fn acquire(mut stack: ResMut<StateStack<Self>>) {
+        stack.acquire();
     }
 
     /// A system that pops the top base state index of the stack.
-    fn release(mut stack: Query<&mut StateStack<Self>, With<GlobalStates>>) {
-        stack.single_mut().release();
+    fn release(mut stack: ResMut<StateStack<Self>>) {
+        stack.release();
     }
 
     /// A system that clears the stack down to the base state.
-    fn clear(mut stack: Query<&mut StateStack<Self>, With<GlobalStates>>) {
-        stack.single_mut().clear();
+    fn clear(mut stack: ResMut<StateStack<Self>>) {
+        stack.clear();
     }
 
     /// A system that pops the stack if it's above the base state.
-    fn pop(mut stack: Query<&mut StateStack<Self>, With<GlobalStates>>) {
-        stack.single_mut().pop();
+    fn pop(mut stack: ResMut<StateStack<Self>>) {
+        stack.pop();
     }
 }
 
@@ -184,23 +186,23 @@ impl<S: State<Next = StateStack<S>>> StateStackMut for S {}
 /// An extension trait for [`StateStackMut`] types that are also [`Clone`].
 pub trait StateStackMutExtClone: StateStackMut + Clone {
     /// A system that pushes a state to the top of the stack.
-    fn push(self) -> impl Fn(Query<&mut StateStack<Self>, With<GlobalStates>>) {
+    fn push(self) -> impl Fn(ResMut<StateStack<Self>>) {
         move |mut stack| {
-            stack.single_mut().push(self.clone());
+            stack.push(self.clone());
         }
     }
 
     /// A system that clears and then pushes a state to the top of the stack.
-    fn clear_push(self) -> impl Fn(Query<&mut StateStack<Self>, With<GlobalStates>>) {
+    fn clear_push(self) -> impl Fn(ResMut<StateStack<Self>>) {
         move |mut stack| {
-            stack.single_mut().clear().push(self.clone());
+            stack.clear().push(self.clone());
         }
     }
 
     /// A system that pops and then pushes a state to the top of the stack.
-    fn pop_push(self) -> impl Fn(Query<&mut StateStack<Self>, With<GlobalStates>>) {
+    fn pop_push(self) -> impl Fn(ResMut<StateStack<Self>>) {
         move |mut stack| {
-            stack.single_mut().pop().push(self.clone());
+            stack.pop().push(self.clone());
         }
     }
 }

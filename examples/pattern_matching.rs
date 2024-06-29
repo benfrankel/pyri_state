@@ -53,7 +53,7 @@ fn main() {
         .run();
 }
 
-#[derive(State, Component, Clone, PartialEq, Eq, Debug)]
+#[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
 #[state(log_flush)]
 struct Level(usize);
 

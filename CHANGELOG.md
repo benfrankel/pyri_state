@@ -18,13 +18,23 @@
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
 - **Implemented states as components:**
-    - Added `GlobalStates` marker component
-    - Made `State` trait require `Component`
+    - Added `local` derive macro option
+    - Made `State` trait require `Resource`
+    - Added `LocalState` marker trait
+    - Added local state plugin variants:
+        - Added `LocalDetectChangePlugin` plugin
+        - Added `LocalFlushEventPlugin` plugin
+        - Added `LocalApplyFlushPlugin` plugin
+        - Added `LocalLogFlushPlugin` plugin
+        - Added `schedule_local_detect_change` function
+        - Added `schedule_local_flush_event` function
+        - Added `schedule_local_apply_flush` function
+        - Added `schedule_local_log_flush` function
 - **Implemented custom next state storage:**
     - Added `next(...)` derive macro option
     - Added `NextState` trait
     - Added `NextStateMut` trait
-    - Replaced `NextState_` resource with `TriggerStateFlush` and `StateBuffer` components
+    - Replaced `NextState_` resource with `StateBuffer` and `TriggerStateFlush` resource / components
 - Implemented extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
@@ -42,13 +52,13 @@
         - Added `schedule_log_flush` function
     - **Implemented state stack as a next state storage type:**
         - Added `stack` feature flag
-        - Added `StateStack` component
+        - Added `StateStack` resource / component
         - Added `StateStackMut` extension trait
         - Added `StateStackMutExtClone` extension trait
     - **Implemented state sequence as a next state storage type:**
         - Added `sequence` feature flag
         - Added `StateSequence` resource
-        - Added `StateSequenceIndex` component
+        - Added `StateSequenceIndex` resource / component
         - Added `StateSequenceIndexMut` extension trait
     - **Implemented split state helper:**
         - Added `split` feature flag
@@ -57,6 +67,7 @@
 - Adjusted state traits:
     - Removed `State_` trait
     - Renamed `RawState` -> `State` trait
+    - Added `StateExtEq` extension trait
     - Added `StateMut` extension trait
     - Renamed `RawStateExtClone` -> `StateMutExtClone` extension trait
     - Renamed `RawStateExtDefault` -> `StateMutExtDefault` extension trait

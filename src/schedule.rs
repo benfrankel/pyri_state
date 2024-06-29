@@ -7,17 +7,16 @@ use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 use bevy_ecs::{
     entity::Entity,
     event::{Event, EventWriter},
-    query::With,
     schedule::{
-        common_conditions::not, InternedSystemSet, IntoSystemConfigs, IntoSystemSetConfigs,
-        Schedule, ScheduleLabel, SystemSet,
+        common_conditions::not, Condition, InternedSystemSet, IntoSystemConfigs,
+        IntoSystemSetConfigs, Schedule, ScheduleLabel, SystemSet,
     },
     system::{Commands, Query, StaticSystemParam},
 };
 
 use crate::{
-    access::{FlushRef, GlobalStates},
-    state::{NextState, State, TriggerStateFlush},
+    access::{CurrentMut, FlushRef, NextRef},
+    state::{LocalState, NextState, State, StateExtEq as _, TriggerStateFlush},
 };
 
 /// The schedule that handles all [`State`] flush logic, added after
@@ -36,8 +35,8 @@ pub struct StateFlush;
 /// 1. [`Resolve`](Self::Resolve) (before or after other `Resolve` system sets based on
 /// state dependencies, and before [`ApplyFlushSet`])
 ///     1. [`Compute`](Self::Compute)
-///     2. [`Trigger`](Self::Trigger) (if not yet triggered)
-///     3. [`Flush`](Self::Flush) (if triggered)
+///     2. [`Trigger`](Self::Trigger)
+///     3. [`Flush`](Self::Flush)
 ///         1. [`Exit`](Self::Exit)
 ///         2. [`Trans`](Self::Trans)
 ///         3. [`Enter`](Self::Enter)
@@ -122,10 +121,18 @@ pub struct StateFlushEvent<S: State> {
     pub new: Option<S>,
 }
 
-pub(crate) fn was_triggered<S: State>(
-    trigger: Query<&TriggerStateFlush<S>, With<GlobalStates>>,
-) -> bool {
-    trigger.single().0
+/// An event sent whenever a local [`State`] type `S` flushes.
+///
+/// Added [by default](pyri_state_derive::State) by
+/// [`LocalFlushEventPlugin<S>`](crate::extra::app::FlushEventPlugin).
+#[derive(Event)]
+pub struct LocalStateFlushEvent<S: LocalState> {
+    /// The entity for which the state flush occurred.
+    pub entity: Entity,
+    /// The state before the flush, or `None` if disabled.
+    pub old: Option<S>,
+    /// The state after the flush, or `None` if disabled.
+    pub new: Option<S>,
 }
 
 /// Configure [`StateHook<S>`] system sets for the [`State`] type `S` in a schedule.
@@ -152,8 +159,10 @@ pub fn schedule_resolve_state<S: State>(
         StateHook::<S>::Resolve.before(ApplyFlushSet),
         (
             StateHook::<S>::Compute,
-            StateHook::<S>::Trigger.run_if(not(was_triggered::<S>)),
-            StateHook::<S>::Flush.run_if(was_triggered::<S>),
+            // Systems in this system set should only run if not triggered.
+            StateHook::<S>::Trigger,
+            // Systems in this system set should only run if triggered.
+            StateHook::<S>::Flush,
         )
             .chain()
             .in_set(StateHook::<S>::Resolve),
@@ -173,9 +182,27 @@ pub fn schedule_resolve_state<S: State>(
 pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
-            .run_if(|state: FlushRef<S>| matches!(state.get(), (x, y) if x != y))
+            .run_if(not(S::is_triggered).and_then(S::will_change))
             .in_set(StateHook::<S>::Trigger),
     );
+}
+
+fn local_detect_change<S: LocalState + Eq>(
+    next_param: StaticSystemParam<<S::Next as NextState>::Param>,
+    mut state_query: Query<(Option<&S>, &S::Next, &mut TriggerStateFlush<S>)>,
+) {
+    for (current, next, mut trigger) in &mut state_query {
+        if !trigger.0 && current != next.get_state(&next_param) {
+            trigger.0 = true;
+        }
+    }
+}
+
+/// Add local change detection systems for the [`State`] type `S` to a schedule.
+///
+/// Used in [`LocalDetectChangePlugin<S>`](crate::extra::app::LocalDetectChangePlugin).
+pub fn schedule_local_detect_change<S: LocalState + Eq>(schedule: &mut Schedule) {
+    schedule.add_systems(local_detect_change::<S>.in_set(StateHook::<S>::Trigger));
 }
 
 fn send_flush_event<S: State + Clone>(
@@ -193,15 +220,76 @@ fn send_flush_event<S: State + Clone>(
 ///
 /// Used in [`FlushEventPlugin<S>`](crate::extra::app::FlushEventPlugin).
 pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(send_flush_event::<S>.in_set(StateHook::<S>::Flush));
+    schedule.add_systems(
+        send_flush_event::<S>
+            .run_if(S::is_triggered)
+            .in_set(StateHook::<S>::Flush),
+    );
+}
+
+fn send_local_flush_event<S: LocalState + Clone>(
+    next_param: StaticSystemParam<<S::Next as NextState>::Param>,
+    state_query: Query<(Entity, Option<&S>, &S::Next, &TriggerStateFlush<S>)>,
+    mut events: EventWriter<LocalStateFlushEvent<S>>,
+) {
+    for (entity, current, next, flush) in &state_query {
+        if !flush.0 {
+            continue;
+        }
+
+        events.send(LocalStateFlushEvent {
+            entity,
+            old: current.cloned(),
+            new: next.get_state(&next_param).cloned(),
+        });
+    }
+}
+
+/// Add a local [`StateFlushEvent<S>`] sending system for the [`State`] type `S` to a schedule.
+///
+/// Used in [`LocalFlushEventPlugin<S>`](crate::extra::app::LocalFlushEventPlugin).
+pub fn schedule_local_flush_event<S: LocalState + Clone>(schedule: &mut Schedule) {
+    schedule.add_systems(send_local_flush_event::<S>.in_set(StateHook::<S>::Flush));
 }
 
 fn apply_flush<S: State + Clone>(
     mut commands: Commands,
-    next_param: StaticSystemParam<<S::Next as NextState>::Param>,
-    mut state_query: Query<(Entity, Option<&mut S>, &S::Next)>,
+    mut current: CurrentMut<S>,
+    next: NextRef<S>,
 ) {
-    for (entity, current, next) in &mut state_query {
+    match (current.get_mut(), next.get()) {
+        (Some(x), Some(y)) => *x = y.clone(),
+        (Some(_), None) => {
+            commands.remove_resource::<S>();
+        }
+        (None, Some(y)) => {
+            commands.insert_resource(y.clone());
+        }
+        _ => (),
+    }
+}
+
+/// Add an apply flush system for the [`State`] type `S` to a schedule.
+///
+/// Used in [`ApplyFlushPlugin<S>`](crate::extra::app::ApplyFlushPlugin).
+pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
+    schedule.add_systems(
+        (apply_flush::<S>, S::reset_trigger)
+            .run_if(S::is_triggered)
+            .in_set(ApplyFlushSet),
+    );
+}
+
+fn local_apply_flush<S: LocalState + Clone>(
+    mut commands: Commands,
+    next_param: StaticSystemParam<<S::Next as NextState>::Param>,
+    mut state_query: Query<(Entity, Option<&mut S>, &S::Next, &TriggerStateFlush<S>)>,
+) {
+    for (entity, current, next, flush) in &mut state_query {
+        if !flush.0 {
+            continue;
+        }
+
         match (current, next.get_state(&next_param)) {
             (Some(mut x), Some(y)) => *x = y.clone(),
             (Some(_), None) => {
@@ -215,13 +303,19 @@ fn apply_flush<S: State + Clone>(
     }
 }
 
-/// Add an apply flush system for the [`State`] type `S` to a schedule.
+fn local_reset_trigger<S: LocalState>(mut state_query: Query<&mut TriggerStateFlush<S>>) {
+    for mut trigger in &mut state_query {
+        trigger.0 = false;
+    }
+}
+
+/// Add a local apply flush system for the [`State`] type `S` to a schedule.
 ///
-/// Used in [`ApplyFlushPlugin<S>`](crate::extra::app::ApplyFlushPlugin).
-pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
+/// Used in [`LocalApplyFlushPlugin<S>`](crate::extra::app::LocalApplyFlushPlugin).
+pub fn schedule_local_apply_flush<S: LocalState + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
-        (apply_flush::<S>, S::relax)
-            .run_if(was_triggered::<S>)
+        (local_apply_flush::<S>, local_reset_trigger::<S>)
+            .chain()
             .in_set(ApplyFlushSet),
     );
 }

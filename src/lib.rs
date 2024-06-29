@@ -5,7 +5,8 @@
 //!
 //! # Overview
 //!
-//! 1. The current state is stored in a [`CurrentState`](state::CurrentState) resource.
+//! 1. The current state is a [`Resource`](bevy_ecs::system::Resource) or
+//! [`Component`](bevy_ecs::component::Component) that implements [`State`](state::State).
 //! 2. The next state is stored in a [`StateBuffer`](buffer::StateBuffer) resource by default
 //! (see [`NextState`](state::NextState) for more information).
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
@@ -27,7 +28,7 @@
 //! [derive macro](pyri_state_derive::State):
 //!
 //! ```rust
-//! #[derive(State, Clone, PartialEq, Eq, Default)]
+//! #[derive(Resource, State, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
 //! ```
 //!
@@ -80,7 +81,7 @@ pub mod state;
 /// ```
 pub mod prelude {
     pub use crate::{
-        access::{CurrentMut, CurrentRef, FlushMut, FlushRef, GlobalStates, NextMut, NextRef},
+        access::{CurrentMut, CurrentRef, FlushMut, FlushRef, NextMut, NextRef},
         buffer::StateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
@@ -88,7 +89,9 @@ pub mod prelude {
         },
         schedule::{StateFlush, StateFlushEvent},
         state,
-        state::{State, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _},
+        state::{
+            State, StateExtEq as _, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
+        },
     };
 
     #[cfg(feature = "bevy_app")]
@@ -111,21 +114,22 @@ pub mod prelude {
     #[cfg(feature = "split")]
     pub use crate::{add_to_split_state, extra::split::SplitState};
 
-    /// A derive macro for the [`State`] and [`AddState`](crate::extra::app::AddState) traits.
+    /// A derive macro for the [`State`] and
+    /// [`RegisterState`](crate::extra::app::RegisterState) traits.
     ///
     /// # Examples
     ///
-    /// The derive macro requires `Clone`, `PartialEq`, and `Eq` by default:
+    /// The derive macro requires `Resource`, `Clone`, `PartialEq`, and `Eq`:
     ///
     /// ```rust
-    /// #[derive(State, Clone, PartialEq, Eq)]
+    /// #[derive(Resource, State, Clone, PartialEq, Eq)]
     /// enum GameState { ... }
     /// ```
     ///
-    /// They can be omitted if you disable the default options:
+    /// Most of them can be omitted if you disable the default options:
     ///
     /// ```rust
-    /// #[derive(State)]
+    /// #[derive(Resource, State)]
     /// #[state(no_defaults)]
     /// struct RawState;
     /// ```
@@ -137,6 +141,8 @@ pub mod prelude {
     /// #[state(
     ///     // Disable default plugins: detect_change, flush_event, apply_flush.
     ///     no_defaults,
+    ///     // Support local state (requires Component).
+    ///     local,
     ///     // Trigger a flush on any state change (requires PartialEq, Eq).
     ///     detect_change,
     ///     // Send an event on flush (requires Clone).

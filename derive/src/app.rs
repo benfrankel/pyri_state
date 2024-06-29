@@ -56,38 +56,55 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     };
 
     // Construct simple plugins.
-    let simple_plugin = |path: &Path, ty_prefix: &str, enable: bool| {
-        if enable {
-            let state_plugin_ty = concat(path.clone(), &format!("{ty_prefix}Plugin"));
-            quote! { #state_plugin_ty::<Self>::default(), }
-        } else {
-            quote! {}
+    let plugin = |path: &Path, ty_prefix: &str, enable: bool, local: bool| {
+        if !enable {
+            return quote! {};
+        }
+
+        let state_plugin_ty = concat(path.clone(), &format!("{ty_prefix}Plugin"));
+        let state_plugin = quote! { #state_plugin_ty::<Self>::default(), };
+        if !local || !attrs.local {
+            return state_plugin;
+        }
+
+        let local_state_plugin_ty = concat(path.clone(), &format!("Local{ty_prefix}Plugin"));
+        let local_state_plugin = quote! { #local_state_plugin_ty::<Self>::default(), };
+
+        quote! {
+            #state_plugin
+            #local_state_plugin
         }
     };
-    let detect_change = simple_plugin(&crate_app_path, "DetectChange", attrs.detect_change);
-    let flush_event = simple_plugin(&crate_app_path, "FlushEvent", attrs.flush_event);
+
+    let detect_change = plugin(&crate_app_path, "DetectChange", attrs.detect_change, true);
+    let flush_event = plugin(&crate_app_path, "FlushEvent", attrs.flush_event, true);
     #[cfg(not(feature = "debug"))]
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
     let log_flush = {
         let crate_debug_path = concat(crate_extra_path.clone(), "debug");
-        simple_plugin(&crate_debug_path, "LogFlush", attrs.log_flush)
+        plugin(&crate_debug_path, "LogFlush", attrs.log_flush, true)
     };
     #[cfg(not(feature = "bevy_state"))]
     let bevy_state = quote! {};
     #[cfg(feature = "bevy_state")]
     let bevy_state = {
         let crate_bevy_state_path = concat(crate_extra_path.clone(), "bevy_state");
-        simple_plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state)
+        plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state, false)
     };
     #[cfg(not(feature = "entity_scope"))]
     let entity_scope = quote! {};
     #[cfg(feature = "entity_scope")]
     let entity_scope = {
         let crate_entity_scope_path = concat(crate_extra_path.clone(), "entity_scope");
-        simple_plugin(&crate_entity_scope_path, "EntityScope", attrs.entity_scope)
+        plugin(
+            &crate_entity_scope_path,
+            "EntityScope",
+            attrs.entity_scope,
+            false,
+        )
     };
-    let apply_flush = simple_plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush);
+    let apply_flush = plugin(&crate_app_path, "ApplyFlush", attrs.apply_flush, true);
 
     quote! {
         impl #impl_generics #register_state_trait for #ty_name #ty_generics #where_clause {

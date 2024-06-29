@@ -2,30 +2,29 @@
 //!
 //! Enable the `bevy_app` feature flag to use this module.
 //!
-//! See the [derive macro](pyri_state_derive::State) for an easy way to impl [`AddState`] and
-//! enable the plugins provided by this module.
+//! See the [derive macro](pyri_state_derive::State) for an easy way to implement
+//! [`RegisterState`] and enable the plugins provided by this module.
 
 use std::marker::PhantomData;
 
 use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
 use bevy_ecs::{
     schedule::{InternedSystemSet, SystemSet},
-    world::{FromWorld, World},
+    world::FromWorld,
 };
 
 use crate::{
-    access::GlobalStatesEntity,
     schedule::{
-        schedule_apply_flush, schedule_detect_change, schedule_flush_event, schedule_resolve_state,
-        StateFlush, StateFlushEvent, StateHook,
+        schedule_apply_flush, schedule_detect_change, schedule_flush_event,
+        schedule_local_apply_flush, schedule_local_detect_change, schedule_local_flush_event,
+        schedule_resolve_state, LocalStateFlushEvent, StateFlush, StateFlushEvent, StateHook,
     },
-    state::{NextState, State, TriggerStateFlush},
+    state::{LocalState, NextState, State, TriggerStateFlush},
 };
 
 /// A plugin that performs the required setup for [`State`] types to function:
 ///
 /// - Adds the [`StateFlush`] schedule to the [`MainScheduleOrder`] after [`PreUpdate`].
-/// - Spawns the [`GlobalStates`](crate::access::GlobalStates) entity.
 /// - Adds the [`bevy_state` plugin](bevy_state::app::StatesPlugin) if the
 /// `bevy_state` feature is enabled.
 pub struct StatePlugin;
@@ -38,9 +37,6 @@ impl Plugin for StatePlugin {
             .resource_mut::<MainScheduleOrder>()
             .insert_after(PreUpdate, StateFlush);
 
-        // Spawn the `GlobalStates` entity.
-        app.init_resource::<GlobalStatesEntity>();
-
         // Add the `bevy_state` plugin.
         #[cfg(feature = "bevy_state")]
         app.add_plugins(bevy_state::app::StatesPlugin);
@@ -52,59 +48,55 @@ pub trait AppExtState {
     /// Register `S` without initializing it.
     fn register_state<S: RegisterState>(&mut self) -> &mut Self;
 
-    /// Initialize `S` with empty next state.
+    /// Initialize `S` with an empty next state value.
     ///
     /// Calls [`S::Next::empty`](NextState::empty).
     fn add_state<S: RegisterState>(&mut self) -> &mut Self;
 
-    /// Initialize `S` with default next state.
+    /// Initialize `S` with a default next state value.
     fn init_state<S: RegisterState<Next: FromWorld>>(&mut self) -> &mut Self;
 
-    /// Initialize `S` with specific next state.
+    /// Initialize `S` with a specific next state value.
     fn insert_state<T: NextState<State: RegisterState>>(&mut self, next: T) -> &mut Self;
 }
 
-fn state_exists<S: State>(world: &World) -> bool {
-    let global = world.resource::<GlobalStatesEntity>().0;
-    world.entity(global).contains::<TriggerStateFlush<S>>()
+fn state_exists<S: State>(app: &App) -> bool {
+    app.world().contains_resource::<TriggerStateFlush<S>>()
 }
 
-fn insert_state_helper<T: NextState<State: RegisterState>>(app: &mut App, next: Option<T>) {
-    let global = app.world().resource::<GlobalStatesEntity>().0;
-    app.world_mut().entity_mut(global).insert((
-        next.unwrap_or_else(T::empty),
-        TriggerStateFlush::<T::State>::default(),
-    ));
+fn insert_state<T: NextState<State: RegisterState>>(app: &mut App, next: Option<T>) {
+    app.insert_resource(next.unwrap_or_else(T::empty))
+        .init_resource::<TriggerStateFlush<T::State>>();
 }
 
 impl AppExtState for App {
     fn register_state<S: RegisterState>(&mut self) -> &mut Self {
-        if !state_exists::<S>(self.world()) {
+        if !state_exists::<S>(self) {
             S::register_state(self);
         }
         self
     }
 
     fn add_state<S: RegisterState>(&mut self) -> &mut Self {
-        if !state_exists::<S>(self.world()) {
-            insert_state_helper(self, None::<S::Next>);
+        if !state_exists::<S>(self) {
+            insert_state(self, None::<S::Next>);
             S::register_state(self);
         }
         self
     }
 
     fn init_state<S: RegisterState<Next: FromWorld>>(&mut self) -> &mut Self {
-        if !state_exists::<S>(self.world()) {
+        if !state_exists::<S>(self) {
             let next = S::Next::from_world(self.world_mut());
-            insert_state_helper(self, Some(next));
+            insert_state(self, Some(next));
             S::register_state(self);
         }
         self
     }
 
     fn insert_state<T: NextState<State: RegisterState>>(&mut self, next: T) -> &mut Self {
-        insert_state_helper(self, Some(next));
-        if !state_exists::<T::State>(self.world()) {
+        insert_state(self, Some(next));
+        if !state_exists::<T::State>(self) {
             T::State::register_state(self);
         }
         self
@@ -114,16 +106,6 @@ impl AppExtState for App {
 /// A [`State`] type that can be registered with an [`App`].
 pub trait RegisterState: State {
     /// Register this state type with the app.
-    ///
-    /// The following plugins may be useful when implementing this method:
-    ///
-    /// - [`ResolveStatePlugin<Self>`]
-    /// - [`DetectChangePlugin<Self>`]
-    /// - [`FlushEventPlugin<Self>`]
-    /// - [`LogFlushPlugin<Self>`](crate::extra::debug::LogFlushPlugin)
-    /// - [`BevyStatePlugin<Self>`](crate::extra::bevy_state::BevyStatePlugin)
-    /// - [`EntityScopePlugin<Self>`](crate::extra::entity_scope::EntityScopePlugin)
-    /// - [`ApplyFlushPlugin<Self>`]
     fn register_state(app: &mut App);
 }
 
@@ -183,7 +165,7 @@ impl<S: State> ResolveStatePlugin<S> {
     }
 }
 
-/// A plugin that adds change detection systems for the [`State`] type `S`
+/// A plugin that adds a change detection system for the [`State`] type `S`
 /// to the [`StateFlush`] schedule.
 ///
 /// Calls [`schedule_detect_change<S>`].
@@ -196,6 +178,24 @@ impl<S: State + Eq> Plugin for DetectChangePlugin<S> {
 }
 
 impl<S: State + Eq> Default for DetectChangePlugin<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
+
+/// A plugin that adds a local change detection system for the [`State`] type `S`
+/// to the [`StateFlush`] schedule.
+///
+/// Calls [`schedule_local_detect_change<S>`].
+pub struct LocalDetectChangePlugin<S: LocalState + Eq>(PhantomData<S>);
+
+impl<S: LocalState + Eq> Plugin for LocalDetectChangePlugin<S> {
+    fn build(&self, app: &mut App) {
+        schedule_local_detect_change::<S>(app.get_schedule_mut(StateFlush).unwrap());
+    }
+}
+
+impl<S: LocalState + Eq> Default for LocalDetectChangePlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }
@@ -220,6 +220,25 @@ impl<S: State + Clone> Default for FlushEventPlugin<S> {
     }
 }
 
+/// A plugin that adds a [`LocalStateFlushEvent<S>`] sending system for the [`State`] type `S`
+/// to the [`StateFlush`] schedule.
+///
+/// Calls [`schedule_local_flush_event<S>`].
+pub struct LocalFlushEventPlugin<S: State + Clone>(PhantomData<S>);
+
+impl<S: LocalState + Clone> Plugin for LocalFlushEventPlugin<S> {
+    fn build(&self, app: &mut App) {
+        app.add_event::<LocalStateFlushEvent<S>>();
+        schedule_local_flush_event::<S>(app.get_schedule_mut(StateFlush).unwrap());
+    }
+}
+
+impl<S: LocalState + Clone> Default for LocalFlushEventPlugin<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
+
 /// A plugin that adds an apply flush system for the [`State`] type `S`
 /// to the [`StateFlush`] schedule.
 ///
@@ -233,6 +252,24 @@ impl<S: State + Clone> Plugin for ApplyFlushPlugin<S> {
 }
 
 impl<S: State + Clone> Default for ApplyFlushPlugin<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
+
+/// A plugin that adds a local apply flush system for the [`State`] type `S`
+/// to the [`StateFlush`] schedule.
+///
+/// Calls [`schedule_local_apply_flush<S>`].
+pub struct LocalApplyFlushPlugin<S: State + Clone>(PhantomData<S>);
+
+impl<S: LocalState + Clone> Plugin for LocalApplyFlushPlugin<S> {
+    fn build(&self, app: &mut App) {
+        schedule_local_apply_flush::<S>(app.get_schedule_mut(StateFlush).unwrap());
+    }
+}
+
+impl<S: LocalState + Clone> Default for LocalApplyFlushPlugin<S> {
     fn default() -> Self {
         Self(PhantomData)
     }

@@ -37,12 +37,12 @@ fn main() {
         .run();
 }
 
-#[derive(State, Component, Clone, PartialEq, Eq, Default)]
+#[derive(Resource, State, Clone, PartialEq, Eq, Default)]
 // The default `NextState` type is `StateBuffer<Self>`, which is a newtyped `Option<Self>`.
 //#[state(next(StateBuffer<Self>))]
 struct MyBufferedState;
 
-#[derive(State, Component, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(Resource, State, Clone, PartialEq, Eq, Debug, Default)]
 // You can easily swap in a `StateStack<Self>` instead, for example.
 #[state(log_flush, next(StateStack<Self>))]
 enum MyStackedState {
@@ -52,7 +52,7 @@ enum MyStackedState {
 }
 
 // You can define your own fully custom next state type:
-#[derive(Component)]
+#[derive(Resource, Component)]
 pub struct StateSwap<S: State>([Option<S>; 2]);
 
 impl<S: State> NextState for StateSwap<S> {
@@ -97,8 +97,8 @@ impl<S: State> NextStateMut for StateSwap<S> {
 // Define a custom extension trait to attach extra systems and run conditions to
 // `State` types using your `NextState` type.
 pub trait StateSwapMut: State {
-    fn swap(mut swap: Query<&mut StateSwap<Self>, With<GlobalStates>>) {
-        let [left, right] = &mut swap.single_mut().0;
+    fn swap(mut swap: ResMut<StateSwap<Self>>) {
+        let [left, right] = &mut swap.0;
         std::mem::swap(left, right);
     }
 }
@@ -106,7 +106,7 @@ pub trait StateSwapMut: State {
 // Blanket impl the trait.
 impl<S: State<Next = StateSwap<S>>> StateSwapMut for S {}
 
-#[derive(State, Component, Clone, PartialEq, Eq, Debug)]
+#[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
 // Now you can use `StateSwap<Self>` as a first-class custom next state type!
 #[state(log_flush, next(StateSwap<Self>))]
 enum MySwappedState {

@@ -11,52 +11,23 @@
 //!
 //! \* NOTE: Don't mutate the current state directly unless you know what you're doing.
 
-use bevy_core::Name;
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    query::With,
-    system::{Query, Resource, StaticSystemParam, SystemParam},
-    world::{FromWorld, Mut, World},
-};
+use bevy_ecs::system::{Res, ResMut, StaticSystemParam, SystemParam};
 
 use crate::{
     pattern::{StatePattern, StateTransPattern},
     state::{NextState, NextStateMut, State, StateMut, TriggerStateFlush},
 };
 
-/// A marker [`Component`] for the global states entity spawned by
-/// [`StatePlugin`](crate::extra::app::StatePlugin).
-#[derive(Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
-pub struct GlobalStates;
-
-#[derive(Resource, Debug)]
-#[cfg_attr(
-    feature = "bevy_reflect",
-    derive(bevy_reflect::Reflect),
-    reflect(Resource)
-)]
-pub(crate) struct GlobalStatesEntity(pub Entity);
-
-impl FromWorld for GlobalStatesEntity {
-    fn from_world(world: &mut World) -> Self {
-        Self(world.spawn((Name::new("GlobalStates"), GlobalStates)).id())
-    }
-}
-
 // TODO: Manually impl `SystemParam` to skip the query and contain `Option<&S>` directly (if that's possible).
 // TODO: Manually impl `QueryData` as well.
 /// A [`SystemParam`] with read-only access to the current value of the [`State`] type `S`.
 #[derive(SystemParam)]
-pub struct CurrentRef<'w, 's, S: State>(Query<'w, 's, &'static S, With<GlobalStates>>);
+pub struct CurrentRef<'w, S: State>(Option<Res<'w, S>>);
 
-impl<S: State> CurrentRef<'_, '_, S> {
+impl<S: State> CurrentRef<'_, S> {
     /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.0.get_single().ok()
+        self.0.as_deref()
     }
 
     /// Get a read-only reference to the current state, or panic if disabled.
@@ -66,12 +37,12 @@ impl<S: State> CurrentRef<'_, '_, S> {
 
     /// Check if the current state is disabled.
     pub fn is_disabled(&self) -> bool {
-        self.0.is_empty()
+        self.0.is_none()
     }
 
     /// Check if the current state is enabled.
     pub fn is_enabled(&self) -> bool {
-        !self.0.is_empty()
+        self.0.is_some()
     }
 
     /// Check if the current state is enabled and matches a specific [`StatePattern`].
@@ -84,17 +55,17 @@ impl<S: State> CurrentRef<'_, '_, S> {
 ///
 /// NOTE: Don't mutate the current state directly unless you know what you're doing.
 #[derive(SystemParam)]
-pub struct CurrentMut<'w, 's, S: State>(Query<'w, 's, &'static mut S, With<GlobalStates>>);
+pub struct CurrentMut<'w, S: State>(Option<ResMut<'w, S>>);
 
-impl<S: State> CurrentMut<'_, '_, S> {
+impl<S: State> CurrentMut<'_, S> {
     /// Get a read-only reference to the current state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.0.get_single().ok()
+        self.0.as_deref()
     }
 
     /// Get a mutable reference to the current state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        self.0.get_single_mut().map(Mut::into_inner).ok()
+        self.0.as_deref_mut()
     }
 
     /// Get a read-only reference to the current state, or panic if disabled.
@@ -109,12 +80,12 @@ impl<S: State> CurrentMut<'_, '_, S> {
 
     /// Check if the current state is disabled.
     pub fn is_disabled(&self) -> bool {
-        self.0.is_empty()
+        self.0.is_none()
     }
 
     /// Check if the current state is enabled.
     pub fn is_enabled(&self) -> bool {
-        !self.0.is_empty()
+        self.0.is_some()
     }
 
     /// Check if the current state is enabled and matches a specific [`StatePattern`].
@@ -140,14 +111,15 @@ impl<S: State> CurrentMut<'_, '_, S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextRef<'w, 's, S: State> {
-    next: Query<'w, 's, &'static <S as State>::Next, With<GlobalStates>>,
+    next: Res<'w, <S as State>::Next>,
     next_param: StaticSystemParam<'w, 's, <<S as State>::Next as NextState>::Param>,
+    trigger: Res<'w, TriggerStateFlush<S>>,
 }
 
 impl<S: State> NextRef<'_, '_, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.next.single().get_state(&self.next_param)
+        self.next.get_state(&self.next_param)
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.
@@ -169,6 +141,12 @@ impl<S: State> NextRef<'_, '_, S> {
     pub fn will_be_in<P: StatePattern<S>>(&self, pattern: &P) -> bool {
         matches!(self.get(), Some(x) if pattern.matches(x))
     }
+
+    /// Check if `S` is triggered to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
+    pub fn is_triggered(&self) -> bool {
+        self.trigger.0
+    }
 }
 
 /// A [`SystemParam`] with mutable access to the next value of the [`State`] type `S`.
@@ -186,9 +164,9 @@ impl<S: State> NextRef<'_, '_, S> {
 /// ```
 #[derive(SystemParam)]
 pub struct NextMut<'w, 's, S: StateMut> {
-    next: Query<'w, 's, &'static mut <S as State>::Next, With<GlobalStates>>,
+    next: ResMut<'w, <S as State>::Next>,
     next_param: StaticSystemParam<'w, 's, <<S as State>::Next as NextStateMut>::ParamMut>,
-    trigger: Query<'w, 's, &'static mut TriggerStateFlush<S>, With<GlobalStates>>,
+    trigger: ResMut<'w, TriggerStateFlush<S>>,
 }
 
 impl<S: StateMut + Default> NextMut<'_, '_, S> {
@@ -217,22 +195,17 @@ impl<S: StateMut + Default> NextMut<'_, '_, S> {
 impl<S: StateMut> NextMut<'_, '_, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.next.single().get_state_from_mut(&self.next_param)
+        self.next.get_state_from_mut(&self.next_param)
     }
 
     /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        self.next
-            .single_mut()
-            .into_inner()
-            .get_state_mut(&mut self.next_param)
+        self.next.get_state_mut(&mut self.next_param)
     }
 
     /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
-        self.next
-            .single_mut()
-            .set_state(&mut self.next_param, state);
+        self.next.set_state(&mut self.next_param, state);
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.
@@ -260,15 +233,23 @@ impl<S: StateMut> NextMut<'_, '_, S> {
         matches!(self.get(), Some(x) if pattern.matches(x))
     }
 
-    /// Trigger `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    /// Check if `S` is triggered to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
+    pub fn is_triggered(&self) -> bool {
+        self.trigger.0
+    }
+
+    /// Trigger `S` to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
     pub fn trigger(&mut self) -> &mut Self {
-        self.trigger.single_mut().trigger();
+        self.trigger.0 = true;
         self
     }
 
-    /// Reset the trigger for `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    pub fn relax(&mut self) -> &mut Self {
-        self.trigger.single_mut().relax();
+    /// Reset the trigger for `S` to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
+    pub fn reset_trigger(&mut self) -> &mut Self {
+        self.trigger.0 = false;
         self
     }
 
@@ -314,7 +295,7 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 #[derive(SystemParam)]
 pub struct FlushRef<'w, 's, S: State> {
     /// A system parameter with read-only access to the current state.
-    pub current: CurrentRef<'w, 's, S>,
+    pub current: CurrentRef<'w, S>,
     /// A system parameter with read-only access to the next state.
     pub next: NextRef<'w, 's, S>,
 }
@@ -326,6 +307,11 @@ impl<S: State + Eq> FlushRef<'_, '_, S> {
             self.get(),
             (Some(x), Some(y)) if x == y && pattern.matches(y),
         )
+    }
+
+    /// Check if `S` will change if triggered.
+    pub fn will_change(&self) -> bool {
+        matches!(self.get(), (x, y) if x != y)
     }
 }
 
@@ -384,7 +370,7 @@ impl<S: State> FlushRef<'_, '_, S> {
 #[derive(SystemParam)]
 pub struct FlushMut<'w, 's, S: StateMut> {
     /// A system parameter with read-only access to the current state.
-    pub current: CurrentRef<'w, 's, S>,
+    pub current: CurrentRef<'w, S>,
     /// A system parameter with mutable access to the next state.
     pub next: NextMut<'w, 's, S>,
 }
@@ -392,7 +378,7 @@ pub struct FlushMut<'w, 's, S: StateMut> {
 impl<S: StateMut + Clone> FlushMut<'_, '_, S> {
     /// Set the next state to remain in the current state with no flush.
     pub fn reset(&mut self) {
-        self.next.relax().set(self.current.get().cloned());
+        self.next.reset_trigger().set(self.current.get().cloned());
     }
 
     /// Set the next state to flush to the current state.
@@ -485,7 +471,7 @@ impl<S: StateMut> FlushMut<'_, '_, S> {
 
     /// Reset the trigger for `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
     pub fn relax(&mut self) -> &mut Self {
-        self.next.relax();
+        self.next.reset_trigger();
         self
     }
 }

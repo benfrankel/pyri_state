@@ -10,37 +10,40 @@ use std::{fmt::Debug, marker::PhantomData};
 
 use bevy_ecs::{
     component::Component,
-    query::With,
-    system::{Query, ReadOnlySystemParam, SystemParam, SystemParamItem},
+    system::{ReadOnlySystemParam, Res, ResMut, Resource, SystemParam, SystemParamItem},
 };
 
 use crate::{
-    access::{CurrentRef, FlushMut, GlobalStates, NextMut, NextRef},
+    access::{CurrentRef, FlushMut, NextMut, NextRef},
     pattern::{AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern},
+    prelude::FlushRef,
 };
 
-/// A [`Component`] that can be used as a state.
+/// A [`Resource`] that can be used as a state.
 ///
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
 /// ```rust
-/// #[derive(State, Clone, PartialEq, Eq)]
+/// #[derive(Resource, State, Clone, PartialEq, Eq)]
 /// enum GameState { ... }
 ///
+/// #[derive(Resource)]
 /// enum MenuState { ... }
 /// impl State for MenuState {
 ///     type Next = StateBuffer<Self>;
 /// }
 /// ```
 ///
-/// The derive macro would also implement [`AddState`](crate::extra::app::AddState) for `MenuState`.
+/// The derive macro would also implement
+/// [`RegisterState`](crate::extra::app::RegisterState) for `MenuState`.
 ///
 /// See the following extension traits with additional bounds on `Self` and [`Self::Next`](State::Next):
 ///
+/// - [`StateExtEq`]
 /// - [`StateMut`]
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait State: Component + Sized {
+pub trait State: Resource + Sized {
     /// The [`NextState`] type that determines the next state for this state type.
     type Next: NextState<State = Self>;
 
@@ -86,16 +89,34 @@ pub trait State: Component + Sized {
         next.get().is_some()
     }
 
-    /// A system that triggers this state type to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    fn trigger(mut trigger: Query<&mut TriggerStateFlush<Self>, With<GlobalStates>>) {
-        trigger.single_mut().trigger();
+    /// A run condition that checks if this state type is triggered to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
+    fn is_triggered(trigger: Res<TriggerStateFlush<Self>>) -> bool {
+        trigger.0
     }
 
-    /// A system that resets the trigger for this state type to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    fn relax(mut trigger: Query<&mut TriggerStateFlush<Self>, With<GlobalStates>>) {
-        trigger.single_mut().relax();
+    /// A system that triggers this state type to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
+    fn trigger(mut trigger: ResMut<TriggerStateFlush<Self>>) {
+        trigger.0 = true;
+    }
+
+    /// A system that resets the trigger for this state type to flush in the
+    /// [`StateFlush`](crate::schedule::StateFlush) schedule.
+    fn reset_trigger(mut trigger: ResMut<TriggerStateFlush<Self>>) {
+        trigger.0 = false;
     }
 }
+
+/// An extention trait for [`State`] types that also implement [`Eq`].
+pub trait StateExtEq: State + Eq {
+    /// A run condition that checks if this state type will change if triggered.
+    fn will_change(state: FlushRef<Self>) -> bool {
+        state.will_change()
+    }
+}
+
+impl<S: State + Eq> StateExtEq for S {}
 
 /// An extension trait for [`State`] types with [mutable `NextState`](NextStateMut).
 ///
@@ -109,6 +130,8 @@ pub trait StateMut: State<Next: NextStateMut> {
         state.set(None);
     }
 }
+
+impl<S: State<Next: NextStateMut>> StateMut for S {}
 
 /// An extension trait for [`StateMut`] types that also implement [`Clone`].
 pub trait StateMutExtClone: StateMut + Clone {
@@ -172,9 +195,14 @@ pub trait StateMutExtDefault: StateMut + Default {
 
 impl<S: StateMut + Default> StateMutExtDefault for S {}
 
-/// A [`Component`] that determines whether the [`State`] type `S` will flush in the
+/// A marker trait for [`State`] types that can be stored as components on entities.
+pub trait LocalState: State<Next: Component> + Component {}
+
+impl<S: State<Next: Component> + Component> LocalState for S {}
+
+/// A [`Resource`] / [`Component`] that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
-#[derive(Component, Debug)]
+#[derive(Resource, Component, Debug)]
 #[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 pub struct TriggerStateFlush<S: State>(
     /// The flush flag. If true, `S` will flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
@@ -188,22 +216,9 @@ impl<S: State> Default for TriggerStateFlush<S> {
     }
 }
 
-impl<S: State> TriggerStateFlush<S> {
-    /// Trigger `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    pub fn trigger(&mut self) {
-        self.0 = true;
-    }
-
-    /// Reset the trigger for `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    pub fn relax(&mut self) {
-        self.0 = false;
-    }
-}
-
-/// A [`Component`] that determines the next state for the [`State`] type `S`.
+/// A [`Resource`] that determines the next state for the [`State`] type `S`.
 ///
-/// Use [`NextRef`] or [`FlushRef`](crate::access::FlushRef)
-/// in a system for read-only access to the next state.
+/// Use [`NextRef`] or [`FlushRef`] in a system for read-only access to the next state.
 ///
 /// See [`NextStateMut`] for mutable next state types.
 ///
@@ -217,7 +232,7 @@ impl<S: State> TriggerStateFlush<S> {
 /// #[state(next(StateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
-pub trait NextState: Component {
+pub trait NextState: Resource {
     /// The stored [`State`] type.
     type State: State;
 
@@ -226,7 +241,7 @@ pub trait NextState: Component {
     /// If the next state is stored within `Self`, this can be set to `()`.
     type Param: ReadOnlySystemParam;
 
-    /// Create an empty next state component.
+    /// Create an empty next state instance.
     ///
     /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
     fn empty() -> Self;
@@ -235,7 +250,7 @@ pub trait NextState: Component {
     fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
 }
 
-/// A [`NextState`] type that allows `S` to be mutated directly as a [`StateMut`].
+/// A [`NextState`] type that allows `S` to be mutated directly.
 ///
 /// Use [`NextMut`] or [`FlushMut`] in a system for mutable access to the next state.
 pub trait NextStateMut: NextState {
@@ -263,6 +278,3 @@ pub trait NextStateMut: NextState {
         state: Option<Self::State>,
     );
 }
-
-// A `State` is `StateMut` if its `NextState` is `NextStateMut`
-impl<S: State<Next: NextStateMut>> StateMut for S {}

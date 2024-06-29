@@ -24,7 +24,7 @@ fn main() {
         .run();
 }
 
-#[derive(State, Component, Clone, PartialEq, Eq, Default)]
+#[derive(Resource, State, Clone, PartialEq, Eq, Default)]
 enum GameState {
     #[default]
     Splash,
@@ -32,7 +32,7 @@ enum GameState {
 }
 
 // Substate of GameState::Playing
-#[derive(State, Component, Clone, PartialEq, Eq, Default)]
+#[derive(Resource, State, Clone, PartialEq, Eq, Default)]
 #[state(after(GameState))]
 struct CheckerboardSquare {
     row: u8,
@@ -40,7 +40,7 @@ struct CheckerboardSquare {
 }
 
 // Computed from CheckerboardSquare
-#[derive(State, Component, Clone, PartialEq, Eq)]
+#[derive(Resource, State, Clone, PartialEq, Eq)]
 #[state(after(CheckerboardSquare))]
 enum SquareColor {
     Black,

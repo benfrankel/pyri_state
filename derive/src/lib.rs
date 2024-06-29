@@ -69,6 +69,7 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
 #[derive(Default)]
 struct StateAttrs {
     next: Option<Type>,
+    local: bool,
     after: Punctuated<Type, Token![,]>,
     before: Punctuated<Type, Token![,]>,
     no_defaults: bool,
@@ -95,17 +96,17 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                 Meta::List(meta) if meta.path.is_ident("after") => {
                     state_attrs.after = meta
                         .parse_args_with(Punctuated::<Type, Token![,]>::parse_terminated)
-                        .expect("invalid after states");
+                        .expect("invalid `after` states");
                 }
 
                 Meta::List(meta) if meta.path.is_ident("before") => {
                     state_attrs.before = meta
                         .parse_args_with(Punctuated::<Type, Token![,]>::parse_terminated)
-                        .expect("invalid before states");
+                        .expect("invalid `before` states");
                 }
 
                 Meta::List(meta) if meta.path.is_ident("next") => {
-                    state_attrs.next = Some(meta.parse_args().expect("invalid next state type"));
+                    state_attrs.next = Some(meta.parse_args().expect("invalid `next` type"));
                 }
 
                 Meta::Path(path) => {
@@ -115,6 +116,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
 
                     match ident.to_string().as_str() {
                         "no_defaults" => state_attrs.no_defaults = true,
+                        "local" => state_attrs.local = true,
                         "detect_change" => state_attrs.detect_change = true,
                         "flush_event" => state_attrs.flush_event = true,
                         "log_flush" => state_attrs.log_flush = true,

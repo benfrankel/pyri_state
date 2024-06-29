@@ -10,14 +10,10 @@ use std::marker::PhantomData;
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    query::With,
-    system::{lifetimeless::SRes, Query, Res, Resource, SystemParamItem},
+    system::{lifetimeless::SRes, Res, ResMut, Resource, SystemParamItem},
 };
 
-use crate::{
-    access::GlobalStates,
-    state::{NextState, State},
-};
+use crate::state::{NextState, State};
 
 /// A [`Resource`] that stores a sequence of the [`State`] type `S`.
 ///
@@ -44,8 +40,12 @@ impl<S: State> StateSequence<S> {
 /// an external [`StateSequence<S>`] resource.
 ///
 /// Using this as [`State::Next`] unlocks the [`StateSequenceIndexMut`] extension trait for `S`.
-#[derive(Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[derive(Resource, Component, Debug)]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Resource)
+)]
 pub struct StateSequenceIndex<S: State>(
     /// The index into the sequence, or `None` if not in the sequence.
     pub Option<usize>,
@@ -128,77 +128,59 @@ pub trait StateSequenceIndexMut: State {
     /// A system that sets the sequence index and clamps within bounds.
     fn seek(
         to: isize,
-    ) -> impl 'static
-           + Send
-           + Sync
-           + Fn(Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>, Res<StateSequence<Self>>)
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
     {
-        move |mut index, sequence| index.single_mut().seek(to, sequence.0.len())
+        move |mut index, sequence| index.seek(to, sequence.0.len())
     }
 
     /// A system that adjusts the sequence index and clamps within bounds.
     fn step(
         by: isize,
-    ) -> impl 'static
-           + Send
-           + Sync
-           + Fn(Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>, Res<StateSequence<Self>>)
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
     {
-        move |mut index, sequence| index.single_mut().step(by, sequence.0.len())
+        move |mut index, sequence| index.step(by, sequence.0.len())
     }
 
     /// A system that steps the sequence index forwards by 1 and clamps within bounds.
-    fn next(
-        mut index: Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>,
-        sequence: Res<StateSequence<Self>>,
-    ) {
-        index.single_mut().step(1, sequence.0.len());
+    fn next(mut index: ResMut<StateSequenceIndex<Self>>, sequence: Res<StateSequence<Self>>) {
+        index.step(1, sequence.0.len());
     }
 
     /// A system that steps the sequence index backwards by 1 and clamps within bounds.
-    fn prev(
-        mut index: Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>,
-        sequence: Res<StateSequence<Self>>,
-    ) {
-        index.single_mut().step(-1, sequence.0.len());
+    fn prev(mut index: ResMut<StateSequenceIndex<Self>>, sequence: Res<StateSequence<Self>>) {
+        index.step(-1, sequence.0.len());
     }
 
     /// A system that sets the sequence index and wraps within bounds.
     fn wrapping_seek(
         to: isize,
-    ) -> impl 'static
-           + Send
-           + Sync
-           + Fn(Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>, Res<StateSequence<Self>>)
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
     {
-        move |mut index, sequence| index.single_mut().wrapping_seek(to, sequence.0.len())
+        move |mut index, sequence| index.wrapping_seek(to, sequence.0.len())
     }
 
     /// A system that adjusts the sequence index and wraps within bounds.
     fn wrapping_step(
         by: isize,
-    ) -> impl 'static
-           + Send
-           + Sync
-           + Fn(Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>, Res<StateSequence<Self>>)
+    ) -> impl 'static + Send + Sync + Fn(ResMut<StateSequenceIndex<Self>>, Res<StateSequence<Self>>)
     {
-        move |mut index, sequence| index.single_mut().wrapping_step(by, sequence.0.len())
+        move |mut index, sequence| index.wrapping_step(by, sequence.0.len())
     }
 
     /// A system that steps the sequence index forwards by 1 and wraps within bounds.
     fn wrapping_next(
-        mut index: Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>,
+        mut index: ResMut<StateSequenceIndex<Self>>,
         sequence: Res<StateSequence<Self>>,
     ) {
-        index.single_mut().wrapping_step(1, sequence.0.len());
+        index.wrapping_step(1, sequence.0.len());
     }
 
     /// A system that steps the sequence index backwards by 1 and wraps within bounds.
     fn wrapping_prev(
-        mut index: Query<&mut StateSequenceIndex<Self>, With<GlobalStates>>,
+        mut index: ResMut<StateSequenceIndex<Self>>,
         sequence: Res<StateSequence<Self>>,
     ) {
-        index.single_mut().wrapping_step(-1, sequence.0.len());
+        index.wrapping_step(-1, sequence.0.len());
     }
 }
 
