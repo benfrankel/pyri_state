@@ -21,7 +21,10 @@
     - Added `local` derive macro option
     - Required `Resource` for `State` trait
     - Added `LocalState` marker trait
-    - Added local state plugin variants:
+    - Added `AppExtState::register_state` method
+    - Added `CommandsExtState` extension trait
+    - Added `EntityCommandsExtState` extension trait
+    - Added local variants for state plugins:
         - Added `LocalDetectChangePlugin` plugin
         - Added `LocalFlushEventPlugin` plugin
         - Added `LocalApplyFlushPlugin` plugin
@@ -75,7 +78,6 @@
     - Removed `RawStateExtEq` extension trait (see `StatePatternExtEq` instead)
 - Adjusted `AppExtState`:
     - Renamed `app` -> `setup` module
-    - Added `register_state` method
     - Renamed `add_state_` -> `add_state` method
     - Renamed `init_state_` -> `init_state` method
     - Renamed `insert_state_` -> `insert_state` method

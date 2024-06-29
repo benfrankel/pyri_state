@@ -91,6 +91,7 @@ pub mod prelude {
             StateTransPattern as _, StateTransPatternExtClone as _,
         },
         schedule::{flush_event::StateFlushEvent, StateFlush},
+        setup::{CommandsExtState as _, EntityCommandsExtState as _},
         state,
         state::{
             State, StateExtEq as _, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
