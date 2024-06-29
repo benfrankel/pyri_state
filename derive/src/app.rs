@@ -82,8 +82,9 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
     let log_flush = {
-        let crate_debug_path = concat(crate_extra_path.clone(), "debug");
-        plugin(&crate_debug_path, "LogFlush", attrs.log_flush, true)
+        let crate_debug_path = concat(crate_path.clone(), "debug");
+        let crate_log_flush_path = concat(crate_debug_path.clone(), "log_flush");
+        plugin(&crate_log_flush_path, "LogFlush", attrs.log_flush, true)
     };
     #[cfg(not(feature = "bevy_state"))]
     let bevy_state = quote! {};

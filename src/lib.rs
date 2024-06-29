@@ -14,7 +14,7 @@
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
 //! 5. Tools are provided for state [configuration](extra::app), [access],
-//! [pattern-matching](pattern), [debugging](extra::debug), and [more](extra).
+//! [pattern-matching](pattern), [debugging](debug), and [more](extra).
 //!
 //! # Getting started
 //!
@@ -66,6 +66,8 @@
 extern crate self as pyri_state;
 
 pub mod access;
+#[cfg(feature = "debug")]
+pub mod debug;
 pub mod extra;
 pub mod next_state;
 pub mod pattern;
@@ -101,7 +103,7 @@ pub mod prelude {
     pub use crate::extra::bevy_state::BevyState;
 
     #[cfg(feature = "debug")]
-    pub use crate::extra::debug::StateDebugSettings;
+    pub use crate::debug::StateDebugSettings;
 
     #[cfg(feature = "stack")]
     pub use crate::next_state::stack::{

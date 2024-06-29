@@ -2,13 +2,13 @@
 
 use bevy::prelude::*;
 use pyri_state::{
+    debug::log_flush::LogFlushPlugin,
     extra::{
         app::{
             ApplyFlushPlugin, DetectChangePlugin, FlushEventPlugin, RegisterState,
             ResolveStatePlugin,
         },
         bevy_state::BevyStatePlugin,
-        debug::LogFlushPlugin,
         entity_scope::EntityScopePlugin,
     },
     prelude::*,

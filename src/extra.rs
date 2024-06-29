@@ -4,8 +4,6 @@
 pub mod app;
 #[cfg(feature = "bevy_state")]
 pub mod bevy_state;
-#[cfg(feature = "debug")]
-pub mod debug;
 #[cfg(feature = "entity_scope")]
 pub mod entity_scope;
 #[cfg(feature = "split")]

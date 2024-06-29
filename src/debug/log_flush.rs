@@ -1,48 +1,23 @@
-//! State debugging tools.
-//!
-//! Enable the `debug` feature flag to use this module.
-//!
-//! Insert the [`StateDebugSettings`] resource to enable debug tools.
+//! State flush logging tools.
 
 use std::{any::type_name, fmt::Debug};
 
 use bevy_core::FrameCount;
-#[cfg(feature = "bevy_reflect")]
-use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     entity::Entity,
     schedule::{common_conditions::resource_exists, Condition, IntoSystemConfigs, Schedule},
-    system::{Query, Res, Resource, StaticSystemParam},
+    system::{Query, Res, StaticSystemParam},
 };
 use bevy_log::info;
 
 use crate::{
     access::{CurrentRef, FlushRef, NextRef},
+    debug::StateDebugSettings,
     next_state::{NextState, TriggerStateFlush},
     pattern::{StatePattern, StateTransPattern},
     schedule::StateHook,
     state::{LocalState, State},
 };
-
-/// A resource that controls the behavior of [state debugging tools](crate::extra::debug).
-#[derive(Resource, PartialEq, Eq, Default)]
-#[cfg_attr(
-    feature = "bevy_reflect",
-    derive(bevy_reflect::Reflect),
-    reflect(Resource)
-)]
-pub struct StateDebugSettings {
-    /// Enable on-flush logs.
-    pub log_flush: bool,
-    /// Enable on-exit logs.
-    pub log_exit: bool,
-    /// Enable on-transition logs.
-    pub log_trans: bool,
-    /// Enable on-enter logs.
-    pub log_enter: bool,
-    /// Enable logging for local states.
-    pub log_local: bool,
-}
 
 /// A plugin that adds on-flush logging systems for the [`State`] type `S`.
 ///
