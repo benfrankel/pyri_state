@@ -17,9 +17,9 @@
     - Added `FnStateTransPattern` type
     - Replaced `on_any_xyz` methods with `State::ANY` and `State::ANY_TO_ANY` constants
     - Replaced `on_xyz_and` methods with `State::with` and `State::when` methods
-- **Implemented states as components:**
+- **Implemented local states as components:**
     - Added `local` derive macro option
-    - Made `State` trait require `Resource`
+    - Required `Resource` for `State` trait
     - Added `LocalState` marker trait
     - Added local state plugin variants:
         - Added `LocalDetectChangePlugin` plugin
@@ -36,32 +36,33 @@
     - Added `NextState` trait
     - Added `NextStateMut` trait
     - Split `NextState_` resource into `NextStateBuffer` and `TriggerStateFlush` resource / components
-    - **Added next state stack:**
+    - **Implemented next state stack:**
         - Added `stack` feature flag
         - Added `NextStateStack` resource / component
         - Added `NextStateStackMut` extension trait
         - Added `NextStateStackMutExtClone` extension trait
-    - **Added next state sequence / index:**
+    - **Implemented next state sequence / index:**
         - Added `sequence` feature flag
         - Added `NextStateSequence` resource
         - Added `NextStateIndex` resource / component
         - Added `NextStateIndexMut` extension trait
-- Added some extra features:
+- **Implemented state flush logging:**
+    - Added `debug` module
+    - Added `debug` feature flag
+    - Added `StateDebugSettings` resource
+    - Added `log_flush` derive macro option
+    - Added `LogFlushPlugin` plugin
+    - Added `schedule_log_flush` function
+- Implemented some extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
     - Moved `BevyState` and related items into new `extra::bevy_state` module
-    - **Added state scoping for entities:**
+    - **Implemented state scoping for entities:**
         - Added `entity_scope` feature flag
         - Added `StateScope` component
         - Added `schedule_entity_scope` function
         - Added `EntityScopePlugin` plugin
-    - **Added state flush logging:**
-        - Added `debug` feature flag
-        - Added `StateDebugSettings` resource
-        - Added `log_flush` derive macro option
-        - Added `LogFlushPlugin` plugin
-        - Added `schedule_log_flush` function
-    - **Added split state helper:**
+    - **Implemented split state helper:**
         - Added `split` feature flag
         - Added `SplitState` type alias
         - Added `add_to_split_state!` macro
@@ -86,6 +87,7 @@
     - Renamed `StateConfigBevyState` -> `BevyStatePlugin` plugin
     - Renamed `StateConfigApplyFlush` -> `ApplyFlushPlugin` plugin
 - Adjusted scheduling:
+    - Split out `resolve_state`, `detect_change`, `flush_event`, and `apply_flush` modules
     - Renamed `StateFlushSet` -> `StateHook` system set
     - Renamed `StateFlushSet::Transition` -> `StateHook::Trans` variant
     - Added `StateHook::Compute` variant

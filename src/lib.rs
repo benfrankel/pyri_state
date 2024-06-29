@@ -13,7 +13,7 @@
 //! resource and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
-//! 5. Tools are provided for state [configuration](extra::app), [access],
+//! 5. Tools are provided for state [setup](extra::app), [access],
 //! [pattern-matching](pattern), [debugging](debug), and [more](extra).
 //!
 //! # Getting started
@@ -89,7 +89,7 @@ pub mod prelude {
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
         },
-        schedule::{StateFlush, StateFlushEvent},
+        schedule::{flush_event::StateFlushEvent, StateFlush},
         state,
         state::{
             State, StateExtEq as _, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
