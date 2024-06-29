@@ -34,7 +34,7 @@
     - Added `next(...)` derive macro option
     - Added `NextState` trait
     - Added `NextStateMut` trait
-    - Replaced `NextState_` resource with `StateBuffer` and `TriggerStateFlush` resource / components
+    - Replaced `NextState_` resource with `NextStateBuffer` and `TriggerStateFlush` resource / components
 - Implemented extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
@@ -52,14 +52,14 @@
         - Added `schedule_log_flush` function
     - **Implemented state stack as a next state storage type:**
         - Added `stack` feature flag
-        - Added `StateStack` resource / component
-        - Added `StateStackMut` extension trait
-        - Added `StateStackMutExtClone` extension trait
+        - Added `NextStateStack` resource / component
+        - Added `NextStateStackMut` extension trait
+        - Added `NextStateStackMutExtClone` extension trait
     - **Implemented state sequence as a next state storage type:**
         - Added `sequence` feature flag
-        - Added `StateSequence` resource
-        - Added `StateSequenceIndex` resource / component
-        - Added `StateSequenceIndexMut` extension trait
+        - Added `NextStateSequence` resource
+        - Added `NextStateIndex` resource / component
+        - Added `NextStateIndexMut` extension trait
     - **Implemented split state helper:**
         - Added `split` feature flag
         - Added `SplitState` type alias

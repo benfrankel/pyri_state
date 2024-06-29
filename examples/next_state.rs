@@ -17,9 +17,9 @@ fn main() {
         })
         .init_state::<MyBufferedState>()
         .init_state::<MyStackedState>()
-        .insert_state(StateSwap([
-            Some(MySwappedState::X),
-            Some(MySwappedState::Y),
+        .insert_state(NextStatePair([
+            Some(MyPairedState::X),
+            Some(MyPairedState::Y),
         ]))
         .add_systems(
             Update,
@@ -31,31 +31,31 @@ fn main() {
                     .push()
                     .run_if(input_just_pressed(KeyCode::KeyB)),
                 MyStackedState::pop.run_if(input_just_pressed(KeyCode::Escape)),
-                MySwappedState::swap.run_if(input_just_pressed(KeyCode::Space)),
+                MyPairedState::swap.run_if(input_just_pressed(KeyCode::Space)),
             ),
         )
         .run();
 }
 
 #[derive(Resource, State, Clone, PartialEq, Eq, Default)]
-// The default `NextState` type is `StateBuffer<Self>`, which is a newtyped `Option<Self>`.
-//#[state(next(StateBuffer<Self>))]
+// The default `NextState` type is `NextStateBuffer<Self>`, which is a newtyped `Option<Self>`.
+//#[state(next(NextStateBuffer<Self>))]
 struct MyBufferedState;
 
 #[derive(Resource, State, Clone, PartialEq, Eq, Debug, Default)]
-// You can easily swap in a `StateStack<Self>` instead, for example.
-#[state(log_flush, next(StateStack<Self>))]
+// You can easily swap in a `NextStateStack<Self>` instead, for example.
+#[state(log_flush, next(NextStateStack<Self>))]
 enum MyStackedState {
     #[default]
     A,
     B,
 }
 
-// You can define your own fully custom next state type:
+// You can define your own fully custom `NextState` type:
 #[derive(Resource, Component)]
-pub struct StateSwap<S: State>([Option<S>; 2]);
+pub struct NextStatePair<S: State>([Option<S>; 2]);
 
-impl<S: State> NextState for StateSwap<S> {
+impl<S: State> NextState for NextStatePair<S> {
     type State = S;
 
     type Param = ();
@@ -71,7 +71,7 @@ impl<S: State> NextState for StateSwap<S> {
     }
 }
 
-impl<S: State> NextStateMut for StateSwap<S> {
+impl<S: State> NextStateMut for NextStatePair<S> {
     type ParamMut = ();
 
     fn get_state_from_mut<'s>(
@@ -96,20 +96,20 @@ impl<S: State> NextStateMut for StateSwap<S> {
 
 // Define a custom extension trait to attach extra systems and run conditions to
 // `State` types using your `NextState` type.
-pub trait StateSwapMut: State {
-    fn swap(mut swap: ResMut<StateSwap<Self>>) {
+pub trait NextStatePairMut: State {
+    fn swap(mut swap: ResMut<NextStatePair<Self>>) {
         let [left, right] = &mut swap.0;
         std::mem::swap(left, right);
     }
 }
 
 // Blanket impl the trait.
-impl<S: State<Next = StateSwap<S>>> StateSwapMut for S {}
+impl<S: State<Next = NextStatePair<S>>> NextStatePairMut for S {}
 
 #[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
-// Now you can use `StateSwap<Self>` as a first-class custom next state type!
-#[state(log_flush, next(StateSwap<Self>))]
-enum MySwappedState {
+// Now you can use `NextStatePair<Self>` as a custom first-class `NextState` type!
+#[state(log_flush, next(NextStatePair<Self>))]
+enum MyPairedState {
     X,
     Y,
 }

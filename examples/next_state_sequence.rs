@@ -13,7 +13,7 @@ fn main() {
             ..default()
         })
         // Add the `Page` sequence.
-        .insert_resource(StateSequence::new([
+        .insert_resource(NextStateSequence::new([
             None,
             Some(Page::A),
             Some(Page::B),
@@ -37,8 +37,8 @@ fn main() {
 }
 
 #[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
-// Configure `Page` to use `StateSequenceIndex` instead of `StateBuffer` as its `NextState` type.
-#[state(log_flush, next(StateSequenceIndex<Self>))]
+// Configure `Page` to use `NextStateIndex` instead of `NextStateBuffer` as its `NextState` type.
+#[state(log_flush, next(NextStateIndex<Self>))]
 enum Page {
     A,
     B,

@@ -1,4 +1,4 @@
-//! Store the [`NextState`] as a [`StateStack`].
+//! Store the [`NextState`] as a [`NextStateStack`].
 //!
 //! Enable the `stack` feature flag to use this module.
 //!
@@ -16,19 +16,19 @@ use crate::state::{NextState, NextStateMut, State};
 
 /// A [`NextState`] type that stores the [`State`] type `S` in a stack with the next state on top.
 ///
-/// Using this as [`State::Next`] unlocks the [`StateStackMut`] extension trait for `S`.
+/// Using this as [`State::Next`] unlocks the [`NextStateStackMut`] extension trait for `S`.
 #[derive(Resource, Component, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct StateStack<S: State> {
+pub struct NextStateStack<S: State> {
     stack: Vec<Option<S>>,
     bases: Vec<usize>,
 }
 
-impl<S: State> NextState for StateStack<S> {
+impl<S: State> NextState for NextStateStack<S> {
     type State = S;
 
     type Param = ();
@@ -48,7 +48,7 @@ impl<S: State> NextState for StateStack<S> {
     }
 }
 
-impl<S: State> NextStateMut for StateStack<S> {
+impl<S: State> NextStateMut for NextStateStack<S> {
     type ParamMut = ();
 
     fn get_state_from_mut<'s>(
@@ -74,14 +74,14 @@ impl<S: State> NextStateMut for StateStack<S> {
     }
 }
 
-impl<S: State + FromWorld> FromWorld for StateStack<S> {
+impl<S: State + FromWorld> FromWorld for NextStateStack<S> {
     fn from_world(world: &mut World) -> Self {
         Self::new(S::from_world(world))
     }
 }
 
-impl<S: State> StateStack<S> {
-    /// Create a new `StateStack` with an initial state.
+impl<S: State> NextStateStack<S> {
+    /// Create a new `NextStateStack` with an initial state.
     pub fn new(state: S) -> Self {
         Self {
             stack: vec![Some(state)],
@@ -89,7 +89,7 @@ impl<S: State> StateStack<S> {
         }
     }
 
-    /// Create a new `StateStack` with an initial base state.
+    /// Create a new `NextStateStack` with an initial base state.
     pub fn with_base(state: S) -> Self {
         Self {
             stack: vec![Some(state)],
@@ -154,57 +154,57 @@ impl<S: State> StateStack<S> {
     }
 }
 
-/// An extension trait for [`State`] types with [`StateStack`] as their [`NextState`] type.
+/// An extension trait for [`State`] types with [`NextStateStack`] as their [`NextState`] type.
 ///
 /// See the following extension traits with additional bounds on `Self`:
 ///
-/// - [`StateStackMutExtClone`]
-pub trait StateStackMut: State {
+/// - [`NextStateStackMutExtClone`]
+pub trait NextStateStackMut: State {
     /// A system that pushes a new base state index to the stack.
-    fn acquire(mut stack: ResMut<StateStack<Self>>) {
+    fn acquire(mut stack: ResMut<NextStateStack<Self>>) {
         stack.acquire();
     }
 
     /// A system that pops the top base state index of the stack.
-    fn release(mut stack: ResMut<StateStack<Self>>) {
+    fn release(mut stack: ResMut<NextStateStack<Self>>) {
         stack.release();
     }
 
     /// A system that clears the stack down to the base state.
-    fn clear(mut stack: ResMut<StateStack<Self>>) {
+    fn clear(mut stack: ResMut<NextStateStack<Self>>) {
         stack.clear();
     }
 
     /// A system that pops the stack if it's above the base state.
-    fn pop(mut stack: ResMut<StateStack<Self>>) {
+    fn pop(mut stack: ResMut<NextStateStack<Self>>) {
         stack.pop();
     }
 }
 
-impl<S: State<Next = StateStack<S>>> StateStackMut for S {}
+impl<S: State<Next = NextStateStack<S>>> NextStateStackMut for S {}
 
-/// An extension trait for [`StateStackMut`] types that are also [`Clone`].
-pub trait StateStackMutExtClone: StateStackMut + Clone {
+/// An extension trait for [`NextStateStackMut`] types that are also [`Clone`].
+pub trait NextStateStackMutExtClone: NextStateStackMut + Clone {
     /// A system that pushes a state to the top of the stack.
-    fn push(self) -> impl Fn(ResMut<StateStack<Self>>) {
+    fn push(self) -> impl Fn(ResMut<NextStateStack<Self>>) {
         move |mut stack| {
             stack.push(self.clone());
         }
     }
 
     /// A system that clears and then pushes a state to the top of the stack.
-    fn clear_push(self) -> impl Fn(ResMut<StateStack<Self>>) {
+    fn clear_push(self) -> impl Fn(ResMut<NextStateStack<Self>>) {
         move |mut stack| {
             stack.clear().push(self.clone());
         }
     }
 
     /// A system that pops and then pushes a state to the top of the stack.
-    fn pop_push(self) -> impl Fn(ResMut<StateStack<Self>>) {
+    fn pop_push(self) -> impl Fn(ResMut<NextStateStack<Self>>) {
         move |mut stack| {
             stack.pop().push(self.clone());
         }
     }
 }
 
-impl<S: StateStackMut + Clone> StateStackMutExtClone for S {}
+impl<S: NextStateStackMut + Clone> NextStateStackMutExtClone for S {}

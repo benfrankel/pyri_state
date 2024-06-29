@@ -1,4 +1,4 @@
-//! Store the [`NextState`] as a [`StateBuffer`].
+//! Store the [`NextState`] as a [`NextStateBuffer`].
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
@@ -23,12 +23,12 @@ use crate::{
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct StateBuffer<S: State>(
+pub struct NextStateBuffer<S: State>(
     /// The next state, or `None` if disabled.
     pub Option<S>,
 );
 
-impl<S: State> NextState for StateBuffer<S> {
+impl<S: State> NextState for NextStateBuffer<S> {
     type State = S;
 
     type Param = ();
@@ -45,7 +45,7 @@ impl<S: State> NextState for StateBuffer<S> {
     }
 }
 
-impl<S: State> NextStateMut for StateBuffer<S> {
+impl<S: State> NextStateMut for NextStateBuffer<S> {
     type ParamMut = ();
 
     fn get_state_from_mut<'s>(
@@ -71,19 +71,19 @@ impl<S: State> NextStateMut for StateBuffer<S> {
     }
 }
 
-impl<S: State + FromWorld> FromWorld for StateBuffer<S> {
+impl<S: State + FromWorld> FromWorld for NextStateBuffer<S> {
     fn from_world(world: &mut World) -> Self {
         Self::enabled(S::from_world(world))
     }
 }
 
-impl<S: State> StateBuffer<S> {
-    /// Create a disabled `StateBuffer`.
+impl<S: State> NextStateBuffer<S> {
+    /// Create a disabled `NextStateBuffer`.
     pub fn disabled() -> Self {
         Self(None)
     }
 
-    /// Create an enabled `StateBuffer` with a specific value.
+    /// Create an enabled `NextStateBuffer` with a specific value.
     pub fn enabled(state: S) -> Self {
         Self(Some(state))
     }

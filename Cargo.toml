@@ -30,11 +30,11 @@ bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 debug = ["dep:bevy_core", "dep:bevy_log", "pyri_state_derive/debug"]
 # Enable the `StateScope` component.
 entity_scope = ["dep:bevy_hierarchy", "pyri_state_derive/entity_scope"]
-# Enable the `StateSequenceIndex` next state type.
+# Enable the `NextStateIndex` next state type.
 sequence = []
 # Enable the `SplitState` code organization tool.
 split = []
-# Enable the `StateStack` next state type.
+# Enable the `NextStateStack` next state type.
 stack = []
 
 [dependencies]

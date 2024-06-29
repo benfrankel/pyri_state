@@ -7,8 +7,8 @@
 //!
 //! 1. The current state is a [`Resource`](bevy_ecs::system::Resource) or
 //! [`Component`](bevy_ecs::component::Component) that implements [`State`](state::State).
-//! 2. The next state is stored in a [`StateBuffer`](buffer::StateBuffer) resource by default
-//! (see [`NextState`](state::NextState) for more information).
+//! 2. The next state is stored in a [`NextStateBuffer`](buffer::NextStateBuffer) resource
+//! by default (see [`NextState`](state::NextState) for more information).
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
 //! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
@@ -82,7 +82,7 @@ pub mod state;
 pub mod prelude {
     pub use crate::{
         access::{CurrentMut, CurrentRef, FlushMut, FlushRef, NextMut, NextRef},
-        buffer::StateBuffer,
+        buffer::NextStateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
@@ -104,12 +104,12 @@ pub mod prelude {
     pub use crate::extra::debug::StateDebugSettings;
 
     #[cfg(feature = "stack")]
-    pub use crate::extra::stack::{StateStack, StateStackMut as _, StateStackMutExtClone as _};
+    pub use crate::extra::stack::{
+        NextStateStack, NextStateStackMut as _, NextStateStackMutExtClone as _,
+    };
 
     #[cfg(feature = "sequence")]
-    pub use crate::extra::sequence::{
-        StateSequence, StateSequenceIndex, StateSequenceIndexMut as _,
-    };
+    pub use crate::extra::sequence::{NextStateIndex, NextStateIndexMut as _, NextStateSequence};
 
     #[cfg(feature = "split")]
     pub use crate::{add_to_split_state, extra::split::SplitState};
@@ -155,8 +155,8 @@ pub mod prelude {
     ///     entity_scope,
     ///     // Clone the next state into the current state on flush (requires Clone).
     ///     apply_flush,
-    ///     // Swap out the default `StateBuffer<Self>` for a custom `NextState` type.
-    ///     next(StateStack<Self>),
+    ///     // Swap out the default `NextStateBuffer<Self>` for another `NextState` type.
+    ///     next(NextStateStack<Self>),
     ///     // Run this state's on-flush hooks after the listed states.
     ///     after(GameState),
     ///     // Run this state's on-flush hooks before the listed states.

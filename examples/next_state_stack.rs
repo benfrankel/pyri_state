@@ -11,8 +11,8 @@ fn main() {
             log_flush: true,
             ..default()
         })
-        // Add the `Menu` state with `Menu::Main` as the fixed base of the stack.
-        .insert_state(StateStack::with_base(Menu::Main))
+        // Add the `Menu` state with `Menu::Main` as the base of the stack.
+        .insert_state(NextStateStack::with_base(Menu::Main))
         .init_state::<GameState>()
         .add_systems(
             Update,
@@ -46,8 +46,8 @@ fn main() {
 }
 
 #[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
-// Configure `Menu` to use `StateStack` instead of `StateBuffer` as its `NextState` type.
-#[state(log_flush, next(StateStack<Self>))]
+// Configure `Menu` to use `NextStateStack` instead of `NextStateBuffer` as its `NextState` type.
+#[state(log_flush, next(NextStateStack<Self>))]
 enum Menu {
     Main,
     MainOverlay,

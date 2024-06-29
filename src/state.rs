@@ -2,9 +2,9 @@
 //!
 //! Provided [`NextState`] types:
 //!
-//! - [`StateBuffer`](crate::buffer::StateBuffer) (default)
-//! - [`StateStack`](crate::extra::stack::StateStack)
-//! - [`StateSequence`](crate::extra::sequence::StateSequence)
+//! - [`NextStateBuffer`](crate::buffer::NextStateBuffer) (default)
+//! - [`NextStateStack`](crate::extra::stack::NextStateStack)
+//! - [`NextStateIndex`](crate::extra::sequence::NextStateIndex)
 
 use std::{fmt::Debug, marker::PhantomData};
 
@@ -30,7 +30,7 @@ use crate::{
 /// #[derive(Resource)]
 /// enum MenuState { ... }
 /// impl State for MenuState {
-///     type Next = StateBuffer<Self>;
+///     type Next = NextStateBuffer<Self>;
 /// }
 /// ```
 ///
@@ -216,7 +216,7 @@ impl<S: State> Default for TriggerStateFlush<S> {
     }
 }
 
-/// A [`Resource`] that determines the next state for the [`State`] type `S`.
+/// A [`Resource`] that determines the next state for [`Self::State`].
 ///
 /// Use [`NextRef`] or [`FlushRef`] in a system for read-only access to the next state.
 ///
@@ -224,12 +224,12 @@ impl<S: State> Default for TriggerStateFlush<S> {
 ///
 /// # Example
 ///
-/// The default next state type is [`StateBuffer`](crate::buffer::StateBuffer). You can
-/// set a different next state type in the [derive macro](pyri_state_derive::State):
+/// The default `NextState` type is [`NextStateBuffer`](crate::buffer::NextStateBuffer).
+/// You can set a different `NextState` type in the [derive macro](pyri_state_derive::State):
 ///
 /// ```rust
 /// #[derive(State, Clone, PartialEq, Eq)]
-/// #[state(next(StateStack<Self>))]
+/// #[state(next(NextStateStack<Self>))]
 /// enum MenuState { ... }
 /// ```
 pub trait NextState: Resource {
@@ -250,7 +250,7 @@ pub trait NextState: Resource {
     fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
 }
 
-/// A [`NextState`] type that allows `S` to be mutated directly.
+/// A [`NextState`] type that allows [`Self::State`](NextState::State) to be mutated directly.
 ///
 /// Use [`NextMut`] or [`FlushMut`] in a system for mutable access to the next state.
 pub trait NextStateMut: NextState {
