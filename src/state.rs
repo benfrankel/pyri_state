@@ -1,20 +1,15 @@
-//! State traits and components.
-//!
-//! Provided [`NextState`] types:
-//!
-//! - [`NextStateBuffer`](crate::buffer::NextStateBuffer) (default)
-//! - [`NextStateStack`](crate::extra::stack::NextStateStack)
-//! - [`NextStateIndex`](crate::extra::sequence::NextStateIndex)
+//! [`State`]` trait and extension traits.
 
-use std::{fmt::Debug, marker::PhantomData};
+use std::marker::PhantomData;
 
 use bevy_ecs::{
     component::Component,
-    system::{ReadOnlySystemParam, Res, ResMut, Resource, SystemParam, SystemParamItem},
+    system::{Res, ResMut, Resource},
 };
 
 use crate::{
     access::{CurrentRef, FlushMut, NextMut, NextRef},
+    next_state::{NextState, NextStateMut, TriggerStateFlush},
     pattern::{AnyStatePattern, AnyStateTransPattern, FnStatePattern, FnStateTransPattern},
     prelude::FlushRef,
 };
@@ -199,83 +194,3 @@ impl<S: StateMut + Default> StateMutExtDefault for S {}
 pub trait LocalState: State<Next: Component> + Component {}
 
 impl<S: State<Next: Component> + Component> LocalState for S {}
-
-/// A [`Resource`] / [`Component`] that determines whether the [`State`] type `S` will flush in the
-/// [`StateFlush`](crate::schedule::StateFlush) schedule.
-#[derive(Resource, Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
-pub struct TriggerStateFlush<S: State>(
-    /// The flush flag. If true, `S` will flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    pub bool,
-    PhantomData<S>,
-);
-
-impl<S: State> Default for TriggerStateFlush<S> {
-    fn default() -> Self {
-        Self(false, PhantomData)
-    }
-}
-
-/// A [`Resource`] that determines the next state for [`Self::State`].
-///
-/// Use [`NextRef`] or [`FlushRef`] in a system for read-only access to the next state.
-///
-/// See [`NextStateMut`] for mutable next state types.
-///
-/// # Example
-///
-/// The default `NextState` type is [`NextStateBuffer`](crate::buffer::NextStateBuffer).
-/// You can set a different `NextState` type in the [derive macro](pyri_state_derive::State):
-///
-/// ```rust
-/// #[derive(State, Clone, PartialEq, Eq)]
-/// #[state(next(NextStateStack<Self>))]
-/// enum MenuState { ... }
-/// ```
-pub trait NextState: Resource {
-    /// The stored [`State`] type.
-    type State: State;
-
-    /// A [`ReadOnlySystemParam`] to help access the next state if needed.
-    ///
-    /// If the next state is stored within `Self`, this can be set to `()`.
-    type Param: ReadOnlySystemParam;
-
-    /// Create an empty next state instance.
-    ///
-    /// Used in [`AppExtState::add_state`](crate::extra::app::AppExtState::add_state).
-    fn empty() -> Self;
-
-    /// Get a read-only reference to the next state, or `None` if disabled.
-    fn next_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>)
-        -> Option<&'s Self::State>;
-}
-
-/// A [`NextState`] type that allows [`Self::State`](NextState::State) to be mutated directly.
-///
-/// Use [`NextMut`] or [`FlushMut`] in a system for mutable access to the next state.
-pub trait NextStateMut: NextState {
-    /// A [`SystemParam`] to help mutably access the next state if needed.
-    ///
-    /// If the next state is stored within `Self`, this can be set to `()`.
-    type ParamMut: SystemParam;
-
-    /// Get a reference to the next state, or `None` if disabled.
-    fn next_state_from_mut<'s>(
-        &'s self,
-        param: &'s SystemParamItem<Self::ParamMut>,
-    ) -> Option<&'s Self::State>;
-
-    /// Get a mutable reference to the next state, or `None` if disabled.
-    fn next_state_mut<'s>(
-        &'s mut self,
-        param: &'s mut SystemParamItem<Self::ParamMut>,
-    ) -> Option<&'s mut Self::State>;
-
-    /// Set the next state to a new value, or `None` to disable.
-    fn set_next_state(
-        &mut self,
-        param: &mut SystemParamItem<Self::ParamMut>,
-        state: Option<Self::State>,
-    );
-}

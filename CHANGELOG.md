@@ -31,36 +31,37 @@
         - Added `schedule_local_apply_flush` function
         - Added `schedule_local_log_flush` function
 - **Implemented custom next state storage:**
+    - Added `next_state` module
     - Added `next(...)` derive macro option
     - Added `NextState` trait
     - Added `NextStateMut` trait
-    - Replaced `NextState_` resource with `NextStateBuffer` and `TriggerStateFlush` resource / components
-- Implemented extra features:
+    - Split `NextState_` resource into `NextStateBuffer` and `TriggerStateFlush` resource / components
+    - **Added next state stack:**
+        - Added `stack` feature flag
+        - Added `NextStateStack` resource / component
+        - Added `NextStateStackMut` extension trait
+        - Added `NextStateStackMutExtClone` extension trait
+    - **Added next state sequence / index:**
+        - Added `sequence` feature flag
+        - Added `NextStateSequence` resource
+        - Added `NextStateIndex` resource / component
+        - Added `NextStateIndexMut` extension trait
+- Added some extra features:
     - Added `extra` module
     - Moved `app` -> `extra::app` module
     - Moved `BevyState` and related items into new `extra::bevy_state` module
-    - **Implemented state scoping for entities:**
+    - **Added state scoping for entities:**
         - Added `entity_scope` feature flag
         - Added `StateScope` component
         - Added `schedule_entity_scope` function
         - Added `EntityScopePlugin` plugin
-    - **Implemented state flush logging:**
+    - **Added state flush logging:**
         - Added `debug` feature flag
         - Added `StateDebugSettings` resource
         - Added `log_flush` derive macro option
         - Added `LogFlushPlugin` plugin
         - Added `schedule_log_flush` function
-    - **Implemented state stack as a next state storage type:**
-        - Added `stack` feature flag
-        - Added `NextStateStack` resource / component
-        - Added `NextStateStackMut` extension trait
-        - Added `NextStateStackMutExtClone` extension trait
-    - **Implemented state sequence as a next state storage type:**
-        - Added `sequence` feature flag
-        - Added `NextStateSequence` resource
-        - Added `NextStateIndex` resource / component
-        - Added `NextStateIndexMut` extension trait
-    - **Implemented split state helper:**
+    - **Added split state helper:**
         - Added `split` feature flag
         - Added `SplitState` type alias
         - Added `add_to_split_state!` macro

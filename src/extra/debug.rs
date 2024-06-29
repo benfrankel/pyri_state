@@ -18,9 +18,10 @@ use bevy_log::info;
 
 use crate::{
     access::{CurrentRef, FlushRef, NextRef},
+    next_state::{NextState, TriggerStateFlush},
     pattern::{StatePattern, StateTransPattern},
     schedule::StateHook,
-    state::{LocalState, NextState, State, TriggerStateFlush},
+    state::{LocalState, State},
 };
 
 /// A resource that controls the behavior of [state debugging tools](crate::extra::debug).

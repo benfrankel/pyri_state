@@ -49,7 +49,8 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
             #next
         }
     } else {
-        let crate_buffer_path = concat(crate_path.clone(), "buffer");
+        let crate_next_state_path = concat(crate_path.clone(), "next_state");
+        let crate_buffer_path = concat(crate_next_state_path.clone(), "buffer");
         let state_buffer_ty = concat(crate_buffer_path.clone(), "NextStateBuffer");
 
         quote! {

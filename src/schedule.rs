@@ -16,7 +16,8 @@ use bevy_ecs::{
 
 use crate::{
     access::{CurrentMut, FlushRef, NextRef},
-    state::{LocalState, NextState, State, StateExtEq as _, TriggerStateFlush},
+    next_state::{NextState, TriggerStateFlush},
+    state::{LocalState, State, StateExtEq as _},
 };
 
 /// The schedule that handles all [`State`] flush logic, added after

@@ -14,12 +14,13 @@ use bevy_ecs::{
 };
 
 use crate::{
+    next_state::{NextState, TriggerStateFlush},
     schedule::{
         schedule_apply_flush, schedule_detect_change, schedule_flush_event,
         schedule_local_apply_flush, schedule_local_detect_change, schedule_local_flush_event,
         schedule_resolve_state, LocalStateFlushEvent, StateFlush, StateFlushEvent, StateHook,
     },
-    state::{LocalState, NextState, State, TriggerStateFlush},
+    state::{LocalState, State},
 };
 
 /// A plugin that performs the required setup for [`State`] types to function:

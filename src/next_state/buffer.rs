@@ -9,8 +9,9 @@ use bevy_ecs::{
 };
 
 use crate::{
+    next_state::{NextState, NextStateMut},
     pattern::StatePattern,
-    state::{NextState, NextStateMut, State},
+    state::State,
 };
 
 /// A [`NextState`] type that stores the [`State`] type `S` in an [`Option<S>`].

@@ -4,8 +4,8 @@ use bevy::{
     ecs::system::SystemParamItem, input::common_conditions::input_just_pressed, prelude::*,
 };
 use pyri_state::{
+    next_state::{NextState, NextStateMut},
     prelude::*,
-    state::{NextState, NextStateMut},
 };
 
 fn main() {

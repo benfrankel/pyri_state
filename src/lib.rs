@@ -7,10 +7,10 @@
 //!
 //! 1. The current state is a [`Resource`](bevy_ecs::system::Resource) or
 //! [`Component`](bevy_ecs::component::Component) that implements [`State`](state::State).
-//! 2. The next state is stored in a [`NextStateBuffer`](buffer::NextStateBuffer) resource
-//! by default (see [`NextState`](state::NextState) for more information).
-//! 3. A state flush is triggered by the [`TriggerStateFlush`](state::TriggerStateFlush) resource
-//! and handled in the [`StateFlush`](schedule::StateFlush) schedule.
+//! 2. The [next state](next_state) is stored in a
+//! [`NextStateBuffer`](next_state::buffer::NextStateBuffer) resource by default.
+//! 3. A state flush is triggered by the [`TriggerStateFlush`](next_state::TriggerStateFlush)
+//! resource and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`StateHook`](schedule::StateHook)
 //! system sets.
 //! 5. Tools are provided for state [configuration](extra::app), [access],
@@ -66,8 +66,8 @@
 extern crate self as pyri_state;
 
 pub mod access;
-pub mod buffer;
 pub mod extra;
+pub mod next_state;
 pub mod pattern;
 pub mod schedule;
 pub mod state;
@@ -82,7 +82,7 @@ pub mod state;
 pub mod prelude {
     pub use crate::{
         access::{CurrentMut, CurrentRef, FlushMut, FlushRef, NextMut, NextRef},
-        buffer::NextStateBuffer,
+        next_state::buffer::NextStateBuffer,
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
@@ -104,12 +104,14 @@ pub mod prelude {
     pub use crate::extra::debug::StateDebugSettings;
 
     #[cfg(feature = "stack")]
-    pub use crate::extra::stack::{
+    pub use crate::next_state::stack::{
         NextStateStack, NextStateStackMut as _, NextStateStackMutExtClone as _,
     };
 
     #[cfg(feature = "sequence")]
-    pub use crate::extra::sequence::{NextStateIndex, NextStateIndexMut as _, NextStateSequence};
+    pub use crate::next_state::sequence::{
+        NextStateIndex, NextStateIndexMut as _, NextStateSequence,
+    };
 
     #[cfg(feature = "split")]
     pub use crate::{add_to_split_state, extra::split::SplitState};

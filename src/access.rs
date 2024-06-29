@@ -14,8 +14,9 @@
 use bevy_ecs::system::{Res, ResMut, StaticSystemParam, SystemParam};
 
 use crate::{
+    next_state::{NextState, NextStateMut, TriggerStateFlush},
     pattern::{StatePattern, StateTransPattern},
-    state::{NextState, NextStateMut, State, StateMut, TriggerStateFlush},
+    state::{State, StateMut},
 };
 
 // TODO: Manually impl `SystemParam` to skip the query and contain `Option<&S>` directly (if that's possible).

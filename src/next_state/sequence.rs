@@ -13,7 +13,7 @@ use bevy_ecs::{
     system::{lifetimeless::SRes, Res, ResMut, Resource, SystemParamItem},
 };
 
-use crate::state::{NextState, State};
+use crate::{next_state::NextState, state::State};
 
 /// A [`Resource`] that stores a sequence of next states for the [`State`] type `S`.
 ///
@@ -61,7 +61,10 @@ impl<S: State> NextState for NextStateIndex<S> {
         Self(None, PhantomData)
     }
 
-    fn next_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
+    fn next_state<'s>(
+        &'s self,
+        param: &'s SystemParamItem<Self::Param>,
+    ) -> Option<&'s Self::State> {
         self.0
             .and_then(|index| param.0.get(index))
             .and_then(Option::as_ref)
