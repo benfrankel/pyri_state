@@ -66,7 +66,7 @@ impl<S: State> NextState for NextStatePair<S> {
     }
 
     // This allows `NextRef<S>` and `FlushRef<S>` to interface with your `NextState` type.
-    fn get_state<'s>(&'s self, _param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
+    fn next_state<'s>(&'s self, _param: &'s SystemParamItem<Self::Param>) -> Option<&'s S> {
         self.0[0].as_ref()
     }
 }
@@ -74,7 +74,7 @@ impl<S: State> NextState for NextStatePair<S> {
 impl<S: State> NextStateMut for NextStatePair<S> {
     type ParamMut = ();
 
-    fn get_state_from_mut<'s>(
+    fn next_state_from_mut<'s>(
         &'s self,
         _param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s S> {
@@ -82,14 +82,14 @@ impl<S: State> NextStateMut for NextStatePair<S> {
     }
 
     // This allows `NextMut<S>` and `FlushMut<S>` to interface with your `NextState` type,
-    fn get_state_mut<'s>(
+    fn next_state_mut<'s>(
         &'s mut self,
         _param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut S> {
         self.0[0].as_mut()
     }
 
-    fn set_state(&mut self, _param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
+    fn set_next_state(&mut self, _param: &mut SystemParamItem<Self::ParamMut>, state: Option<S>) {
         self.0[0] = state;
     }
 }

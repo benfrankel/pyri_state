@@ -247,7 +247,8 @@ pub trait NextState: Resource {
     fn empty() -> Self;
 
     /// Get a read-only reference to the next state, or `None` if disabled.
-    fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State>;
+    fn next_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>)
+        -> Option<&'s Self::State>;
 }
 
 /// A [`NextState`] type that allows [`Self::State`](NextState::State) to be mutated directly.
@@ -260,19 +261,19 @@ pub trait NextStateMut: NextState {
     type ParamMut: SystemParam;
 
     /// Get a reference to the next state, or `None` if disabled.
-    fn get_state_from_mut<'s>(
+    fn next_state_from_mut<'s>(
         &'s self,
         param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s Self::State>;
 
     /// Get a mutable reference to the next state, or `None` if disabled.
-    fn get_state_mut<'s>(
+    fn next_state_mut<'s>(
         &'s mut self,
         param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut Self::State>;
 
     /// Set the next state to a new value, or `None` to disable.
-    fn set_state(
+    fn set_next_state(
         &mut self,
         param: &mut SystemParamItem<Self::ParamMut>,
         state: Option<Self::State>,

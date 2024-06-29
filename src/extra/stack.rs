@@ -40,7 +40,7 @@ impl<S: State> NextState for NextStateStack<S> {
         }
     }
 
-    fn get_state<'s>(
+    fn next_state<'s>(
         &'s self,
         _param: &'s SystemParamItem<Self::Param>,
     ) -> Option<&'s Self::State> {
@@ -51,21 +51,21 @@ impl<S: State> NextState for NextStateStack<S> {
 impl<S: State> NextStateMut for NextStateStack<S> {
     type ParamMut = ();
 
-    fn get_state_from_mut<'s>(
+    fn next_state_from_mut<'s>(
         &'s self,
         _param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s Self::State> {
         self.get()
     }
 
-    fn get_state_mut<'s>(
+    fn next_state_mut<'s>(
         &'s mut self,
         _param: &'s mut SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s mut Self::State> {
         self.get_mut()
     }
 
-    fn set_state(
+    fn set_next_state(
         &mut self,
         _param: &mut SystemParamItem<Self::ParamMut>,
         state: Option<Self::State>,

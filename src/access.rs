@@ -119,7 +119,7 @@ pub struct NextRef<'w, 's, S: State> {
 impl<S: State> NextRef<'_, '_, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.next.get_state(&self.next_param)
+        self.next.next_state(&self.next_param)
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.
@@ -195,17 +195,17 @@ impl<S: StateMut + Default> NextMut<'_, '_, S> {
 impl<S: StateMut> NextMut<'_, '_, S> {
     /// Get a read-only reference to the next state, or `None` if disabled.
     pub fn get(&self) -> Option<&S> {
-        self.next.get_state_from_mut(&self.next_param)
+        self.next.next_state_from_mut(&self.next_param)
     }
 
     /// Get a mutable reference to the next state, or `None` if disabled.
     pub fn get_mut(&mut self) -> Option<&mut S> {
-        self.next.get_state_mut(&mut self.next_param)
+        self.next.next_state_mut(&mut self.next_param)
     }
 
     /// Set the next state to a new value, or `None` to disable.
     pub fn set(&mut self, state: Option<S>) {
-        self.next.set_state(&mut self.next_param, state);
+        self.next.set_next_state(&mut self.next_param, state);
     }
 
     /// Get a read-only reference to the next state, or panic if disabled.

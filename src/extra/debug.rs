@@ -162,7 +162,7 @@ fn log_local_state_flush<S: LocalState + Debug>(
             continue;
         }
 
-        let new = new.get_state(&next_param);
+        let new = new.next_state(&next_param);
         info!("[Frame {frame}] {ty} flush ({entity}): {old:?} -> {new:?}");
     }
 }
@@ -193,7 +193,7 @@ fn log_local_state_trans<S: LocalState + Debug>(
         if !trigger.0 {
             continue;
         }
-        let Some(new) = new.get_state(&next_param) else {
+        let Some(new) = new.next_state(&next_param) else {
             continue;
         };
 
@@ -212,7 +212,7 @@ fn log_local_state_enter<S: LocalState + Debug>(
         if !trigger.0 {
             continue;
         }
-        let Some(new) = new.get_state(&next_param) else {
+        let Some(new) = new.next_state(&next_param) else {
             continue;
         };
 

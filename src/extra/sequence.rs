@@ -61,7 +61,7 @@ impl<S: State> NextState for NextStateIndex<S> {
         Self(None, PhantomData)
     }
 
-    fn get_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
+    fn next_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>) -> Option<&'s Self::State> {
         self.0
             .and_then(|index| param.0.get(index))
             .and_then(Option::as_ref)

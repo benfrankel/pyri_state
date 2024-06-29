@@ -192,7 +192,7 @@ fn local_detect_change<S: LocalState + Eq>(
     mut state_query: Query<(Option<&S>, &S::Next, &mut TriggerStateFlush<S>)>,
 ) {
     for (current, next, mut trigger) in &mut state_query {
-        if !trigger.0 && current != next.get_state(&next_param) {
+        if !trigger.0 && current != next.next_state(&next_param) {
             trigger.0 = true;
         }
     }
@@ -232,15 +232,15 @@ fn send_local_flush_event<S: LocalState + Clone>(
     state_query: Query<(Entity, Option<&S>, &S::Next, &TriggerStateFlush<S>)>,
     mut events: EventWriter<LocalStateFlushEvent<S>>,
 ) {
-    for (entity, current, next, flush) in &state_query {
-        if !flush.0 {
+    for (entity, current, next, trigger) in &state_query {
+        if !trigger.0 {
             continue;
         }
 
         events.send(LocalStateFlushEvent {
             entity,
             old: current.cloned(),
-            new: next.get_state(&next_param).cloned(),
+            new: next.next_state(&next_param).cloned(),
         });
     }
 }
@@ -285,12 +285,12 @@ fn local_apply_flush<S: LocalState + Clone>(
     next_param: StaticSystemParam<<S::Next as NextState>::Param>,
     mut state_query: Query<(Entity, Option<&mut S>, &S::Next, &TriggerStateFlush<S>)>,
 ) {
-    for (entity, current, next, flush) in &mut state_query {
-        if !flush.0 {
+    for (entity, current, next, trigger) in &mut state_query {
+        if !trigger.0 {
             continue;
         }
 
-        match (current, next.get_state(&next_param)) {
+        match (current, next.next_state(&next_param)) {
             (Some(mut x), Some(y)) => *x = y.clone(),
             (Some(_), None) => {
                 commands.entity(entity).remove::<S>();
