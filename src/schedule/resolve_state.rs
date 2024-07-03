@@ -1,4 +1,4 @@
-//! Configure [`StateHook`] system sets.
+//! Configure [`ResolveStateSet`] system sets.
 
 #[cfg(feature = "bevy_app")]
 pub use app::*;
@@ -12,13 +12,13 @@ mod app {
 
     use crate::state::State;
 
-    use super::{schedule_resolve_state, StateHook};
+    use super::{schedule_resolve_state, ResolveStateSet};
 
-    /// A plugin that configures the [`StateHook<S>`] system sets for the [`State`] type `S`
-    /// in the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    /// A plugin that configures the [`ResolveStateSet<S>`] system sets for the [`State`]
+    /// type `S` in the [`StateFlush`](crate::schedule::StateFlush) schedule.
     ///
     /// To specify a dependency relative to another `State` type `T`, add
-    /// [`StateHook::<T>::Resolve`] to [`after`](Self::after) or [`before`](Self::before).
+    /// [`ResolveStateSet::<T>::Resolve`] to [`after`](Self::after) or [`before`](Self::before).
     ///
     /// Calls [`schedule_resolve_state<S>`].
     pub struct ResolveStatePlugin<S: State> {
@@ -59,13 +59,13 @@ mod app {
 
         /// Configure a `.after` system set.
         pub fn after<T: State>(mut self) -> Self {
-            self.after.push(StateHook::<T>::Resolve.intern());
+            self.after.push(ResolveStateSet::<T>::Resolve.intern());
             self
         }
 
         /// Configure a `.before` system set.
         pub fn before<T: State>(mut self) -> Self {
-            self.before.push(StateHook::<T>::Resolve.intern());
+            self.before.push(ResolveStateSet::<T>::Resolve.intern());
             self
         }
     }
@@ -92,26 +92,26 @@ use crate::{schedule::ApplyFlushSet, state::State};
 ///         2. [`Trans`](Self::Trans)
 ///         3. [`Enter`](Self::Enter)
 #[derive(SystemSet)]
-pub enum StateHook<S: State> {
+pub enum ResolveStateSet<S: State> {
     /// Resolve the state flush logic for `S` this frame.
     Resolve,
     /// Optionally compute the next value for `S`.
     Compute,
     /// Decide whether to trigger a flush for `S` this frame.
     Trigger,
-    /// Run flush hooks for `S`.
+    /// Run on-flush hooks for `S`.
     Flush,
-    /// Run exit hooks for `S`.
+    /// Run on-exit hooks for `S`.
     Exit,
-    /// Run transition hooks for `S`.
+    /// Run on-transition hooks for `S`.
     Trans,
-    /// Run enter hooks for `S`.
+    /// Run on-enter hooks for `S`.
     Enter,
     #[doc(hidden)]
     _PhantomData(PhantomData<S>, Infallible),
 }
 
-impl<S: State> Clone for StateHook<S> {
+impl<S: State> Clone for ResolveStateSet<S> {
     fn clone(&self) -> Self {
         match self {
             Self::Resolve => Self::Resolve,
@@ -126,21 +126,21 @@ impl<S: State> Clone for StateHook<S> {
     }
 }
 
-impl<S: State> PartialEq for StateHook<S> {
+impl<S: State> PartialEq for ResolveStateSet<S> {
     fn eq(&self, other: &Self) -> bool {
         core::mem::discriminant(self) == core::mem::discriminant(other)
     }
 }
 
-impl<S: State> Eq for StateHook<S> {}
+impl<S: State> Eq for ResolveStateSet<S> {}
 
-impl<S: State> Hash for StateHook<S> {
+impl<S: State> Hash for ResolveStateSet<S> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
-impl<S: State> Debug for StateHook<S> {
+impl<S: State> Debug for ResolveStateSet<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
@@ -155,10 +155,10 @@ impl<S: State> Debug for StateHook<S> {
     }
 }
 
-/// Configure [`StateHook<S>`] system sets for the [`State`] type `S` in a schedule.
+/// Configure [`ResolveStateSet<S>`] for the [`State`] type `S` in a schedule.
 ///
 /// To specify a dependency relative to another `State` type `T`, include
-/// [`StateHook::<T>::Resolve`] in `after` or `before`.
+/// [`ResolveStateSet::<T>::Resolve`] in `after` or `before`.
 ///
 /// Used in [`ResolveStatePlugin<S>`].
 pub fn schedule_resolve_state<S: State>(
@@ -168,30 +168,30 @@ pub fn schedule_resolve_state<S: State>(
 ) {
     // External ordering
     for &system_set in after {
-        schedule.configure_sets(StateHook::<S>::Resolve.after(system_set));
+        schedule.configure_sets(ResolveStateSet::<S>::Resolve.after(system_set));
     }
     for &system_set in before {
-        schedule.configure_sets(StateHook::<S>::Resolve.before(system_set));
+        schedule.configure_sets(ResolveStateSet::<S>::Resolve.before(system_set));
     }
 
     // Internal ordering
     schedule.configure_sets((
-        StateHook::<S>::Resolve.before(ApplyFlushSet),
+        ResolveStateSet::<S>::Resolve.before(ApplyFlushSet),
         (
-            StateHook::<S>::Compute,
+            ResolveStateSet::<S>::Compute,
             // Systems in this system set should only run if not triggered.
-            StateHook::<S>::Trigger,
+            ResolveStateSet::<S>::Trigger,
             // Systems in this system set should only run if triggered.
-            StateHook::<S>::Flush,
+            ResolveStateSet::<S>::Flush,
         )
             .chain()
-            .in_set(StateHook::<S>::Resolve),
+            .in_set(ResolveStateSet::<S>::Resolve),
         (
-            StateHook::<S>::Exit,
-            StateHook::<S>::Trans,
-            StateHook::<S>::Enter,
+            ResolveStateSet::<S>::Exit,
+            ResolveStateSet::<S>::Trans,
+            ResolveStateSet::<S>::Enter,
         )
             .chain()
-            .in_set(StateHook::<S>::Flush),
+            .in_set(ResolveStateSet::<S>::Flush),
     ));
 }

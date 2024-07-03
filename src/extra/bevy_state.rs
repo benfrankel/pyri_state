@@ -84,7 +84,7 @@ use bevy_state::state::{NextState, States};
 
 use crate::{
     access::{NextMut, NextRef},
-    schedule::StateHook,
+    schedule::ResolveStateSet,
     state::{State, StateMut},
 };
 
@@ -124,7 +124,7 @@ pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash +
     };
 
     schedule.add_systems((
-        update_pyri_state.in_set(StateHook::<S>::Compute),
-        update_bevy_state.in_set(StateHook::<S>::Flush),
+        update_pyri_state.in_set(ResolveStateSet::<S>::Compute),
+        update_bevy_state.in_set(ResolveStateSet::<S>::Flush),
     ));
 }

@@ -63,7 +63,7 @@ use crate::{
     state::{LocalState, State, StateExtEq as _},
 };
 
-use super::resolve_state::StateHook;
+use super::resolve_state::ResolveStateSet;
 
 /// Add change detection systems for the [`State`] type `S` to a schedule.
 ///
@@ -72,7 +72,7 @@ pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
             .run_if(not(S::is_triggered).and_then(S::will_change))
-            .in_set(StateHook::<S>::Trigger),
+            .in_set(ResolveStateSet::<S>::Trigger),
     );
 }
 
@@ -91,5 +91,5 @@ fn local_detect_change<S: LocalState + Eq>(
 ///
 /// Used in [`LocalDetectChangePlugin<S>`].
 pub fn schedule_local_detect_change<S: LocalState + Eq>(schedule: &mut Schedule) {
-    schedule.add_systems(local_detect_change::<S>.in_set(StateHook::<S>::Trigger));
+    schedule.add_systems(local_detect_change::<S>.in_set(ResolveStateSet::<S>::Trigger));
 }

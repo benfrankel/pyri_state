@@ -9,7 +9,7 @@ use bevy_ecs::schedule::{Condition, IntoSystemConfigs, SystemConfigs};
 
 use crate::{
     access::{CurrentRef, FlushRef, NextRef},
-    schedule::StateHook,
+    schedule::ResolveStateSet,
     state::State,
 };
 
@@ -42,10 +42,10 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
 
     /// Configure systems to run when `S` exits a matching state.
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        // TODO: `StateHook::<S>::GlobalExit` etc. instead of checking `S::is_triggered` every time.
+        // TODO: `ResolveStateSet::<S>::AnyExit` etc. instead of checking `S::is_triggered` every time.
         systems
             .run_if(S::is_triggered.and_then(self.will_exit()))
-            .in_set(StateHook::<S>::Exit)
+            .in_set(ResolveStateSet::<S>::Exit)
     }
 
     /// Build a run condition that checks if `S` will become disabled from a matching state if triggered.
@@ -57,7 +57,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_disable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_disable()))
-            .in_set(StateHook::<S>::Exit)
+            .in_set(ResolveStateSet::<S>::Exit)
     }
 
     /// Build a run condition that checks if `S` will enter into a matching state if triggered.
@@ -69,7 +69,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_enter()))
-            .in_set(StateHook::<S>::Enter)
+            .in_set(ResolveStateSet::<S>::Enter)
     }
 
     /// Build a run condition that checks if `S` will become enabled in a matching state if triggered.
@@ -81,7 +81,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_enable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_enable()))
-            .in_set(StateHook::<S>::Enter)
+            .in_set(ResolveStateSet::<S>::Enter)
     }
 }
 
@@ -115,7 +115,7 @@ pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_refresh()))
-            .in_set(StateHook::<S>::Trans)
+            .in_set(ResolveStateSet::<S>::Trans)
     }
 }
 
@@ -197,21 +197,21 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_trans()))
-            .in_set(StateHook::<S>::Exit)
+            .in_set(ResolveStateSet::<S>::Exit)
     }
 
     /// Configure systems to run when `S` undergoes a matching transition.
     fn on_trans<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_trans()))
-            .in_set(StateHook::<S>::Trans)
+            .in_set(ResolveStateSet::<S>::Trans)
     }
 
     /// Configure systems to run when `S` enters as part of a matching transition.
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_trans()))
-            .in_set(StateHook::<S>::Enter)
+            .in_set(ResolveStateSet::<S>::Enter)
     }
 }
 

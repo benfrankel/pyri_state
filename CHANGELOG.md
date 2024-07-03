@@ -90,9 +90,9 @@
     - Renamed `StateConfigApplyFlush` -> `ApplyFlushPlugin` plugin
 - Adjusted scheduling:
     - Split out `resolve_state`, `detect_change`, `flush_event`, and `apply_flush` modules
-    - Renamed `StateFlushSet` -> `StateHook` system set
-    - Renamed `StateFlushSet::Transition` -> `StateHook::Trans` variant
-    - Added `StateHook::Compute` variant
+    - Renamed `StateFlushSet` -> `ResolveStateSet` system set
+    - Renamed `ResolveStateSet::Transition` -> `ResolveStateSet::Trans` variant
+    - Added `ResolveStateSet::Compute` variant
     - Renamed `StateFlushEvent` fields: `before` -> `old` and `after` -> `new`
     - Renamed `schedule_send_event` -> `schedule_flush_event` function
     - Renamed `send_event` -> `flush_event` derive macro option

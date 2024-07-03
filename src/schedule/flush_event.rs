@@ -67,7 +67,7 @@ use bevy_ecs::{
 use crate::{
     access::FlushRef,
     next_state::{NextState, TriggerStateFlush},
-    schedule::StateHook,
+    schedule::ResolveStateSet,
     state::{LocalState, State},
 };
 
@@ -113,7 +113,7 @@ pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         send_flush_event::<S>
             .run_if(S::is_triggered)
-            .in_set(StateHook::<S>::Flush),
+            .in_set(ResolveStateSet::<S>::Flush),
     );
 }
 
@@ -139,5 +139,5 @@ fn send_local_flush_event<S: LocalState + Clone>(
 ///
 /// Used in [`LocalFlushEventPlugin<S>`].
 pub fn schedule_local_flush_event<S: LocalState + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(send_local_flush_event::<S>.in_set(StateHook::<S>::Flush));
+    schedule.add_systems(send_local_flush_event::<S>.in_set(ResolveStateSet::<S>::Flush));
 }

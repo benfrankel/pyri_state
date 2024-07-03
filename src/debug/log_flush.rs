@@ -66,7 +66,7 @@ use crate::{
     debug::StateDebugSettings,
     next_state::{NextState, TriggerStateFlush},
     pattern::{StatePattern, StateTransPattern},
-    schedule::StateHook,
+    schedule::ResolveStateSet,
     state::{LocalState, State},
 };
 
@@ -105,28 +105,28 @@ pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
     schedule.add_systems(
         (
             log_state_flush::<S>
-                .after(StateHook::<S>::Trigger)
-                .before(StateHook::<S>::Flush)
+                .after(ResolveStateSet::<S>::Trigger)
+                .before(ResolveStateSet::<S>::Flush)
                 .run_if(S::is_triggered.and_then(|x: Res<StateDebugSettings>| x.log_flush)),
             log_state_exit::<S>
-                .in_set(StateHook::<S>::Flush)
-                .before(StateHook::<S>::Exit)
+                .in_set(ResolveStateSet::<S>::Flush)
+                .before(ResolveStateSet::<S>::Exit)
                 .run_if(
                     S::is_triggered
                         .and_then(S::ANY.will_exit())
                         .and_then(|x: Res<StateDebugSettings>| x.log_exit),
                 ),
             log_state_trans::<S>
-                .after(StateHook::<S>::Exit)
-                .before(StateHook::<S>::Trans)
+                .after(ResolveStateSet::<S>::Exit)
+                .before(ResolveStateSet::<S>::Trans)
                 .run_if(
                     S::is_triggered
                         .and_then(S::ANY_TO_ANY.will_trans())
                         .and_then(|x: Res<StateDebugSettings>| x.log_trans),
                 ),
             log_state_enter::<S>
-                .after(StateHook::<S>::Trans)
-                .before(StateHook::<S>::Enter)
+                .after(ResolveStateSet::<S>::Trans)
+                .before(ResolveStateSet::<S>::Enter)
                 .run_if(
                     S::is_triggered
                         .and_then(S::ANY.will_enter())
@@ -214,20 +214,20 @@ pub fn schedule_local_log_flush<S: LocalState + Debug>(schedule: &mut Schedule) 
     schedule.add_systems(
         (
             log_local_state_flush::<S>
-                .after(StateHook::<S>::Trigger)
-                .before(StateHook::<S>::Flush)
+                .after(ResolveStateSet::<S>::Trigger)
+                .before(ResolveStateSet::<S>::Flush)
                 .run_if(|x: Res<StateDebugSettings>| x.log_local && x.log_flush),
             log_local_state_exit::<S>
-                .in_set(StateHook::<S>::Flush)
-                .before(StateHook::<S>::Exit)
+                .in_set(ResolveStateSet::<S>::Flush)
+                .before(ResolveStateSet::<S>::Exit)
                 .run_if(|x: Res<StateDebugSettings>| x.log_local && x.log_exit),
             log_local_state_trans::<S>
-                .after(StateHook::<S>::Exit)
-                .before(StateHook::<S>::Trans)
+                .after(ResolveStateSet::<S>::Exit)
+                .before(ResolveStateSet::<S>::Trans)
                 .run_if(|x: Res<StateDebugSettings>| x.log_local && x.log_trans),
             log_local_state_enter::<S>
-                .after(StateHook::<S>::Trans)
-                .before(StateHook::<S>::Enter)
+                .after(ResolveStateSet::<S>::Trans)
+                .before(ResolveStateSet::<S>::Enter)
                 .run_if(|x: Res<StateDebugSettings>| x.log_local && x.log_enter),
         )
             .run_if(resource_exists::<StateDebugSettings>),
