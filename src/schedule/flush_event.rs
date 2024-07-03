@@ -110,11 +110,7 @@ fn send_flush_event<S: State + Clone>(
 ///
 /// Used in [`FlushEventPlugin<S>`].
 pub fn schedule_flush_event<S: State + Clone>(schedule: &mut Schedule) {
-    schedule.add_systems(
-        send_flush_event::<S>
-            .run_if(S::is_triggered)
-            .in_set(ResolveStateSet::<S>::Flush),
-    );
+    schedule.add_systems(send_flush_event::<S>.in_set(ResolveStateSet::<S>::AnyFlush));
 }
 
 fn send_local_flush_event<S: LocalState + Clone>(

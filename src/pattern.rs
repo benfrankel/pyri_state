@@ -42,9 +42,9 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
 
     /// Configure systems to run when `S` exits a matching state.
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
-        // TODO: `ResolveStateSet::<S>::AnyExit` etc. instead of checking `S::is_triggered` every time.
         systems
-            .run_if(S::is_triggered.and_then(self.will_exit()))
+            .run_if(self.will_exit())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Exit)
     }
 
@@ -56,7 +56,8 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     /// Configure systems to run when `S` is disabled from a matching state.
     fn on_disable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_disable()))
+            .run_if(self.will_disable())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Exit)
     }
 
@@ -68,7 +69,8 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     /// Configure systems to run when `S` enters a matching state.
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_enter()))
+            .run_if(self.will_enter())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Enter)
     }
 
@@ -81,6 +83,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     fn on_enable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
             .run_if(S::is_triggered.and_then(self.will_enable()))
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Enter)
     }
 }
@@ -114,7 +117,8 @@ pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     /// Configure systems to run when `S` refreshes in a matching state.
     fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_refresh()))
+            .run_if(self.will_refresh())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Trans)
     }
 }
@@ -137,6 +141,7 @@ impl<S: State + Eq> StatePattern<S> for S {
 #[derive(Clone)]
 pub struct AnyStatePattern<S: State>(pub(crate) PhantomData<S>);
 
+// TODO: Optimization: Instead of impling the trait, raw impl the methods and use `AnyExit` etc. system sets.
 impl<S: State> StatePattern<S> for AnyStatePattern<S> {
     fn matches(&self, _state: &S) -> bool {
         true
@@ -196,21 +201,24 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     /// Configure systems to run when `S` exits as part of a matching transition.
     fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_trans()))
+            .run_if(self.will_trans())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Exit)
     }
 
     /// Configure systems to run when `S` undergoes a matching transition.
     fn on_trans<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_trans()))
+            .run_if(self.will_trans())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Trans)
     }
 
     /// Configure systems to run when `S` enters as part of a matching transition.
     fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_trans()))
+            .run_if(self.will_trans())
+            .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Enter)
     }
 }

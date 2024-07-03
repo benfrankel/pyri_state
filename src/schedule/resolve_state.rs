@@ -73,7 +73,7 @@ mod app {
 
 use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
-use bevy_ecs::schedule::{InternedSystemSet, IntoSystemSetConfigs, Schedule, SystemSet};
+use bevy_ecs::schedule::{Condition, InternedSystemSet, IntoSystemSetConfigs, Schedule, SystemSet};
 
 use crate::{schedule::ApplyFlushSet, state::State};
 
@@ -87,17 +87,19 @@ use crate::{schedule::ApplyFlushSet, state::State};
 /// state dependencies, and before [`ApplyFlushSet`])
 ///     1. [`Compute`](Self::Compute)
 ///     2. [`Trigger`](Self::Trigger)
-///     3. [`Flush`](Self::Flush)
-///         1. [`Exit`](Self::Exit)
-///         2. [`Trans`](Self::Trans)
-///         3. [`Enter`](Self::Enter)
+///     3. [`Flush`](Self::Flush) (and [`AnyFlush`](Self::AnyFlush) if the global state will flush)
+///         1. [`Exit`](Self::Exit) (and [`AnyExit`](Self::AnyExit) if the global state will exit)
+///         2. [`Trans`](Self::Trans) (and [`AnyTrans`](Self::AnyTrans) if the global state will
+///            transition)
+///         3. [`Enter`](Self::Enter) (and [`AnyEnter`](Self::AnyEnter) if the global state will
+///            enter)
 #[derive(SystemSet)]
 pub enum ResolveStateSet<S: State> {
-    /// Resolve the state flush logic for `S` this frame.
+    /// Resolve the state flush logic for `S`.
     Resolve,
     /// Optionally compute the next value for `S`.
     Compute,
-    /// Decide whether to trigger a flush for `S` this frame.
+    /// Decide whether to trigger a flush for `S`.
     Trigger,
     /// Run on-flush hooks for `S`.
     Flush,
@@ -107,6 +109,14 @@ pub enum ResolveStateSet<S: State> {
     Trans,
     /// Run on-enter hooks for `S`.
     Enter,
+    /// Run global on-flush hooks for `S`.
+    AnyFlush,
+    /// Run global on-exit hooks for `S`.
+    AnyExit,
+    /// Run global on-transition hooks for `S`.
+    AnyTrans,
+    /// Run global on-enter hooks for `S.
+    AnyEnter,
     #[doc(hidden)]
     _PhantomData(PhantomData<S>, Infallible),
 }
@@ -121,6 +131,10 @@ impl<S: State> Clone for ResolveStateSet<S> {
             Self::Exit => Self::Exit,
             Self::Trans => Self::Trans,
             Self::Enter => Self::Enter,
+            Self::AnyFlush => Self::AnyFlush,
+            Self::AnyExit => Self::AnyExit,
+            Self::AnyTrans => Self::AnyTrans,
+            Self::AnyEnter => Self::AnyEnter,
             Self::_PhantomData(..) => unreachable!(),
         }
     }
@@ -150,6 +164,10 @@ impl<S: State> Debug for ResolveStateSet<S> {
             Self::Exit => write!(f, "Exit"),
             Self::Trans => write!(f, "Trans"),
             Self::Enter => write!(f, "Enter"),
+            Self::AnyFlush => write!(f, "AnyFlush"),
+            Self::AnyExit => write!(f, "AnyExit"),
+            Self::AnyTrans => write!(f, "AnyTrans"),
+            Self::AnyEnter => write!(f, "AnyEnter"),
             Self::_PhantomData(..) => unreachable!(),
         }
     }
@@ -179,9 +197,9 @@ pub fn schedule_resolve_state<S: State>(
         ResolveStateSet::<S>::Resolve.before(ApplyFlushSet),
         (
             ResolveStateSet::<S>::Compute,
-            // Systems in this system set should only run if not triggered.
+            // Logic in this system set should only run if not triggered.
             ResolveStateSet::<S>::Trigger,
-            // Systems in this system set should only run if triggered.
+            // Logic in this system set should only run if triggered.
             ResolveStateSet::<S>::Flush,
         )
             .chain()
@@ -193,5 +211,20 @@ pub fn schedule_resolve_state<S: State>(
         )
             .chain()
             .in_set(ResolveStateSet::<S>::Flush),
+        ResolveStateSet::<S>::AnyFlush
+            .run_if(S::is_triggered)
+            .in_set(ResolveStateSet::<S>::Flush),
+        (
+            ResolveStateSet::<S>::AnyExit
+                .run_if(S::is_enabled)
+                .in_set(ResolveStateSet::<S>::Exit),
+            ResolveStateSet::<S>::AnyTrans
+                .run_if(S::is_enabled.and_then(S::will_be_enabled))
+                .in_set(ResolveStateSet::<S>::Trans),
+            ResolveStateSet::<S>::AnyEnter
+                .run_if(S::will_be_enabled)
+                .in_set(ResolveStateSet::<S>::Enter),
+        )
+            .in_set(ResolveStateSet::<S>::AnyFlush),
     ));
 }
