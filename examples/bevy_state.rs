@@ -26,7 +26,7 @@ fn main() {
         .run();
 }
 
-#[derive(Resource, State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 // Enable the `bevy_state` plugin to set up `BevyState<GameState>`:
 #[state(bevy_state)]
 enum GameState {

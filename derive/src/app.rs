@@ -11,22 +11,22 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
 
     // Construct paths.
     let bevy_app_path = BevyManifest::default().get_path("bevy_app");
-    let app_ty = concat(bevy_app_path.clone(), "App");
+    let app_ty = concat(&bevy_app_path, "App");
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
-    let crate_extra_path = concat(crate_path.clone(), "extra");
-    let crate_schedule_path = concat(crate_path.clone(), "schedule");
-    let crate_setup_path = concat(crate_path.clone(), "setup");
-    let register_state_trait = concat(crate_setup_path.clone(), "RegisterState");
+    let crate_extra_path = concat(&crate_path, "extra");
+    let crate_schedule_path = concat(&crate_path, "schedule");
+    let crate_setup_path = concat(&crate_path, "setup");
+    let register_state_trait = concat(&crate_setup_path, "RegisterState");
 
     // Construct `ResolveStatePlugin`.
     let resolve_state = {
-        let bevy_ecs_path = bevy_macro_utils::BevyManifest::default().get_path("bevy_ecs");
-        let bevy_ecs_schedule_path = concat(bevy_ecs_path, "schedule");
-        let system_set = concat(bevy_ecs_schedule_path.clone(), "SystemSet");
+        let bevy_ecs_path = BevyManifest::default().get_path("bevy_ecs");
+        let bevy_ecs_schedule_path = concat(&bevy_ecs_path, "schedule");
+        let system_set = concat(&bevy_ecs_schedule_path, "SystemSet");
 
-        let crate_resolve_state_path = concat(crate_schedule_path.clone(), "resolve_state");
-        let resolve_state_set_ty = concat(crate_resolve_state_path.clone(), "ResolveStateSet");
+        let crate_resolve_state_path = concat(&crate_schedule_path, "resolve_state");
+        let resolve_state_set_ty = concat(&crate_resolve_state_path, "ResolveStateSet");
 
         let after = attrs
             .after
@@ -52,7 +52,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
             })
             .collect::<Punctuated<_, Token![,]>>();
 
-        let state_plugin_ty = concat(crate_resolve_state_path.clone(), "ResolveStatePlugin");
+        let state_plugin_ty = concat(&crate_resolve_state_path, "ResolveStatePlugin");
         quote! { #state_plugin_ty::<Self>::new(vec![#after], vec![#before]), }
     };
 
@@ -62,13 +62,13 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
             return quote! {};
         }
 
-        let state_plugin_ty = concat(path.clone(), &format!("{ty_prefix}Plugin"));
+        let state_plugin_ty = concat(&path, &format!("{ty_prefix}Plugin"));
         let state_plugin = quote! { #state_plugin_ty::<Self>::default(), };
         if !local || !attrs.local {
             return state_plugin;
         }
 
-        let local_state_plugin_ty = concat(path.clone(), &format!("Local{ty_prefix}Plugin"));
+        let local_state_plugin_ty = concat(&path, &format!("Local{ty_prefix}Plugin"));
         let local_state_plugin = quote! { #local_state_plugin_ty::<Self>::default(), };
 
         quote! {
@@ -78,7 +78,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     };
 
     let detect_change = {
-        let crate_detect_change_path = concat(crate_schedule_path.clone(), "detect_change");
+        let crate_detect_change_path = concat(&crate_schedule_path, "detect_change");
         plugin(
             &crate_detect_change_path,
             "DetectChange",
@@ -87,7 +87,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
         )
     };
     let flush_event = {
-        let crate_flush_event_path = concat(crate_schedule_path.clone(), "flush_event");
+        let crate_flush_event_path = concat(&crate_schedule_path, "flush_event");
         plugin(
             &crate_flush_event_path,
             "FlushEvent",
@@ -99,22 +99,22 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     let log_flush = quote! {};
     #[cfg(feature = "debug")]
     let log_flush = {
-        let crate_debug_path = concat(crate_path.clone(), "debug");
-        let crate_log_flush_path = concat(crate_debug_path.clone(), "log_flush");
+        let crate_debug_path = concat(&crate_path, "debug");
+        let crate_log_flush_path = concat(&crate_debug_path, "log_flush");
         plugin(&crate_log_flush_path, "LogFlush", attrs.log_flush, true)
     };
     #[cfg(not(feature = "bevy_state"))]
     let bevy_state = quote! {};
     #[cfg(feature = "bevy_state")]
     let bevy_state = {
-        let crate_bevy_state_path = concat(crate_extra_path.clone(), "bevy_state");
+        let crate_bevy_state_path = concat(&crate_extra_path, "bevy_state");
         plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state, false)
     };
     #[cfg(not(feature = "entity_scope"))]
     let entity_scope = quote! {};
     #[cfg(feature = "entity_scope")]
     let entity_scope = {
-        let crate_entity_scope_path = concat(crate_extra_path.clone(), "entity_scope");
+        let crate_entity_scope_path = concat(&crate_extra_path, "entity_scope");
         plugin(
             &crate_entity_scope_path,
             "EntityScope",
@@ -123,7 +123,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
         )
     };
     let apply_flush = {
-        let crate_apply_flush_path = concat(crate_schedule_path.clone(), "apply_flush");
+        let crate_apply_flush_path = concat(&crate_schedule_path, "apply_flush");
         plugin(
             &crate_apply_flush_path,
             "ApplyFlush",

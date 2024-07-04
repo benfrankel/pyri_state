@@ -2,6 +2,7 @@
 mod app;
 mod util;
 
+use bevy_macro_utils::BevyManifest;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
@@ -26,9 +27,28 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     #[cfg(feature = "bevy_app")]
     let impl_register_state = app::derive_register_state_helper(&input, &attrs);
 
+    // Construct `Resource` impl.
+    let impl_resource = derive_resource_helper(&input);
+
     quote! {
         #impl_state
         #impl_register_state
+        #impl_resource
+    }
+    .into()
+}
+
+fn derive_resource_helper(input: &DeriveInput) -> proc_macro2::TokenStream {
+    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
+    let ty_name = &input.ident;
+
+    // Construct paths.
+    let bevy_ecs_path = BevyManifest::default().get_path("bevy_ecs");
+    let bevy_ecs_system_path = concat(&bevy_ecs_path, "system");
+    let resource_trait = concat(&bevy_ecs_system_path, "Resource");
+
+    quote! {
+        impl #impl_generics #resource_trait for #ty_name #ty_generics #where_clause {}
     }
     .into()
 }
@@ -40,8 +60,8 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
     // Construct paths.
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
-    let crate_state_path = concat(crate_path.clone(), "state");
-    let state_trait = concat(crate_state_path.clone(), "State");
+    let crate_state_path = concat(&crate_path, "state");
+    let state_trait = concat(&crate_state_path, "State");
 
     // Construct `NextState` type.
     let next_ty = if let Some(next) = attrs.next.as_ref() {
@@ -49,9 +69,9 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
             #next
         }
     } else {
-        let crate_next_state_path = concat(crate_path.clone(), "next_state");
-        let crate_buffer_path = concat(crate_next_state_path.clone(), "buffer");
-        let state_buffer_ty = concat(crate_buffer_path.clone(), "NextStateBuffer");
+        let crate_next_state_path = concat(&crate_path, "next_state");
+        let crate_buffer_path = concat(&crate_next_state_path, "buffer");
+        let state_buffer_ty = concat(&crate_buffer_path, "NextStateBuffer");
 
         quote! {
             #state_buffer_ty<Self>

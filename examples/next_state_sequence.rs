@@ -36,7 +36,7 @@ fn main() {
         .run();
 }
 
-#[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Clone, PartialEq, Eq, Debug)]
 // Configure `Page` to use `NextStateIndex` instead of `NextStateBuffer` as its `NextState` type.
 #[state(log_flush, next(NextStateIndex<Self>))]
 enum Page {

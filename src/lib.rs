@@ -28,7 +28,7 @@
 //! [derive macro](pyri_state_derive::State):
 //!
 //! ```rust
-//! #[derive(Resource, State, Clone, PartialEq, Eq, Default)]
+//! #[derive(State, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
 //! ```
 //!
@@ -120,22 +120,23 @@ pub mod prelude {
     #[cfg(feature = "split")]
     pub use crate::{add_to_split_state, extra::split::SplitState};
 
-    /// A derive macro for the [`State`] and
-    /// [`RegisterState`](crate::setup::RegisterState) traits.
+    /// A derive macro for the [`State`],
+    /// [`RegisterState`](crate::setup::RegisterState), and
+    /// [`Resource`](bevy_ecs::system::Resource) traits.
     ///
     /// # Examples
     ///
-    /// The derive macro requires `Resource`, `Clone`, `PartialEq`, and `Eq`:
+    /// The derive macro requires `Clone`, `PartialEq`, and `Eq`:
     ///
     /// ```rust
-    /// #[derive(Resource, State, Clone, PartialEq, Eq)]
+    /// #[derive(State, Clone, PartialEq, Eq)]
     /// enum GameState { ... }
     /// ```
     ///
-    /// Most of them can be omitted if you disable the default options:
+    /// They can be omitted if you disable the default options:
     ///
     /// ```rust
-    /// #[derive(Resource, State)]
+    /// #[derive(State)]
     /// #[state(no_defaults)]
     /// struct RawState;
     /// ```

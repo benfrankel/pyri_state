@@ -18,7 +18,7 @@ use crate::{
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
 /// ```rust
-/// #[derive(Resource, State, Clone, PartialEq, Eq)]
+/// #[derive(State, Clone, PartialEq, Eq)]
 /// enum GameState { ... }
 ///
 /// #[derive(Resource)]

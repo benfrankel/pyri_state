@@ -9,7 +9,7 @@ keywords = ["ecs", "game", "bevy"]
 categories = ["game-engines", "data-structures"]
 
 [features]
-bevy_app = ["dep:bevy_macro_utils"]
+bevy_app = []
 bevy_state = []
 debug = []
 entity_scope = []
@@ -18,7 +18,7 @@ entity_scope = []
 proc-macro = true
 
 [dependencies]
-bevy_macro_utils = { version = "0.14.0-rc.2", optional = true }
+bevy_macro_utils = "0.14.0-rc.2"
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", default-features = false, features = [

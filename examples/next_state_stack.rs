@@ -45,7 +45,7 @@ fn main() {
         .run();
 }
 
-#[derive(Resource, State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Clone, PartialEq, Eq, Debug)]
 // Configure `Menu` to use `NextStateStack` instead of `NextStateBuffer` as its `NextState` type.
 #[state(log_flush, next(NextStateStack<Self>))]
 enum Menu {
@@ -56,7 +56,7 @@ enum Menu {
     SettingsGraphics,
 }
 
-#[derive(Resource, State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Clone, PartialEq, Eq, Default)]
 enum GameState {
     #[default]
     Title,

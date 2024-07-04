@@ -29,7 +29,7 @@ fn main() {
         .run();
 }
 
-#[derive(Resource, State, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(State, Clone, PartialEq, Eq, Debug, Default)]
 #[state(log_flush)]
 struct Level(isize);
 
