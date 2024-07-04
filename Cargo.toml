@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.2.0-rc.0"
+version = "0.2.0"
 edition = "2021"
 description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -20,7 +20,7 @@ default = [
     "split",
     "stack",
 ]
-# Enable state configuration tools for `App`.
+# Enable plugins and `App` extension traits.
 bevy_app = ["dep:bevy_app", "pyri_state_derive/bevy_app"]
 # Derive `Reflect` for the types in this crate.
 bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
@@ -38,22 +38,24 @@ split = []
 stack = []
 
 [dependencies]
-bevy_app = { version = "0.14.0-rc.3", default-features = false, optional = true }
-bevy_core = { version = "0.14.0-rc.3", optional = true }
-bevy_ecs = { version = "0.14.0-rc.3", default-features = false }
-bevy_hierarchy = { version = "0.14.0-rc.3", optional = true }
-bevy_log = { version = "0.14.0-rc.3", optional = true }
-bevy_reflect = { version = "0.14.0-rc.3", optional = true }
-bevy_state = { version = "0.14.0-rc.3", optional = true }
-pyri_state_derive = { version = "0.2.0-rc.0", path = "derive" }
+bevy_app = { version = "0.14", default-features = false, optional = true }
+bevy_core = { version = "0.14", optional = true }
+bevy_ecs = { version = "0.14", default-features = false }
+bevy_hierarchy = { version = "0.14", optional = true }
+bevy_log = { version = "0.14", optional = true }
+bevy_reflect = { version = "0.14", optional = true }
+bevy_state = { version = "0.14", optional = true }
+pyri_state_derive = { version = "0.2", path = "derive" }
 
 [dev-dependencies]
-bevy = { version = "0.14.0-rc.3", default-features = false, features = [
+bevy = { version = "0.14", default-features = false, features = [
+    "bevy_core_pipeline",
     "bevy_winit",
     "x11",
     "multi_threaded",
 ] }
-# TODO: `bevy_asset_loader` is incompatible with `pyri_state`, unfortunately.
+# TODO: `bevy_asset_loader` is unfortunately incompatible with `pyri_state` for now.
 #       (see https://github.com/NiklasEi/bevy_asset_loader/issues/219)
-#bevy_asset_loader = { git = "https://github.com/NiklasEi/bevy_asset_loader", branch = "bevy_main" }
-iyes_progress = { git = "https://github.com/NiklasEi/iyes_progress", branch = "update_bevy_main_for_0_14_cycle" }
+#bevy_asset_loader = "0.21"
+# TODO: Uncomment when released.
+#iyes_progress = "0.12"
