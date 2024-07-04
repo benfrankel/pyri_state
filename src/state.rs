@@ -1,4 +1,4 @@
-//! [`State`]` trait and extension traits.
+//! [`State`] trait and extension traits.
 
 use std::marker::PhantomData;
 
