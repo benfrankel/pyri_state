@@ -54,8 +54,4 @@ bevy = { version = "0.14", default-features = false, features = [
     "x11",
     "multi_threaded",
 ] }
-# TODO: `bevy_asset_loader` is unfortunately incompatible with `pyri_state` for now.
-#       (see https://github.com/NiklasEi/bevy_asset_loader/issues/219)
-#bevy_asset_loader = "0.21"
-# TODO: Uncomment when released.
-#iyes_progress = "0.12"
+iyes_progress = "0.12"

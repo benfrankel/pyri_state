@@ -11,13 +11,13 @@ fn main() {
         .init_state::<GameState>()
         .add_plugins(
             ProgressPlugin::new(BevyState(Some(GameState::LoadingGame)))
-                // Changes to BevyState<GameState> will propagate to GameState.
+                // Changes to `BevyState<GameState>` will propagate to `GameState`.
                 .continue_to(BevyState(Some(GameState::PlayingGame))),
         )
         .add_systems(
             Update,
             GameState::Title.on_update(
-                // Changes to GameState will propagate to BevyState<GameState>.
+                // Changes to `GameState` will propagate to `BevyState<GameState>`.
                 GameState::LoadingGame
                     .enter()
                     .run_if(input_just_pressed(KeyCode::Enter)),
