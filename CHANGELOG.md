@@ -1,3 +1,8 @@
+# Version 0.2.1
+
+- Fixed 1-frame delay when using `BevyState` wrapper
+- Added `StateExtBevy` extension trait
+
 # Version 0.2.0
 
 - **Updated to bevy 0.14.0**

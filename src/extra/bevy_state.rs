@@ -36,8 +36,8 @@
 //!
 //! ```rust
 //! app.add_plugins(
-//!     ProgressPlugin::new(BevyState(Some(GameState::Loading)))
-//!         .continue_to(BevyState(Some(GameState::Playing))),
+//!     ProgressPlugin::new(GameState::Loading.bevy())
+//!         .continue_to(GameState::Playing.bevy()),
 //! );
 //! ```
 
@@ -97,6 +97,24 @@ pub struct BevyState<S: State + Clone + PartialEq + Eq + Hash + Debug>(
 impl<S: State + Clone + PartialEq + Eq + Hash + Debug> Default for BevyState<S> {
     fn default() -> Self {
         Self(None)
+    }
+}
+
+impl<S: State + Clone + PartialEq + Eq + Hash + Debug> From<S> for BevyState<S> {
+    fn from(value: S) -> Self {
+        Self(Some(value))
+    }
+}
+
+/// An extension trait for [`State`] types that provides conversion to [`BevyState`].
+pub trait StateExtBevy: State + Clone + PartialEq + Eq + Hash + Debug {
+    /// Convert into a [`BevyState`].
+    fn bevy(self) -> BevyState<Self>;
+}
+
+impl<S: State + Clone + PartialEq + Eq + Hash + Debug> StateExtBevy for S {
+    fn bevy(self) -> BevyState<Self> {
+        self.into()
     }
 }
 

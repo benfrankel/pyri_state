@@ -10,15 +10,15 @@ fn main() {
         .add_plugins((DefaultPlugins, StatePlugin))
         .init_state::<GameState>()
         .add_plugins(
-            ProgressPlugin::new(BevyState(Some(GameState::LoadingGame)))
+            ProgressPlugin::new(GameState::Loading.bevy())
                 // Changes to `BevyState<GameState>` will propagate to `GameState`.
-                .continue_to(BevyState(Some(GameState::PlayingGame))),
+                .continue_to(GameState::Playing.bevy()),
         )
         .add_systems(
             Update,
             GameState::Title.on_update(
                 // Changes to `GameState` will propagate to `BevyState<GameState>`.
-                GameState::LoadingGame
+                GameState::Loading
                     .enter()
                     .run_if(input_just_pressed(KeyCode::Enter)),
             ),
@@ -33,6 +33,6 @@ enum GameState {
     #[default]
     Splash,
     Title,
-    LoadingGame,
-    PlayingGame,
+    Loading,
+    Playing,
 }

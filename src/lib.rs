@@ -102,7 +102,7 @@ pub mod prelude {
     pub use crate::setup::{AppExtState as _, StatePlugin};
 
     #[cfg(feature = "bevy_state")]
-    pub use crate::extra::bevy_state::BevyState;
+    pub use crate::extra::bevy_state::{BevyState, StateExtBevy as _};
 
     #[cfg(feature = "debug")]
     pub use crate::debug::StateDebugSettings;

@@ -41,7 +41,7 @@ struct RawState;
     flush_event,
     // Log on flush (requires Debug).
     log_flush,
-    // Include a BevyState wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
+    // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     // (see `ecosystem_compatibility` example for more information)
     bevy_state,
     // Despawn entities marked with `StateScope<Self>` on any exit.
