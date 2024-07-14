@@ -28,15 +28,15 @@ mod app {
 
     impl Plugin for StatePlugin {
         fn build(&self, app: &mut App) {
+            // Add the `bevy_state` plugin.
+            #[cfg(feature = "bevy_state")]
+            app.add_plugins(bevy_state::app::StatesPlugin);
+
             // Add the `StateFlush` schedule.
             app.init_schedule(StateFlush)
                 .world_mut()
                 .resource_mut::<MainScheduleOrder>()
                 .insert_after(PreUpdate, StateFlush);
-
-            // Add the `bevy_state` plugin.
-            #[cfg(feature = "bevy_state")]
-            app.add_plugins(bevy_state::app::StatesPlugin);
         }
     }
 

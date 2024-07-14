@@ -48,10 +48,10 @@ pub use app::*;
 mod app {
     use std::{fmt::Debug, hash::Hash, marker::PhantomData};
 
-    use bevy_app::{App, Plugin, PreUpdate};
+    use bevy_app::{App, Plugin};
     use bevy_state::prelude as bevy;
 
-    use crate::state::StateMut;
+    use crate::{schedule::StateFlush, state::StateMut};
 
     use super::{schedule_bevy_state, BevyState};
 
@@ -64,7 +64,7 @@ mod app {
     impl<S: StateMut + Clone + PartialEq + Eq + Hash + Debug> Plugin for BevyStatePlugin<S> {
         fn build(&self, app: &mut App) {
             bevy::AppExtStates::init_state::<BevyState<S>>(app);
-            schedule_bevy_state::<S>(app.get_schedule_mut(PreUpdate).unwrap());
+            schedule_bevy_state::<S>(app.get_schedule_mut(StateFlush).unwrap());
         }
     }
 
@@ -77,11 +77,15 @@ mod app {
 
 use std::{fmt::Debug, hash::Hash};
 
-use bevy_ecs::{schedule::Schedule, system::ResMut};
+use bevy_ecs::{
+    schedule::{IntoSystemConfigs as _, Schedule},
+    system::{Res, ResMut},
+};
 use bevy_state::prelude as bevy;
 
 use crate::{
-    access::NextMut,
+    access::{NextMut, NextRef},
+    schedule::ResolveStateSet,
     state::{State, StateMut},
 };
 
@@ -124,17 +128,20 @@ impl<S: State + Clone + PartialEq + Eq + Hash + Debug> StateExtBevy for S {
 pub fn schedule_bevy_state<S: State + StateMut + Clone + PartialEq + Eq + Hash + Debug>(
     schedule: &mut Schedule,
 ) {
-    let sync_states =
-        |mut pyri_state: NextMut<S>, mut bevy_state: ResMut<bevy::NextState<BevyState<S>>>| {
-            match bevy_state.as_ref() {
-                bevy::NextState::Pending(bevy_state) => {
-                    pyri_state.trigger().set(bevy_state.0.clone());
-                }
-                bevy::NextState::Unchanged => {
-                    bevy_state.set(BevyState(pyri_state.get().cloned()));
-                }
+    let sync_pyri_state =
+        |mut pyri_state: NextMut<S>, bevy_state: Res<bevy::NextState<BevyState<S>>>| {
+            if let bevy::NextState::Pending(bevy_state) = bevy_state.as_ref() {
+                pyri_state.trigger().set(bevy_state.0.clone());
             }
         };
 
-    schedule.add_systems(sync_states);
+    let sync_bevy_state =
+        |pyri_state: NextRef<S>, mut bevy_state: ResMut<bevy::NextState<BevyState<S>>>| {
+            bevy_state.set(BevyState(pyri_state.get().cloned()));
+        };
+
+    schedule.add_systems((
+        sync_pyri_state.in_set(ResolveStateSet::<S>::Compute),
+        sync_bevy_state.in_set(ResolveStateSet::<S>::AnyFlush),
+    ));
 }
