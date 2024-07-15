@@ -26,8 +26,3 @@ Read the [documentation](https://docs.rs/pyri_state/latest/pyri_state) or check 
 # License
 
 This crate is available under either of [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-Apache-2.0) at your choice.
-
-# Remaining tasks
-
-- [ ] Unit tests
-- [ ] How does flushing states once per frame interact with `FixedUpdate`?
