@@ -1,9 +1,8 @@
 # Flexible game states
 
-[![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/benfrankel/pyri_state)
 [![Crates.io](https://img.shields.io/crates/v/pyri_state.svg)](https://crates.io/crates/pyri_state)
-[![Downloads](https://img.shields.io/crates/d/pyri_state.svg)](https://crates.io/crates/pyri_state)
 [![Docs](https://docs.rs/pyri_state/badge.svg)](https://docs.rs/pyri_state/latest/pyri_state/)
+[![License](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/benfrankel/pyri_state)
 
 `pyri_state` is a `bevy_state` alternative offering flexible change detection & scheduling.
 
