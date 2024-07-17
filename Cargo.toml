@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
