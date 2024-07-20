@@ -1,4 +1,4 @@
-// Directly update the next state instead of setting an entirely new value.
+//! Directly update the next state instead of setting an entirely new value.
 
 use std::{fmt::Debug, time::Duration};
 

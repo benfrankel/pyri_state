@@ -1,4 +1,4 @@
-// Use pattern-matching and run conditions to schedule state flush hooks.
+//! Use pattern-matching and run conditions to schedule state flush hooks.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;

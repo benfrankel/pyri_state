@@ -1,4 +1,4 @@
-// Swap out or define your own next state type.
+//! Swap out or define your own next state type.
 
 use bevy::{
     ecs::system::SystemParamItem, input::common_conditions::input_just_pressed, prelude::*,
@@ -53,7 +53,7 @@ enum MyStackedState {
 
 // You can define your own fully custom `NextState` type:
 #[derive(Resource, Component)]
-pub struct NextStatePair<S: State>([Option<S>; 2]);
+struct NextStatePair<S: State>([Option<S>; 2]);
 
 impl<S: State> NextState for NextStatePair<S> {
     type State = S;
@@ -96,7 +96,7 @@ impl<S: State> NextStateMut for NextStatePair<S> {
 
 // Define a custom extension trait to attach extra systems and run conditions to
 // `State` types using your `NextState` type.
-pub trait NextStatePairMut: State {
+trait NextStatePairMut: State {
     fn swap(mut swap: ResMut<NextStatePair<Self>>) {
         let [left, right] = &mut swap.0;
         std::mem::swap(left, right);

@@ -1,4 +1,4 @@
-// Keep track of a state's history in a stack (e.g. for a back button).
+//! Keep track of a state's history in a stack (e.g. for a back button).
 
 use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;

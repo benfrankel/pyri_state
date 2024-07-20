@@ -1,5 +1,5 @@
-// A split state is a basic enum state that can be split between the modules of a crate.
-// It's a useful organizational tool for cross-cutting states in a plugin-based codebase.
+//! A split state is a basic enum state that can be split between the modules of a crate.
+//! It's a useful organizational tool for cross-cutting states in a plugin-based codebase.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;

@@ -1,4 +1,4 @@
-// Strip out or add plugins to your state type.
+//! Strip out or add plugins to your state type.
 
 use bevy::prelude::*;
 use pyri_state::{

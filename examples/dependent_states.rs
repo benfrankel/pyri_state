@@ -1,4 +1,4 @@
-// Compute states from anything in the ECS world, including other states.
+//! Compute states from anything in the ECS world, including other states.
 
 use bevy::prelude::*;
 use pyri_state::prelude::*;
