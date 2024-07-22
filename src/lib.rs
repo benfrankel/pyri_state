@@ -105,6 +105,9 @@ pub mod prelude {
     #[cfg(feature = "debug")]
     pub use crate::debug::StateDebugSettings;
 
+    #[cfg(feature = "entity_scope")]
+    pub use crate::extra::entity_scope::StateScope;
+
     #[cfg(feature = "stack")]
     pub use crate::next_state::stack::{
         NextStateStack, NextStateStackMut as _, NextStateStackMutExtClone as _,

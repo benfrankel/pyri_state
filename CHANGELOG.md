@@ -1,3 +1,7 @@
+# Next version
+
+- Added re-export for `StateScope` component to `prelude` module
+
 # Version 0.2.1
 
 - Fixed 1-frame delay when using `BevyState` wrapper
