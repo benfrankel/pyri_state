@@ -138,8 +138,13 @@ impl<S: State + Eq> StatePattern<S> for S {
 /// ```rust
 /// Level::ANY.on_enter(reset_timer)
 /// ```
-#[derive(Clone)]
 pub struct AnyStatePattern<S: State>(pub(crate) PhantomData<S>);
+
+impl<S: State> Clone for AnyStatePattern<S> {
+    fn clone(&self) -> Self {
+        Self(PhantomData)
+    }
+}
 
 // TODO: Optimization: Instead of impling the trait, raw impl the methods and use `AnyExit` etc. system sets.
 impl<S: State> StatePattern<S> for AnyStatePattern<S> {

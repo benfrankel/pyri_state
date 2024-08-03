@@ -11,8 +11,8 @@ categories = ["game-engines", "data-structures"]
 [features]
 bevy_app = []
 bevy_state = []
+react = []
 debug = []
-entity_scope = []
 
 [lib]
 proc-macro = true

@@ -98,7 +98,7 @@ struct StateAttrs {
     flush_event: bool,
     log_flush: bool,
     bevy_state: bool,
-    entity_scope: bool,
+    react: bool,
     apply_flush: bool,
 }
 
@@ -142,7 +142,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                         "flush_event" => state_attrs.flush_event = true,
                         "log_flush" => state_attrs.log_flush = true,
                         "bevy_state" => state_attrs.bevy_state = true,
-                        "entity_scope" => state_attrs.entity_scope = true,
+                        "react" => state_attrs.react = true,
                         "apply_flush" => state_attrs.apply_flush = true,
                         _ => return Err(Error::new_spanned(ident, "invalid state attribute")),
                     }

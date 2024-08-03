@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use pyri_state::{
     debug::log_flush::LogFlushPlugin,
-    extra::{bevy_state::BevyStatePlugin, entity_scope::EntityScopePlugin},
+    extra::{bevy_state::BevyStatePlugin, react::ReactPlugin},
     prelude::*,
     schedule::{
         apply_flush::ApplyFlushPlugin, detect_change::DetectChangePlugin,
@@ -44,8 +44,8 @@ struct RawState;
     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     // (see `ecosystem_compatibility` example for more information)
     bevy_state,
-    // Despawn entities marked with `StateScope<Self>` on any exit.
-    entity_scope,
+    // Enable reaction components such as `DespawnOnExit<Self>` (requires Eq).
+    react,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
     // Swap out the default `NextStateBuffer<Self>` for another `NextState` type.
@@ -79,7 +79,7 @@ impl RegisterState for CustomState {
             FlushEventPlugin::<Self>::default(),
             LogFlushPlugin::<Self>::default(),
             BevyStatePlugin::<Self>::default(),
-            EntityScopePlugin::<Self>::default(),
+            ReactPlugin::<Self>::default(),
             ApplyFlushPlugin::<Self>::default(),
         ));
 

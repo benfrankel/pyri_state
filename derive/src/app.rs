@@ -110,17 +110,12 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
         let crate_bevy_state_path = concat(&crate_extra_path, "bevy_state");
         plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state, false)
     };
-    #[cfg(not(feature = "entity_scope"))]
-    let entity_scope = quote! {};
-    #[cfg(feature = "entity_scope")]
-    let entity_scope = {
-        let crate_entity_scope_path = concat(&crate_extra_path, "entity_scope");
-        plugin(
-            &crate_entity_scope_path,
-            "EntityScope",
-            attrs.entity_scope,
-            false,
-        )
+    #[cfg(not(feature = "react"))]
+    let react = quote! {};
+    #[cfg(feature = "react")]
+    let react = {
+        let crate_react_path = concat(&crate_extra_path, "react");
+        plugin(&crate_react_path, "React", attrs.react, false)
     };
     let apply_flush = {
         let crate_apply_flush_path = concat(&crate_schedule_path, "apply_flush");
@@ -141,7 +136,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
                     #flush_event
                     #log_flush
                     #bevy_state
-                    #entity_scope
+                    #react
                     #apply_flush
                 ));
             }

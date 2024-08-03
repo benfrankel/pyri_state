@@ -15,7 +15,7 @@ default = [
     "bevy_reflect",
     "bevy_state",
     "debug",
-    "entity_scope",
+    "react",
     "sequence",
     "split",
     "stack",
@@ -28,8 +28,8 @@ bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
 bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 # Enable state debugging tools (e.g. on-flush logging).
 debug = ["dep:bevy_core", "dep:bevy_log", "pyri_state_derive/debug"]
-# Enable the `StateScope` component.
-entity_scope = ["dep:bevy_hierarchy", "pyri_state_derive/entity_scope"]
+# Enable reaction components such as `DespawnOnExit`.
+react = ["dep:bevy_hierarchy", "dep:bevy_render", "pyri_state_derive/react"]
 # Enable the `NextStateIndex` next state type.
 sequence = []
 # Enable the `SplitState` code organization tool.
@@ -44,6 +44,7 @@ bevy_ecs = { version = "0.14", default-features = false }
 bevy_hierarchy = { version = "0.14", optional = true }
 bevy_log = { version = "0.14", optional = true }
 bevy_reflect = { version = "0.14", optional = true }
+bevy_render = { version = "0.14", optional = true }
 bevy_state = { version = "0.14", optional = true }
 pyri_state_derive = { version = "0.2", path = "derive" }
 

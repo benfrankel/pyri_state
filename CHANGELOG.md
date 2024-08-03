@@ -1,6 +1,9 @@
 # Next version
 
-- Added re-export for `StateScope` component to `prelude` module
+- **Expanded reaction components:**
+    - Renamed `StateScope` -> `DespawnOnExit` component with `Single`, `Recursive`, and `Descendants` variants
+    - Added `VisibleWhen` component
+    - Added re-exports for reaction components to `prelude` module
 
 # Version 0.2.1
 

@@ -105,8 +105,8 @@ pub mod prelude {
     #[cfg(feature = "debug")]
     pub use crate::debug::StateDebugSettings;
 
-    #[cfg(feature = "entity_scope")]
-    pub use crate::extra::entity_scope::StateScope;
+    #[cfg(feature = "react")]
+    pub use crate::extra::react::{DespawnOnExit, StateVisible};
 
     #[cfg(feature = "stack")]
     pub use crate::next_state::stack::{
@@ -159,8 +159,8 @@ pub mod prelude {
     ///     log_flush,
     ///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     ///     bevy_state,
-    ///     // Despawn entities marked with `StateScope<Self>` on any exit.
-    ///     entity_scope,
+    ///     // Enable reaction components such as `DespawnOnExit<Self>` (requires Eq).
+    ///     react,
     ///     // Clone the next state into the current state on flush (requires Clone).
     ///     apply_flush,
     ///     // Swap out the default `NextStateBuffer<Self>` for another `NextState` type.
