@@ -106,7 +106,9 @@ pub mod prelude {
     pub use crate::debug::StateDebugSettings;
 
     #[cfg(feature = "react")]
-    pub use crate::extra::react::{DespawnOnExit, StateVisible};
+    pub use crate::extra::react::{
+        DespawnOnDisable, DespawnOnExit, VisibleWhileEnabled, VisibleWhileIn,
+    };
 
     #[cfg(feature = "stack")]
     pub use crate::next_state::stack::{
