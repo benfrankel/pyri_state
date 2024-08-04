@@ -129,34 +129,30 @@ impl<S: State<Next: NextStateMut>> StateMut for S {}
 
 /// An extension trait for [`StateMut`] types that also implement [`Clone`].
 pub trait StateMutExtClone: StateMut + Clone {
-    /// Build a system that enables the next state with a specific value if it's disabled.
-    fn enable(self) -> impl Fn(NextMut<Self>) + 'static + Send + Sync {
+    /// Build a system that enables the next state with a specific value if the current
+    /// state is disabled.
+    fn enable(self) -> impl Fn(FlushMut<Self>) + 'static + Send + Sync {
         move |mut state| {
-            if state.will_be_disabled() {
-                state.enter(self.clone());
-            }
+            state.enable(self.clone());
         }
     }
 
-    /// Build a system that toggles the next state between disabled and enabled with a specific value.
-    fn toggle(self) -> impl Fn(NextMut<Self>) + 'static + Send + Sync {
+    /// Build a system that sets the next state to a toggle of the current state between
+    /// disabled and enabled with a specific value.
+    fn toggle(self) -> impl Fn(FlushMut<Self>) + 'static + Send + Sync {
         move |mut state| {
-            if state.will_be_disabled() {
-                state.enter(self.clone());
-            } else {
-                state.disable();
-            }
+            state.toggle(self.clone());
         }
     }
 
     /// Build a system that enables the next state with a specific value.
     fn enter(self) -> impl Fn(NextMut<Self>) + 'static + Send + Sync {
         move |mut state| {
-            state.set(Some(self.clone()));
+            state.enter(self.clone());
         }
     }
 
-    /// A system that resets the next state to the current state and relaxes the trigger to flush.
+    /// A system that resets the next state to the current state and resets the trigger to flush.
     fn reset(mut state: FlushMut<Self>) {
         state.reset();
     }
@@ -171,13 +167,15 @@ impl<S: StateMut + Clone> StateMutExtClone for S {}
 
 /// An extension trait for [`StateMut`] types that also implement [`Default`].
 pub trait StateMutExtDefault: StateMut + Default {
-    /// A system that enables the next state with the default value if it's disabled.
-    fn enable_default(mut state: NextMut<Self>) {
+    /// A system that enables the next state with the default value if the current state is
+    /// disabled.
+    fn enable_default(mut state: FlushMut<Self>) {
         state.enable_default();
     }
 
-    /// A system that toggles the next state between disabled and enabled with the default value.
-    fn toggle_default(mut state: NextMut<Self>) {
+    /// A system that sets the next state to a toggle of the current state between disabled
+    /// and enabled with the default value.
+    fn toggle_default(mut state: FlushMut<Self>) {
         state.toggle_default();
     }
 

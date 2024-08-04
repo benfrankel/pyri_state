@@ -181,7 +181,7 @@ impl<S: StateMut + Default> NextMut<'_, '_, S> {
     /// Toggle the next state between disabled and enabled with the default value.
     pub fn toggle_default(&mut self) {
         if self.will_be_disabled() {
-            self.enable_default();
+            self.enter_default();
         } else {
             self.disable();
         }
@@ -268,10 +268,10 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 
     /// Toggle the next state between disabled and enabled with a specific value.
     pub fn toggle(&mut self, value: S) {
-        if self.will_be_enabled() {
-            self.disable();
-        } else {
+        if self.will_be_disabled() {
             self.enter(value);
+        } else {
+            self.disable();
         }
     }
 
@@ -449,19 +449,26 @@ impl<S: StateMut> FlushMut<'_, '_, S> {
         self.next.disable();
     }
 
-    /// Enable the next state with a specific value if it's disabled.
+    /// Enable the next state with a specific value if the current state is disabled.
     pub fn enable(&mut self, value: S) {
-        self.next.enable(value);
+        if self.current.is_disabled() {
+            self.enter(value);
+        }
     }
 
-    /// Toggle the next state between disabled and enabled with a specific value.
+    /// Set the next state to a toggle of the current state between disabled and enabled
+    /// with a specific value.
     pub fn toggle(&mut self, value: S) {
-        self.next.toggle(value);
+        if self.current.is_disabled() {
+            self.enter(value);
+        } else {
+            self.disable();
+        }
     }
 
     /// Enable the next state with a specific value.
     pub fn enter(&mut self, value: S) {
-        self.next.set(Some(value));
+        self.next.enter(value);
     }
 
     /// Trigger `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
@@ -471,8 +478,32 @@ impl<S: StateMut> FlushMut<'_, '_, S> {
     }
 
     /// Reset the trigger for `S` to flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
-    pub fn relax(&mut self) -> &mut Self {
+    pub fn reset_trigger(&mut self) -> &mut Self {
         self.next.reset_trigger();
         self
+    }
+}
+
+impl<S: StateMut + Default> FlushMut<'_, '_, S> {
+    /// Enable the next state with the default value if the current state is disabled.
+    pub fn enable_default(&mut self) {
+        if self.current.is_disabled() {
+            self.enter(S::default())
+        }
+    }
+
+    /// Set the next state to a toggle of the current state between disabled and enabled
+    /// with the default value.
+    pub fn toggle_default(&mut self) {
+        if self.current.is_disabled() {
+            self.enter_default();
+        } else {
+            self.disable();
+        }
+    }
+
+    /// Enable the next state with the default value.
+    pub fn enter_default(&mut self) {
+        self.next.enter_default();
     }
 }

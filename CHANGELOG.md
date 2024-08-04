@@ -1,5 +1,8 @@
 # Next version
 
+- Changed `toggle` and `enable` functions / systems to check the current state instead of the next state when possible
+- Added `toggle_default`, `enable_default`, and `enter_default` methods to `FlushMut` system param
+- Renamed `FlushMut::relax` to `reset_trigger` method
 - **Expanded reaction components:**
     - Renamed `StateScope` -> `DespawnOnExit` component with `Single`, `Recursive`, and `Descendants` variants
     - Added `VisibleWhen` component
