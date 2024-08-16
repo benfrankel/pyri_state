@@ -8,6 +8,8 @@
 
 use std::marker::PhantomData;
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
     system::{ReadOnlySystemParam, Resource, SystemParam, SystemParamItem},
@@ -24,7 +26,11 @@ pub mod stack;
 /// A [`Resource`] / [`Component`] that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
 #[derive(Resource, Component, Debug)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Resource)
+)]
 pub struct TriggerStateFlush<S: State>(
     /// The flush flag. If true, `S` will flush in the [`StateFlush`](crate::schedule::StateFlush) schedule.
     pub bool,

@@ -35,6 +35,8 @@ mod app {
 
 use std::marker::PhantomData;
 
+#[cfg(feature = "bevy_reflect")]
+use bevy_ecs::reflect::ReflectComponent;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -65,7 +67,11 @@ pub fn schedule_react<S: State + Eq>(schedule: &mut Schedule) {
 
 /// A component that sets the despawn behavior on any exit of the [`State`] type `S`.
 #[derive(Component, Default)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Component)
+)]
 pub enum DespawnOnExit<S: State> {
     /// Despawn the entity on any exit.
     Single,
@@ -96,7 +102,11 @@ fn despawn_on_exit<S: State>(
 
 /// A component that sets the despawn behavior on any disable of the [`State`] type `S`.
 #[derive(Component, Default)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Component)
+)]
 pub enum DespawnOnDisable<S: State> {
     /// Despawn the entity on any exit.
     Single,
@@ -130,7 +140,11 @@ fn despawn_on_disable<S: State>(
 /// - On enter, the visibility will be set to inherited.
 /// - On exit, the visibility will be set to hidden.
 #[derive(Component, Default)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Component)
+)]
 pub struct VisibleWhileIn<S: State>(
     /// The state during which the entity should be visible.
     pub S,
@@ -163,7 +177,11 @@ fn show_on_enter<S: State + Eq>(
 /// - On any enable, the visibility will be set to inherited.
 /// - On any disable, the visibility will be set to hidden.
 #[derive(Component, Default)]
-#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
+#[cfg_attr(
+    feature = "bevy_reflect",
+    derive(bevy_reflect::Reflect),
+    reflect(Component)
+)]
 pub struct VisibleWhileEnabled<S: State>(PhantomData<S>);
 
 fn hide_on_disable<S: State + Eq>(
