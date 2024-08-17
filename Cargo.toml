@@ -59,3 +59,7 @@ iyes_progress = "0.12"
 
 [lints.rust]
 missing_docs = "deny"
+
+[lints.clippy]
+too_many_arguments = "allow"
+type_complexity = "allow"

@@ -23,7 +23,7 @@ mod app {
     ///
     /// - Adds the [`StateFlush`] schedule to the [`MainScheduleOrder`] after [`PreUpdate`].
     /// - Adds the [`bevy_state` plugin](bevy_state::app::StatesPlugin) if the
-    /// `bevy_state` feature is enabled.
+    ///   `bevy_state` feature is enabled.
     pub struct StatePlugin;
 
     impl Plugin for StatePlugin {
@@ -191,7 +191,7 @@ impl EntityCommandsExtState for EntityCommands<'_> {
     fn init_state<S: LocalState<Next: FromWorld>>(&mut self) {
         self.add(|mut entity: EntityWorldMut| {
             if !local_state_exists::<S>(&entity) {
-                let next = entity.world_scope(|world| S::Next::from_world(world));
+                let next = entity.world_scope(S::Next::from_world);
                 insert_local_state(&mut entity, Some(next));
             }
         });

@@ -19,7 +19,7 @@ mod app {
     };
 
     /// A plugin that adds a [`StateFlushEvent<S>`] sending system for the [`State`] type `S`
-    /// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    /// to the [`StateFlush`] schedule.
     ///
     /// Calls [`schedule_flush_event<S>`].
     pub struct FlushEventPlugin<S: State + Clone>(std::marker::PhantomData<S>);
@@ -38,7 +38,7 @@ mod app {
     }
 
     /// A plugin that adds a [`LocalStateFlushEvent<S>`] sending system for the [`State`] type `S`
-    /// to the [`StateFlush`](crate::schedule::StateFlush) schedule.
+    /// to the [`StateFlush`] schedule.
     ///
     /// Calls [`schedule_local_flush_event<S>`].
     pub struct LocalFlushEventPlugin<S: State + Clone>(PhantomData<S>);

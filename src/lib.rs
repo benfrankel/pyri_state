@@ -6,15 +6,15 @@
 //! # Overview
 //!
 //! 1. The current state is a [`Resource`](bevy_ecs::system::Resource) or
-//! [`Component`](bevy_ecs::component::Component) that implements [`State`](state::State).
+//!    [`Component`](bevy_ecs::component::Component) that implements [`State`](state::State).
 //! 2. The [next state](next_state) is stored in a
-//! [`NextStateBuffer`](next_state::buffer::NextStateBuffer) resource by default.
+//!    [`NextStateBuffer`](next_state::buffer::NextStateBuffer) resource by default.
 //! 3. A state flush is triggered by the [`TriggerStateFlush`](next_state::TriggerStateFlush)
-//! resource and handled in the [`StateFlush`](schedule::StateFlush) schedule.
+//!    resource and handled in the [`StateFlush`](schedule::StateFlush) schedule.
 //! 4. State flush hooks are organized into [`ResolveStateSet`](schedule::ResolveStateSet)
-//! system sets.
+//!    system sets.
 //! 5. Tools are provided for state [setup], [access], [pattern-matching](pattern),
-//! [debugging](debug), and [more](extra).
+//!    [debugging](debug), and [more](extra).
 //!
 //! # Getting started
 //!

@@ -84,7 +84,7 @@ use crate::{schedule::ApplyFlushSet, state::State};
 /// [`ResolveStatePlugin<S>`] as follows:
 ///
 /// 1. [`Resolve`](Self::Resolve) (before or after other `Resolve` system sets based on
-/// state dependencies, and before [`ApplyFlushSet`])
+///    state dependencies, and before [`ApplyFlushSet`])
 ///     1. [`Compute`](Self::Compute)
 ///     2. [`Trigger`](Self::Trigger)
 ///     3. [`Flush`](Self::Flush) (and [`AnyFlush`](Self::AnyFlush) if the global state will flush)
