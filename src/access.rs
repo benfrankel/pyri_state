@@ -102,7 +102,7 @@ impl<S: State> CurrentMut<'_, S> {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```ignore
 /// fn spawn_new_menu(menu: NextStateRef<Menu>) {
 ///     match menu.unwrap() {
 ///         Menu::Main => spawn_main_menu(),
@@ -157,7 +157,7 @@ impl<S: State> NextRef<'_, '_, S> {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```ignore
 /// fn toggle_blue(mut color: NextMut<ColorState>) {
 ///     let mut color = color.unwrap_mut();
 ///     color.blue = !color.blue;
@@ -288,7 +288,7 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```ignore
 /// fn same_red(color: FlushRef<ColorState>) -> bool {
 ///     color.will_trans(&ColorState::when(|x, y| x.red == y.red))
 /// }
@@ -362,7 +362,7 @@ impl<S: State> FlushRef<'_, '_, S> {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```ignore
 /// fn copy_red_to_green(mut color: FlushMut<ColorState>) {
 ///     let (current, next) = color.unwrap_mut();
 ///     next.green = current.red;

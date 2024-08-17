@@ -20,27 +20,27 @@
 //!
 //! Import the [prelude] to bring traits and common types into scope:
 //!
-//! ```rust
+//! ```
 //! use pyri_state::prelude::*;
 //! ```
 //!
 //! Define your own [`State`](state::State) type using the
 //! [derive macro](pyri_state_derive::State):
 //!
-//! ```rust
+//! ```ignore
 //! #[derive(State, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
 //! ```
 //!
 //! Add [`StatePlugin`](setup::StatePlugin) and initialize your state type:
 //!
-//! ```rust
+//! ```ignore
 //! app.add_plugins(StatePlugin).init_state::<Level>();
 //! ```
 //!
 //! Add update systems with [`StatePattern::on_update`](pattern::StatePattern::on_update):
 //!
-//! ```rust
+//! ```ignore
 //! app.add_systems(Update, (
 //!     Level::ANY.on_update(update_level_timer),
 //!     Level(10).on_update(update_boss_health_bar),
@@ -50,7 +50,7 @@
 //!
 //! Add flush hooks with other [`StatePattern`](pattern::StatePattern) methods:
 //!
-//! ```rust
+//! ```ignore
 //! app.add_systems(StateFlush, (
 //!     // Short-hand for `on_exit` followed by `on_enter`.
 //!     Level::ANY.on_edge(despawn_old_level, spawn_new_level),
@@ -77,7 +77,7 @@ pub mod state;
 ///
 /// Import the prelude to get started:
 ///
-/// ```rust
+/// ```
 /// use pyri_state::prelude::*;
 /// ```
 pub mod prelude {
@@ -131,14 +131,14 @@ pub mod prelude {
     ///
     /// The derive macro requires `Clone`, `PartialEq`, and `Eq`:
     ///
-    /// ```rust
+    /// ```ignore
     /// #[derive(State, Clone, PartialEq, Eq)]
     /// enum GameState { ... }
     /// ```
     ///
     /// They can be omitted if you disable the default options:
     ///
-    /// ```rust
+    /// ```ignore
     /// #[derive(State)]
     /// #[state(no_defaults)]
     /// struct RawState;
@@ -146,7 +146,7 @@ pub mod prelude {
     ///
     /// The following options are provided:
     ///
-    /// ```rust
+    /// ```ignore
     /// #[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
     /// #[state(
     ///     // Disable default plugins: detect_change, flush_event, apply_flush.

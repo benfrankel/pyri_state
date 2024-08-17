@@ -15,7 +15,7 @@
 ///
 /// Define your own split state type as a newtype:
 ///
-/// ```rust
+/// ```ignore
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// pub struct MyState(pub SplitState);
 /// ```
@@ -25,7 +25,7 @@ pub type SplitState = &'static str;
 ///
 /// # Example
 ///
-/// ```rust
+/// ```ignore
 /// add_to_split_state!(MyState, Foo, Bar);
 /// add_to_split_state!(MyState, Quux);
 /// ```

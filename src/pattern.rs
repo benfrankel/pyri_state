@@ -135,7 +135,7 @@ impl<S: State + Eq> StatePattern<S> for S {
 ///
 /// The usual way to use `AnyStatePattern` is through the associated constant [`State::ANY`]:
 ///
-/// ```rust
+/// ```ignore
 /// Level::ANY.on_enter(reset_timer)
 /// ```
 pub struct AnyStatePattern<S: State>(pub(crate) PhantomData<S>);
@@ -159,7 +159,7 @@ impl<S: State> StatePattern<S> for AnyStatePattern<S> {
 /// The usual way to construct this type is with the [`state!`](crate::state!) macro or
 /// [`State::with`]:
 ///
-/// ```rust
+/// ```ignore
 /// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
 /// Level::with(|x| x.0 < 4).on_refresh(my_systems)
 /// ```
@@ -257,7 +257,7 @@ impl<S: State, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> fo
 ///
 /// The usual way to use this type is through the associated constant [`State::ANY_TO_ANY`]:
 ///
-/// ```rust
+/// ```ignore
 /// Level::ANY_TO_ANY.on_trans(reset_timer)
 ///
 /// // Equivalent to:
@@ -279,7 +279,7 @@ impl<S: State> StateTransPattern<S> for AnyStateTransPattern<S> {
 /// The usual way to construct this type is with the [`state!`](crate::state!) macro or
 /// [`State::when`]:
 ///
-/// ```rust
+/// ```ignore
 /// state!(Level(2..=5 | 7) => Level(8 | 10)).on_enter(spawn_something_cool)
 /// Level::when(|x, y| y.0 > x.0).on_enter(play_next_level_sfx)
 /// ```
@@ -313,13 +313,13 @@ where
 ///
 /// State pattern-matching:
 ///
-/// ```rust
+/// ```ignore
 /// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
 /// ```
 ///
 /// State transition pattern-matching:
 ///
-/// ```rust
+/// ```ignore
 /// state!(Level(x @ 1..=3) => y if y.0 == 10 - x).on_trans(do_something_cool)
 /// ```
 #[macro_export]

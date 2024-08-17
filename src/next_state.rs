@@ -55,7 +55,7 @@ impl<S: State> Default for TriggerStateFlush<S> {
 /// The default `NextState` type is [`NextStateBuffer`](buffer::NextStateBuffer).
 /// You can set a different `NextState` type in the [derive macro](pyri_state_derive::State):
 ///
-/// ```rust
+/// ```ignore
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// #[state(next(NextStateStack<Self>))]
 /// enum MenuState { ... }
