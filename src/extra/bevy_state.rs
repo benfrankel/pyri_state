@@ -6,7 +6,8 @@
 //!
 //! Opt in to [`BevyStatePlugin<S>`] for `GameState`:
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! #[state(bevy_state)]
 //! enum GameState {
@@ -15,30 +16,37 @@
 //!     Loading,
 //!     Playing,
 //! }
+//! # */
 //! ```
 //!
 //! Add `GameState` along with its [`BevyState`] wrapper:
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! app.init_state::<GameState>();
+//! # */
 //! ```
 //!
 //! Change `GameState` to drive `BevyState`:
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! app.add_systems(Update, GameState::Title.on_update(
 //!     GameState::Loading.enter().run_if(input_just_pressed(KeyCode::Enter)),
 //! ));
+//! # */
 //! ```
 //!
 //! Change `BevyState` to drive `GameState` (e.g. using
 //! [iyes_progress](https://github.com/IyesGames/iyes_progress)):
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! app.add_plugins(
 //!     ProgressPlugin::new(GameState::Loading.bevy())
 //!         .continue_to(GameState::Playing.bevy()),
 //! );
+//! # */
 //! ```
 
 #[cfg(feature = "bevy_app")]

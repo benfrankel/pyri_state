@@ -102,13 +102,15 @@ impl<S: State> CurrentMut<'_, S> {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// fn spawn_new_menu(menu: NextStateRef<Menu>) {
 ///     match menu.unwrap() {
 ///         Menu::Main => spawn_main_menu(),
 ///         Menu::Settings => spawn_settings_menu(),
 ///     }
 /// }
+/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct NextRef<'w, 's, S: State> {
@@ -157,11 +159,13 @@ impl<S: State> NextRef<'_, '_, S> {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// fn toggle_blue(mut color: NextMut<ColorState>) {
 ///     let mut color = color.unwrap_mut();
 ///     color.blue = !color.blue;
 /// }
+/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct NextMut<'w, 's, S: StateMut> {
@@ -288,10 +292,12 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// fn same_red(color: FlushRef<ColorState>) -> bool {
 ///     color.will_trans(&ColorState::when(|x, y| x.red == y.red))
 /// }
+/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct FlushRef<'w, 's, S: State> {
@@ -362,11 +368,13 @@ impl<S: State> FlushRef<'_, '_, S> {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// fn copy_red_to_green(mut color: FlushMut<ColorState>) {
 ///     let (current, next) = color.unwrap_mut();
 ///     next.green = current.red;
 /// }
+/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct FlushMut<'w, 's, S: StateMut> {

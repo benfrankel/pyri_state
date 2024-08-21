@@ -135,8 +135,10 @@ impl<S: State + Eq> StatePattern<S> for S {
 ///
 /// The usual way to use `AnyStatePattern` is through the associated constant [`State::ANY`]:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// Level::ANY.on_enter(reset_timer)
+/// # */
 /// ```
 pub struct AnyStatePattern<S: State>(pub(crate) PhantomData<S>);
 
@@ -159,9 +161,11 @@ impl<S: State> StatePattern<S> for AnyStatePattern<S> {
 /// The usual way to construct this type is with the [`state!`](crate::state!) macro or
 /// [`State::with`]:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
 /// Level::with(|x| x.0 < 4).on_refresh(my_systems)
+/// # */
 /// ```
 #[derive(Clone)]
 pub struct FnStatePattern<S: State, F>(F, PhantomData<S>)
@@ -257,11 +261,13 @@ impl<S: State, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> fo
 ///
 /// The usual way to use this type is through the associated constant [`State::ANY_TO_ANY`]:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// Level::ANY_TO_ANY.on_trans(reset_timer)
 ///
 /// // Equivalent to:
 /// (Level::ANY, Level::ANY).on_trans(reset_timer)
+/// # */
 /// ```
 ///
 #[derive(Clone)]
@@ -279,9 +285,11 @@ impl<S: State> StateTransPattern<S> for AnyStateTransPattern<S> {
 /// The usual way to construct this type is with the [`state!`](crate::state!) macro or
 /// [`State::when`]:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// state!(Level(2..=5 | 7) => Level(8 | 10)).on_enter(spawn_something_cool)
 /// Level::when(|x, y| y.0 > x.0).on_enter(play_next_level_sfx)
+/// # */
 /// ```
 #[derive(Clone)]
 pub struct FnStateTransPattern<S: State, F>(F, PhantomData<S>)
@@ -313,14 +321,18 @@ where
 ///
 /// State pattern-matching:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// state!(Level(4 | 7 | 10)).on_enter(save_checkpoint)
+/// # */
 /// ```
 ///
 /// State transition pattern-matching:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// state!(Level(x @ 1..=3) => y if y.0 == 10 - x).on_trans(do_something_cool)
+/// # */
 /// ```
 #[macro_export]
 macro_rules! state {

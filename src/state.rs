@@ -17,7 +17,8 @@ use crate::{
 ///
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// enum GameState { ... }
 ///
@@ -26,6 +27,7 @@ use crate::{
 /// impl State for MenuState {
 ///     type Next = NextStateBuffer<Self>;
 /// }
+/// # */
 /// ```
 ///
 /// The derive macro would also implement

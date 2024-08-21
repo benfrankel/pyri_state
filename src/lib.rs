@@ -27,30 +27,37 @@
 //! Define your own [`State`](state::State) type using the
 //! [derive macro](pyri_state_derive::State):
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! #[derive(State, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
+//! # */
 //! ```
 //!
 //! Add [`StatePlugin`](setup::StatePlugin) and initialize your state type:
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! app.add_plugins(StatePlugin).init_state::<Level>();
+//! # */
 //! ```
 //!
 //! Add update systems with [`StatePattern::on_update`](pattern::StatePattern::on_update):
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! app.add_systems(Update, (
 //!     Level::ANY.on_update(update_level_timer),
 //!     Level(10).on_update(update_boss_health_bar),
 //!     state!(Level(4..=6)).on_update(spawn_enemy_waves),
 //! ));
+//! # */
 //! ```
 //!
 //! Add flush hooks with other [`StatePattern`](pattern::StatePattern) methods:
 //!
-//! ```ignore
+//! ```
+//! # /*
 //! app.add_systems(StateFlush, (
 //!     // Short-hand for `on_exit` followed by `on_enter`.
 //!     Level::ANY.on_edge(despawn_old_level, spawn_new_level),
@@ -58,6 +65,7 @@
 //!     state!(Level(4 | 7 | 10)).on_enter(save_checkpoint),
 //!     Level::with(|x| x.0 < 4).on_enter(spawn_tutorial_popup),
 //! ));
+//! # */
 //! ```
 
 // Allow macros to refer to this crate as `pyri_state` internally.
@@ -131,22 +139,27 @@ pub mod prelude {
     ///
     /// The derive macro requires `Clone`, `PartialEq`, and `Eq`:
     ///
-    /// ```ignore
+    /// ```
+    /// # /*
     /// #[derive(State, Clone, PartialEq, Eq)]
     /// enum GameState { ... }
+    /// # */
     /// ```
     ///
     /// They can be omitted if you disable the default options:
     ///
-    /// ```ignore
+    /// ```
+    /// # /*
     /// #[derive(State)]
     /// #[state(no_defaults)]
     /// struct RawState;
+    /// # */
     /// ```
     ///
     /// The following options are provided:
     ///
-    /// ```ignore
+    /// ```
+    /// # /*
     /// #[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
     /// #[state(
     ///     // Disable default plugins: detect_change, flush_event, apply_flush.
@@ -173,6 +186,7 @@ pub mod prelude {
     ///     before(RawState),
     /// )]
     /// struct ConfiguredState;
+    /// # */
     /// ```
     pub use pyri_state_derive::State;
 }

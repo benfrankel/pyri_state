@@ -15,9 +15,11 @@
 ///
 /// Define your own split state type as a newtype:
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// pub struct MyState(pub SplitState);
+/// # */
 /// ```
 pub type SplitState = &'static str;
 
@@ -25,9 +27,11 @@ pub type SplitState = &'static str;
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
+/// # /*
 /// add_to_split_state!(MyState, Foo, Bar);
 /// add_to_split_state!(MyState, Quux);
+/// # */
 /// ```
 #[macro_export]
 macro_rules! add_to_split_state {
