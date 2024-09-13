@@ -47,7 +47,7 @@ struct SaveProgressLevel;
 impl SubStates for SaveProgressLevel {
     type SourceStates = Level;
 
-    fn should_exit(sources: Level) -> Option<Self> {
+    fn should_exist(sources: Level) -> Option<Self> {
         matches!(sources, Level(4 | 7 | 10)).then(Self)
     }
 }
