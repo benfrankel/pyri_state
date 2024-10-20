@@ -104,7 +104,7 @@ pub trait State: Resource + Sized {
     }
 }
 
-/// An extention trait for [`State`] types that also implement [`Eq`].
+/// An extension trait for [`State`] types that also implement [`Eq`].
 pub trait StateExtEq: State + Eq {
     /// A run condition that checks if this state type will change if triggered.
     fn will_change(state: FlushRef<Self>) -> bool {
