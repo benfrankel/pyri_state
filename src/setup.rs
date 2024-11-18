@@ -129,7 +129,7 @@ pub trait CommandsExtState {
 
 impl CommandsExtState for Commands<'_, '_> {
     fn add_state<S: State>(&mut self) {
-        self.add(|world: &mut World| {
+        self.queue(|world: &mut World| {
             if !state_exists::<S>(world) {
                 insert_state(world, None::<S::Next>);
             }
@@ -137,7 +137,7 @@ impl CommandsExtState for Commands<'_, '_> {
     }
 
     fn init_state<S: State<Next: FromWorld>>(&mut self) {
-        self.add(|world: &mut World| {
+        self.queue(|world: &mut World| {
             if !state_exists::<S>(world) {
                 let next = S::Next::from_world(world);
                 insert_state(world, Some(next));
@@ -146,7 +146,7 @@ impl CommandsExtState for Commands<'_, '_> {
     }
 
     fn insert_state<T: NextState>(&mut self, next: T) {
-        self.add(|world: &mut World| insert_state(world, Some(next)));
+        self.queue(|world: &mut World| insert_state(world, Some(next)));
     }
 }
 
@@ -181,7 +181,7 @@ pub trait EntityCommandsExtState {
 
 impl EntityCommandsExtState for EntityCommands<'_> {
     fn add_state<S: LocalState>(&mut self) {
-        self.add(|mut entity: EntityWorldMut| {
+        self.queue(|mut entity: EntityWorldMut| {
             if !local_state_exists::<S>(&entity) {
                 insert_local_state(&mut entity, None::<S::Next>);
             }
@@ -189,7 +189,7 @@ impl EntityCommandsExtState for EntityCommands<'_> {
     }
 
     fn init_state<S: LocalState<Next: FromWorld>>(&mut self) {
-        self.add(|mut entity: EntityWorldMut| {
+        self.queue(|mut entity: EntityWorldMut| {
             if !local_state_exists::<S>(&entity) {
                 let next = entity.world_scope(S::Next::from_world);
                 insert_local_state(&mut entity, Some(next));
@@ -198,6 +198,6 @@ impl EntityCommandsExtState for EntityCommands<'_> {
     }
 
     fn insert_state<T: NextState<State: LocalState<Next = T>>>(&mut self, next: T) {
-        self.add(|mut entity: EntityWorldMut| insert_local_state(&mut entity, Some(next)));
+        self.queue(|mut entity: EntityWorldMut| insert_local_state(&mut entity, Some(next)));
     }
 }

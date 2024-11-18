@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state_derive"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "Derive macros for `pyri_state`"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -18,7 +18,7 @@ debug = []
 proc-macro = true
 
 [dependencies]
-bevy_macro_utils = "0.14"
+bevy_macro_utils = "0.15.0-rc.3"
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", default-features = false, features = [

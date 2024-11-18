@@ -71,7 +71,7 @@ use super::resolve_state::ResolveStateSet;
 pub fn schedule_detect_change<S: State + Eq>(schedule: &mut Schedule) {
     schedule.add_systems(
         S::trigger
-            .run_if(not(S::is_triggered).and_then(S::will_change))
+            .run_if(not(S::is_triggered).and(S::will_change))
             .in_set(ResolveStateSet::<S>::Trigger),
     );
 }

@@ -3,17 +3,18 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-use iyes_progress::prelude::*;
+// TODO: Uncomment once iyes_progress is released for Bevy 0.15.
+//use iyes_progress::prelude::*;
 
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .init_state::<GameState>()
-        .add_plugins(
+        /*.add_plugins(
             ProgressPlugin::new(GameState::Loading.bevy())
                 // Changes to `BevyState<GameState>` will propagate to `GameState`.
                 .continue_to(GameState::Playing.bevy()),
-        )
+        )*/
         .add_systems(
             Update,
             GameState::Title.on_update(
@@ -34,5 +35,5 @@ enum GameState {
     Splash,
     Title,
     Loading,
-    Playing,
+    //Playing,
 }

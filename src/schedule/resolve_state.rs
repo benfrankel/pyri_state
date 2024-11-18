@@ -219,7 +219,7 @@ pub fn schedule_resolve_state<S: State>(
                 .run_if(S::is_enabled)
                 .in_set(ResolveStateSet::<S>::Exit),
             ResolveStateSet::<S>::AnyTrans
-                .run_if(S::is_enabled.and_then(S::will_be_enabled))
+                .run_if(S::is_enabled.and(S::will_be_enabled))
                 .in_set(ResolveStateSet::<S>::Trans),
             ResolveStateSet::<S>::AnyEnter
                 .run_if(S::will_be_enabled)

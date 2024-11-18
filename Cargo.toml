@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -38,24 +38,24 @@ split = []
 stack = []
 
 [dependencies]
-bevy_app = { version = "0.14", default-features = false, optional = true }
-bevy_core = { version = "0.14", optional = true }
-bevy_ecs = { version = "0.14", default-features = false }
-bevy_hierarchy = { version = "0.14", optional = true }
-bevy_log = { version = "0.14", optional = true }
-bevy_reflect = { version = "0.14", optional = true }
-bevy_render = { version = "0.14", optional = true }
-bevy_state = { version = "0.14", optional = true }
-pyri_state_derive = { version = "0.2", path = "derive" }
+bevy_app = { version = "0.15.0-rc.3", default-features = false, optional = true }
+bevy_core = { version = "0.15.0-rc.3", optional = true }
+bevy_ecs = { version = "0.15.0-rc.3", default-features = false }
+bevy_hierarchy = { version = "0.15.0-rc.3", optional = true }
+bevy_log = { version = "0.15.0-rc.3", optional = true }
+bevy_reflect = { version = "0.15.0-rc.3", optional = true }
+bevy_render = { version = "0.15.0-rc.3", optional = true }
+bevy_state = { version = "0.15.0-rc.3", optional = true }
+pyri_state_derive = { version = "0.3", path = "derive" }
 
 [dev-dependencies]
-bevy = { version = "0.14", default-features = false, features = [
+bevy = { version = "0.15.0-rc.3", default-features = false, features = [
     "bevy_core_pipeline",
     "bevy_winit",
     "x11",
     "multi_threaded",
 ] }
-iyes_progress = "0.12"
+#iyes_progress = "0.12"
 
 [lints.rust]
 missing_docs = "deny"

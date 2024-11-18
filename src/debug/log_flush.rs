@@ -108,31 +108,31 @@ pub fn schedule_log_flush<S: State + Debug>(schedule: &mut Schedule) {
             .before(ResolveStateSet::<S>::Flush)
             .run_if(
                 S::is_triggered
-                    .and_then(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_flush)),
+                    .and(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_flush)),
             ),
         log_state_exit::<S>
             .in_set(ResolveStateSet::<S>::Flush)
             .before(ResolveStateSet::<S>::Exit)
             .run_if(
                 S::is_triggered
-                    .and_then(S::ANY.will_exit())
-                    .and_then(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_exit)),
+                    .and(S::ANY.will_exit())
+                    .and(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_exit)),
             ),
         log_state_trans::<S>
             .after(ResolveStateSet::<S>::Exit)
             .before(ResolveStateSet::<S>::Trans)
             .run_if(
                 S::is_triggered
-                    .and_then(S::ANY_TO_ANY.will_trans())
-                    .and_then(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_trans)),
+                    .and(S::ANY_TO_ANY.will_trans())
+                    .and(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_trans)),
             ),
         log_state_enter::<S>
             .after(ResolveStateSet::<S>::Trans)
             .before(ResolveStateSet::<S>::Enter)
             .run_if(
                 S::is_triggered
-                    .and_then(S::ANY.will_enter())
-                    .and_then(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_enter)),
+                    .and(S::ANY.will_enter())
+                    .and(|x: Option<Res<StateDebugSettings>>| x.is_some_and(|x| x.log_enter)),
             ),
     ));
 }

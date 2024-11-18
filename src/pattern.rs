@@ -82,7 +82,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     /// Configure systems to run when `S` becomes enabled in a matching state.
     fn on_enable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
         systems
-            .run_if(S::is_triggered.and_then(self.will_enable()))
+            .run_if(S::is_triggered.and(self.will_enable()))
             .in_set(ResolveStateSet::<S>::AnyFlush)
             .in_set(ResolveStateSet::<S>::Enter)
     }

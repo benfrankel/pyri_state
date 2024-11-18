@@ -21,7 +21,7 @@ fn main() {
                 GameState::PlayingGame.on_update(
                     Menu::MainOverlay
                         .push()
-                        .run_if(Menu::is_disabled.and_then(input_just_pressed(KeyCode::Escape))),
+                        .run_if(Menu::is_disabled.and(input_just_pressed(KeyCode::Escape))),
                 ),
                 // Enter settings from main menu on S press.
                 state!(Menu::Main | Menu::MainOverlay).on_update(
