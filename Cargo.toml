@@ -55,7 +55,7 @@ bevy = { version = "0.15.0-rc.3", default-features = false, features = [
     "x11",
     "multi_threaded",
 ] }
-#iyes_progress = "0.12"
+iyes_progress = "0.13.0-rc.1"
 
 [lints.rust]
 missing_docs = "deny"

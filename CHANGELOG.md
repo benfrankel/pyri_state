@@ -1,14 +1,17 @@
 # Next version
 
-- Changed `toggle` and `enable` functions / systems to check the current state instead of the next state when possible
-- Added `toggle_default`, `enable_default`, and `enter_default` methods to `FlushMut` system param
-- Renamed `FlushMut::relax` to `reset_trigger` method
-- **Expanded reaction components:**
+# Version 0.3.0
+
+- **Updated to Bevy 0.15.0**
+- **Extended reaction components:**
     - Renamed `StateScope` -> `DespawnOnExit` component with `Single`, `Recursive`, and `Descendants` variants
     - Added `DespawnOnDisable` component
     - Added `VisibleWhileIn` component
     - Added `VisibleWhileEnabled` component
     - Added re-exports for reaction components to `prelude` module
+- Renamed `relax` -> `reset_trigger` method on `FlushMut` system param
+- Added `toggle_default`, `enable_default`, and `enter_default` methods to `FlushMut` system param
+- Changed `toggle` and `enable` functions and systems to read the current state instead of the next state when possible
 
 # Version 0.2.1
 
@@ -17,7 +20,7 @@
 
 # Version 0.2.0
 
-- **Updated to bevy 0.14.0**
+- **Updated to Bevy 0.14.0**
 - **Wrote [documentation](https://docs.rs/pyri_state/latest/pyri_state/)**
 - **Wrote [interactive examples](/examples/)**
 - **Implemented state pattern-matching:**
