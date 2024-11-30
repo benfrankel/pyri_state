@@ -18,7 +18,7 @@ debug = []
 proc-macro = true
 
 [dependencies]
-bevy_macro_utils = "0.15.0-rc.3"
+bevy_macro_utils = "0.15"
 proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", default-features = false, features = [
