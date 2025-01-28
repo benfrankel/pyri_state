@@ -9,7 +9,7 @@ use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
     system::{Commands, ResMut, Resource, SystemParamItem},
-    world::{Command, FromWorld, World},
+    world::{FromWorld, World},
 };
 
 use crate::{
@@ -240,27 +240,37 @@ pub trait NextStateStackCommandsExt {
 
 impl NextStateStackCommandsExt for Commands<'_, '_> {
     fn state_stack_acquire<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
-        self.queue(state_stack_acquire::<S>);
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().acquire();
+        });
         self
     }
 
     fn state_stack_release<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
-        self.queue(state_stack_release::<S>);
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().release();
+        });
         self
     }
 
     fn state_stack_clear<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
-        self.queue(state_stack_clear::<S>);
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().clear();
+        });
         self
     }
 
     fn state_stack_pop<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
-        self.queue(state_stack_pop::<S>);
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().pop();
+        });
         self
     }
 
     fn state_stack_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self {
-        self.queue(state_stack_push(state));
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().push(state);
+        });
         self
     }
 
@@ -268,56 +278,19 @@ impl NextStateStackCommandsExt for Commands<'_, '_> {
         &mut self,
         state: S,
     ) -> &mut Self {
-        self.queue(state_stack_clear_push(state));
+        self.queue(move |world: &mut World| {
+            world
+                .resource_mut::<NextStateStack<S>>()
+                .clear()
+                .push(state);
+        });
         self
     }
 
     fn state_stack_pop_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self {
-        self.queue(state_stack_pop_push(state));
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().pop().push(state);
+        });
         self
-    }
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_acquire`].
-pub fn state_stack_acquire<S: State<Next = NextStateStack<S>>>(world: &mut World) {
-    world.resource_mut::<NextStateStack<S>>().acquire();
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_release`].
-pub fn state_stack_release<S: State<Next = NextStateStack<S>>>(world: &mut World) {
-    world.resource_mut::<NextStateStack<S>>().release();
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_clear`].
-pub fn state_stack_clear<S: State<Next = NextStateStack<S>>>(world: &mut World) {
-    world.resource_mut::<NextStateStack<S>>().clear();
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_pop`].
-pub fn state_stack_pop<S: State<Next = NextStateStack<S>>>(world: &mut World) {
-    world.resource_mut::<NextStateStack<S>>().pop();
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_push`].
-pub fn state_stack_push<S: State<Next = NextStateStack<S>>>(state: S) -> impl Command {
-    move |world: &mut World| {
-        world.resource_mut::<NextStateStack<S>>().push(state);
-    }
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_clear_push`].
-pub fn state_stack_clear_push<S: State<Next = NextStateStack<S>>>(state: S) -> impl Command {
-    move |world: &mut World| {
-        world
-            .resource_mut::<NextStateStack<S>>()
-            .clear()
-            .push(state);
-    }
-}
-
-/// [`Command`] impl for [`NextStateStackCommandsExt::state_stack_pop_push`].
-pub fn state_stack_pop_push<S: State<Next = NextStateStack<S>>>(state: S) -> impl Command {
-    move |world: &mut World| {
-        world.resource_mut::<NextStateStack<S>>().pop().push(state);
     }
 }
