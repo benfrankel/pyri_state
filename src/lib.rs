@@ -91,7 +91,7 @@ pub mod state;
 pub mod prelude {
     pub use crate::{
         access::{CurrentMut, CurrentRef, FlushMut, FlushRef, NextMut, NextRef},
-        next_state::buffer::NextStateBuffer,
+        next_state::{buffer::NextStateBuffer, stack::NextStateStackCommandsExt as _},
         pattern::{
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
