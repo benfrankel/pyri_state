@@ -8,7 +8,7 @@
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    system::{ResMut, Resource, SystemParamItem},
+    system::{Commands, ResMut, Resource, SystemParamItem},
     world::{FromWorld, World},
 };
 
@@ -26,12 +26,12 @@ use crate::{
     derive(bevy_reflect::Reflect),
     reflect(Resource)
 )]
-pub struct NextStateStack<S: State> {
+pub struct NextStateStack<S: State<Next = Self>> {
     stack: Vec<Option<S>>,
     bases: Vec<usize>,
 }
 
-impl<S: State> NextState for NextStateStack<S> {
+impl<S: State<Next = Self>> NextState for NextStateStack<S> {
     type State = S;
 
     type Param = ();
@@ -51,7 +51,7 @@ impl<S: State> NextState for NextStateStack<S> {
     }
 }
 
-impl<S: State> NextStateMut for NextStateStack<S> {
+impl<S: State<Next = Self>> NextStateMut for NextStateStack<S> {
     type ParamMut = ();
 
     fn next_state_from_mut<'s>(
@@ -77,13 +77,13 @@ impl<S: State> NextStateMut for NextStateStack<S> {
     }
 }
 
-impl<S: State + FromWorld> FromWorld for NextStateStack<S> {
+impl<S: State<Next = Self> + FromWorld> FromWorld for NextStateStack<S> {
     fn from_world(world: &mut World) -> Self {
         Self::new(S::from_world(world))
     }
 }
 
-impl<S: State> NextStateStack<S> {
+impl<S: State<Next = Self>> NextStateStack<S> {
     /// Create a new `NextStateStack` with an initial state.
     pub fn new(state: S) -> Self {
         Self {
@@ -162,7 +162,7 @@ impl<S: State> NextStateStack<S> {
 /// See the following extension traits with additional bounds on `Self`:
 ///
 /// - [`NextStateStackMutExtClone`]
-pub trait NextStateStackMut: State {
+pub trait NextStateStackMut: State<Next = NextStateStack<Self>> {
     /// A system that pushes a new base state index to the stack.
     fn acquire(mut stack: ResMut<NextStateStack<Self>>) {
         stack.acquire();
@@ -211,3 +211,89 @@ pub trait NextStateStackMutExtClone: NextStateStackMut + Clone {
 }
 
 impl<S: NextStateStackMut + Clone> NextStateStackMutExtClone for S {}
+
+/// An extension trait for [`Commands`] that provides methods for operating on states with
+/// [`NextStateStack`] as their `Next` type.
+pub trait NextStateStackCommandsExt {
+    /// Queues a [`Command`](bevy_ecs::world::Command) to push a new base state index to the stack.
+    fn state_stack_acquire<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
+
+    /// Queues a [`Command`](bevy_ecs::world::Command) to pop the top base state index of the stack.
+    fn state_stack_release<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
+
+    /// Queues a [`Command`](bevy_ecs::world::Command) to clear the stack down to the base state.
+    fn state_stack_clear<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
+
+    /// Queues a [`Command`](bevy_ecs::world::Command) to pop the stack if it's above the base
+    /// state.
+    fn state_stack_pop<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
+
+    /// Queues a [`Command`](bevy_ecs::world::Command) to push a state to the top of the stack.
+    fn state_stack_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self;
+
+    /// Queues a [`Command`](bevy_ecs::world::Command) to clear and then push a state to the top of
+    /// the stack.
+    fn state_stack_clear_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S)
+        -> &mut Self;
+
+    /// Queues a [`Command`](bevy_ecs::world::Command) to pop and then push a state to the top of
+    /// the stack.
+    fn state_stack_pop_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self;
+}
+
+impl NextStateStackCommandsExt for Commands<'_, '_> {
+    fn state_stack_acquire<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().acquire();
+        });
+        self
+    }
+
+    fn state_stack_release<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().release();
+        });
+        self
+    }
+
+    fn state_stack_clear<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().clear();
+        });
+        self
+    }
+
+    fn state_stack_pop<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().pop();
+        });
+        self
+    }
+
+    fn state_stack_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().push(state);
+        });
+        self
+    }
+
+    fn state_stack_clear_push<S: State<Next = NextStateStack<S>>>(
+        &mut self,
+        state: S,
+    ) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world
+                .resource_mut::<NextStateStack<S>>()
+                .clear()
+                .push(state);
+        });
+        self
+    }
+
+    fn state_stack_pop_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self {
+        self.queue(move |world: &mut World| {
+            world.resource_mut::<NextStateStack<S>>().pop().push(state);
+        });
+        self
+    }
+}
