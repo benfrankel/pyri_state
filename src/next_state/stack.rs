@@ -235,7 +235,7 @@ pub trait NextStateStackCommandsExt {
     /// Queues a [`Command`](bevy_ecs::world::Command) to clear and then push a state to the top of
     /// the stack.
     fn state_stack_clear_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S)
-        -> &mut Self;
+    -> &mut Self;
 
     /// Queues a [`Command`](bevy_ecs::world::Command) to pop and then push a state to the top of
     /// the stack.

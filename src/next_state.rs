@@ -79,7 +79,7 @@ pub trait NextState: Resource {
 
     /// Get a read-only reference to the next state, or `None` if disabled.
     fn next_state<'s>(&'s self, param: &'s SystemParamItem<Self::Param>)
-        -> Option<&'s Self::State>;
+    -> Option<&'s Self::State>;
 }
 
 /// A [`NextState`] type that allows [`Self::State`](NextState::State) to be mutated directly.

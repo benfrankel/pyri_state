@@ -11,7 +11,7 @@ use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
     resource::Resource,
-    system::{lifetimeless::SRes, Res, ResMut, SystemParamItem},
+    system::{Res, ResMut, SystemParamItem, lifetimeless::SRes},
 };
 
 use crate::{next_state::NextState, state::State};

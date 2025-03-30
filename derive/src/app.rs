@@ -1,9 +1,9 @@
 use bevy_macro_utils::BevyManifest;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_str, punctuated::Punctuated, DeriveInput, Path, Token};
+use syn::{DeriveInput, Path, Token, parse_str, punctuated::Punctuated};
 
-use crate::{util::concat, StateAttrs};
+use crate::{StateAttrs, util::concat};
 
 pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();

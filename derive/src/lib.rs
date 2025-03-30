@@ -6,8 +6,8 @@ use bevy_macro_utils::BevyManifest;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    parse_macro_input, parse_str, punctuated::Punctuated, DeriveInput, Error, Meta, Path, Result,
-    Token, Type,
+    DeriveInput, Error, Meta, Path, Result, Token, Type, parse_macro_input, parse_str,
+    punctuated::Punctuated,
 };
 
 use crate::util::concat;

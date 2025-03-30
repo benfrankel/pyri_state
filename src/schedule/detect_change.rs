@@ -54,7 +54,7 @@ mod app {
 }
 
 use bevy_ecs::{
-    schedule::{common_conditions::not, Condition, IntoScheduleConfigs as _, Schedule},
+    schedule::{Condition, IntoScheduleConfigs as _, Schedule, common_conditions::not},
     system::{Query, StaticSystemParam},
 };
 

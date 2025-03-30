@@ -15,7 +15,7 @@ mod app {
     };
 
     use super::{
-        schedule_flush_event, schedule_local_flush_event, LocalStateFlushEvent, StateFlushEvent,
+        LocalStateFlushEvent, StateFlushEvent, schedule_flush_event, schedule_local_flush_event,
     };
 
     /// A plugin that adds a [`StateFlushEvent<S>`] sending system for the [`State`] type `S`

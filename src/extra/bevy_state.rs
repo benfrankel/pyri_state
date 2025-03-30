@@ -61,7 +61,7 @@ mod app {
 
     use crate::{schedule::StateFlush, state::StateMut};
 
-    use super::{schedule_bevy_state, BevyState};
+    use super::{BevyState, schedule_bevy_state};
 
     /// A plugin that adds [`BevyState<S>`] propagation systems for the
     /// [`State`](crate::state::State) type `S` to the [`StateFlush`] schedule.

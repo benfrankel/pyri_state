@@ -12,7 +12,7 @@ mod app {
 
     use crate::state::State;
 
-    use super::{schedule_resolve_state, ResolveStateSet};
+    use super::{ResolveStateSet, schedule_resolve_state};
 
     /// A plugin that configures the [`ResolveStateSet<S>`] system sets for the [`State`]
     /// type `S` in the [`StateFlush`](crate::schedule::StateFlush) schedule.

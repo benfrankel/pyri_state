@@ -1,4 +1,4 @@
-use syn::{parse_str, Path, PathSegment};
+use syn::{Path, PathSegment, parse_str};
 
 pub(crate) fn concat(base_path: &Path, suffix: &str) -> Path {
     let mut base_path = base_path.clone();
