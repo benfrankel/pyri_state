@@ -123,6 +123,7 @@ This is a seriously discouraging amount of boilerplate for something that should
 
 | `bevy` version | `pyri_state` version |
 | -------------- | -------------------- |
+| 0.16           | 0.4 (unreleased)     |
 | 0.15           | 0.3                  |
 | 0.14           | 0.2                  |
 | 0.13           | 0.1                  |

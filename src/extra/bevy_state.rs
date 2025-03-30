@@ -86,7 +86,7 @@ mod app {
 use std::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
-    schedule::{IntoSystemConfigs as _, Schedule},
+    schedule::{IntoScheduleConfigs as _, Schedule},
     system::{Res, ResMut},
 };
 use bevy_state::prelude as bevy;

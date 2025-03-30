@@ -40,11 +40,11 @@ use bevy_ecs::reflect::ReflectComponent;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
+    hierarchy::Children,
     query::With,
     schedule::Schedule,
     system::{Commands, Query},
 };
-use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_render::view::visibility::Visibility;
 
 use crate::{
@@ -73,8 +73,6 @@ pub fn schedule_react<S: State + Eq>(schedule: &mut Schedule) {
     reflect(Component)
 )]
 pub enum DespawnOnExit<S: State> {
-    /// Despawn the entity on any exit.
-    Single,
     #[default]
     /// Despawn the entity and its descendants on any exit.
     Recursive,
@@ -90,10 +88,9 @@ fn despawn_on_exit<S: State>(
 ) {
     for (entity, reaction) in &reaction_query {
         match reaction {
-            DespawnOnExit::Single => commands.entity(entity).despawn(),
-            DespawnOnExit::Recursive => commands.entity(entity).despawn_recursive(),
+            DespawnOnExit::Recursive => commands.entity(entity).despawn(),
             DespawnOnExit::Descendants => {
-                commands.entity(entity).despawn_descendants();
+                commands.entity(entity).despawn_related::<Children>();
             }
             DespawnOnExit::_PhantomData(_) => unreachable!(),
         }
@@ -108,8 +105,6 @@ fn despawn_on_exit<S: State>(
     reflect(Component)
 )]
 pub enum DespawnOnDisable<S: State> {
-    /// Despawn the entity on any exit.
-    Single,
     #[default]
     /// Despawn the entity and its descendants on any exit.
     Recursive,
@@ -125,10 +120,9 @@ fn despawn_on_disable<S: State>(
 ) {
     for (entity, reaction) in &reaction_query {
         match reaction {
-            DespawnOnDisable::Single => commands.entity(entity).despawn(),
-            DespawnOnDisable::Recursive => commands.entity(entity).despawn_recursive(),
+            DespawnOnDisable::Recursive => commands.entity(entity).despawn(),
             DespawnOnDisable::Descendants => {
-                commands.entity(entity).despawn_descendants();
+                commands.entity(entity).despawn_related::<Children>();
             }
             DespawnOnDisable::_PhantomData(_) => unreachable!(),
         }

@@ -5,7 +5,10 @@
 
 use std::marker::PhantomData;
 
-use bevy_ecs::schedule::{Condition, IntoSystemConfigs, SystemConfigs};
+use bevy_ecs::{
+    schedule::{Condition, IntoScheduleConfigs, ScheduleConfigs},
+    system::ScheduleSystem,
+};
 
 use crate::{
     access::{CurrentRef, FlushRef, NextRef},
@@ -31,7 +34,10 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run if `S` is in a matching state.
-    fn on_update<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_update<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems.run_if(self.will_update())
     }
 
@@ -41,7 +47,10 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` exits a matching state.
-    fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_exit<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_exit())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -54,7 +63,10 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` is disabled from a matching state.
-    fn on_disable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_disable<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_disable())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -67,7 +79,10 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` enters a matching state.
-    fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_enter<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_enter())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -80,7 +95,10 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` becomes enabled in a matching state.
-    fn on_enable<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_enable<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(S::is_triggered.and(self.will_enable()))
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -94,9 +112,9 @@ pub trait StatePatternExtClone<S: State>: StatePattern<S> + Clone {
     /// [`on_enter`](StatePattern::on_enter) systems for the same `StatePattern`.
     fn on_edge<M1, M2>(
         self,
-        exit_systems: impl IntoSystemConfigs<M1>,
-        enter_systems: impl IntoSystemConfigs<M2>,
-    ) -> SystemConfigs {
+        exit_systems: impl IntoScheduleConfigs<ScheduleSystem, M1>,
+        enter_systems: impl IntoScheduleConfigs<ScheduleSystem, M2>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         (
             self.clone().on_exit(exit_systems),
             self.on_enter(enter_systems),
@@ -115,7 +133,10 @@ pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     }
 
     /// Configure systems to run when `S` refreshes in a matching state.
-    fn on_refresh<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_refresh<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_refresh())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -208,7 +229,10 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` exits as part of a matching transition.
-    fn on_exit<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_exit<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_trans())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -216,7 +240,10 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` undergoes a matching transition.
-    fn on_trans<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_trans<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_trans())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -224,7 +251,10 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     }
 
     /// Configure systems to run when `S` enters as part of a matching transition.
-    fn on_enter<M>(self, systems: impl IntoSystemConfigs<M>) -> SystemConfigs {
+    fn on_enter<M>(
+        self,
+        systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_trans())
             .in_set(ResolveStateSet::<S>::AnyFlush)
@@ -238,9 +268,9 @@ pub trait StateTransPatternExtClone<S: State>: StateTransPattern<S> + Clone {
     /// [`on_enter`](StateTransPattern::on_enter) systems for the same `StateTransPattern`.
     fn on_edge<M1, M2>(
         self,
-        exit_systems: impl IntoSystemConfigs<M1>,
-        enter_systems: impl IntoSystemConfigs<M2>,
-    ) -> SystemConfigs {
+        exit_systems: impl IntoScheduleConfigs<ScheduleSystem, M1>,
+        enter_systems: impl IntoScheduleConfigs<ScheduleSystem, M2>,
+    ) -> ScheduleConfigs<ScheduleSystem> {
         (
             self.clone().on_exit(exit_systems),
             self.on_enter(enter_systems),

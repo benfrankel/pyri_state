@@ -44,8 +44,8 @@ fn derive_resource_helper(input: &DeriveInput) -> proc_macro2::TokenStream {
 
     // Construct paths.
     let bevy_ecs_path = BevyManifest::default().get_path("bevy_ecs");
-    let bevy_ecs_system_path = concat(&bevy_ecs_path, "system");
-    let resource_trait = concat(&bevy_ecs_system_path, "Resource");
+    let bevy_ecs_resource_path = concat(&bevy_ecs_path, "resource");
+    let resource_trait = concat(&bevy_ecs_resource_path, "Resource");
 
     quote! {
         impl #impl_generics #resource_trait for #ty_name #ty_generics #where_clause {}

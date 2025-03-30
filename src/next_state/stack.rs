@@ -8,7 +8,8 @@
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    system::{Commands, ResMut, Resource, SystemParamItem},
+    resource::Resource,
+    system::{Commands, ResMut, SystemParamItem},
     world::{FromWorld, World},
 };
 

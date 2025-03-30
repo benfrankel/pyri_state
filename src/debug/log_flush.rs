@@ -53,10 +53,10 @@ mod app {
 
 use std::{any::type_name, fmt::Debug};
 
-use bevy_core::FrameCount;
+use bevy_diagnostic::FrameCount;
 use bevy_ecs::{
     entity::Entity,
-    schedule::{Condition, IntoSystemConfigs, Schedule},
+    schedule::{Condition, IntoScheduleConfigs, Schedule},
     system::{Query, Res, StaticSystemParam},
 };
 use bevy_log::info;

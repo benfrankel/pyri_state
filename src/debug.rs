@@ -8,7 +8,7 @@ pub mod log_flush;
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
-use bevy_ecs::system::Resource;
+use bevy_ecs::resource::Resource;
 
 /// A resource that controls the behavior of [state debugging tools](crate::debug).
 #[derive(Resource, PartialEq, Eq, Default)]

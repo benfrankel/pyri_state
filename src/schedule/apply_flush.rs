@@ -57,7 +57,7 @@ use std::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
     entity::Entity,
-    schedule::{IntoSystemConfigs, Schedule, SystemSet},
+    schedule::{IntoScheduleConfigs as _, Schedule, SystemSet},
     system::{Commands, Query, StaticSystemParam},
 };
 

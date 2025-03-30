@@ -60,7 +60,7 @@ mod app {
 use bevy_ecs::{
     entity::Entity,
     event::{Event, EventWriter},
-    schedule::{IntoSystemConfigs, Schedule},
+    schedule::{IntoScheduleConfigs as _, Schedule},
     system::{Query, StaticSystemParam},
 };
 
@@ -100,7 +100,7 @@ fn send_flush_event<S: State + Clone>(
     mut events: EventWriter<StateFlushEvent<S>>,
 ) {
     let (old, new) = state.get();
-    events.send(StateFlushEvent {
+    events.write(StateFlushEvent {
         old: old.cloned(),
         new: new.cloned(),
     });
@@ -123,7 +123,7 @@ fn send_local_flush_event<S: LocalState + Clone>(
             continue;
         }
 
-        events.send(LocalStateFlushEvent {
+        events.write(LocalStateFlushEvent {
             entity,
             old: current.cloned(),
             new: next.next_state(&next_param).cloned(),

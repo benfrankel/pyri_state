@@ -4,7 +4,8 @@
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    system::{Resource, SystemParamItem},
+    resource::Resource,
+    system::SystemParamItem,
     world::{FromWorld, World},
 };
 

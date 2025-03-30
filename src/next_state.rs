@@ -12,7 +12,8 @@ use std::marker::PhantomData;
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    system::{ReadOnlySystemParam, Resource, SystemParam, SystemParamItem},
+    resource::Resource,
+    system::{ReadOnlySystemParam, SystemParam, SystemParamItem},
 };
 
 use crate::state::State;

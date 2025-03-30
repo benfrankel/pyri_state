@@ -10,7 +10,8 @@ use std::marker::PhantomData;
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
     component::Component,
-    system::{lifetimeless::SRes, Res, ResMut, Resource, SystemParamItem},
+    resource::Resource,
+    system::{lifetimeless::SRes, Res, ResMut, SystemParamItem},
 };
 
 use crate::{next_state::NextState, state::State};
