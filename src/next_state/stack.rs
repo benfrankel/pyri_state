@@ -216,28 +216,28 @@ impl<S: NextStateStackMut + Clone> NextStateStackMutExtClone for S {}
 /// An extension trait for [`Commands`] that provides methods for operating on states with
 /// [`NextStateStack`] as their `Next` type.
 pub trait NextStateStackCommandsExt {
-    /// Queues a [`Command`](bevy_ecs::world::Command) to push a new base state index to the stack.
+    /// Queues a [`Command`](bevy_ecs::system::Command) to push a new base state index to the stack.
     fn state_stack_acquire<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
 
-    /// Queues a [`Command`](bevy_ecs::world::Command) to pop the top base state index of the stack.
+    /// Queues a [`Command`](bevy_ecs::system::Command) to pop the top base state index of the stack.
     fn state_stack_release<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
 
-    /// Queues a [`Command`](bevy_ecs::world::Command) to clear the stack down to the base state.
+    /// Queues a [`Command`](bevy_ecs::system::Command) to clear the stack down to the base state.
     fn state_stack_clear<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
 
-    /// Queues a [`Command`](bevy_ecs::world::Command) to pop the stack if it's above the base
+    /// Queues a [`Command`](bevy_ecs::system::Command) to pop the stack if it's above the base
     /// state.
     fn state_stack_pop<S: State<Next = NextStateStack<S>>>(&mut self) -> &mut Self;
 
-    /// Queues a [`Command`](bevy_ecs::world::Command) to push a state to the top of the stack.
+    /// Queues a [`Command`](bevy_ecs::system::Command) to push a state to the top of the stack.
     fn state_stack_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self;
 
-    /// Queues a [`Command`](bevy_ecs::world::Command) to clear and then push a state to the top of
+    /// Queues a [`Command`](bevy_ecs::system::Command) to clear and then push a state to the top of
     /// the stack.
     fn state_stack_clear_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S)
     -> &mut Self;
 
-    /// Queues a [`Command`](bevy_ecs::world::Command) to pop and then push a state to the top of
+    /// Queues a [`Command`](bevy_ecs::system::Command) to pop and then push a state to the top of
     /// the stack.
     fn state_stack_pop_push<S: State<Next = NextStateStack<S>>>(&mut self, state: S) -> &mut Self;
 }

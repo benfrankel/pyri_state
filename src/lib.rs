@@ -5,7 +5,7 @@
 //!
 //! # Overview
 //!
-//! 1. The current state is a [`Resource`](bevy_ecs::system::Resource) or
+//! 1. The current state is a [`Resource`](bevy_ecs::resource::Resource) or
 //!    [`Component`](bevy_ecs::component::Component) that implements [`State`](state::State).
 //! 2. The [next state](next_state) is stored in a
 //!    [`NextStateBuffer`](next_state::buffer::NextStateBuffer) resource by default.
@@ -133,7 +133,7 @@ pub mod prelude {
 
     /// A derive macro for the [`State`],
     /// [`RegisterState`](crate::setup::RegisterState), and
-    /// [`Resource`](bevy_ecs::system::Resource) traits.
+    /// [`Resource`](bevy_ecs::resource::Resource) traits.
     ///
     /// # Examples
     ///
