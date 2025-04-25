@@ -1,4 +1,4 @@
-//! Enable a `BevyState<S>` wrapper to interact with ecosystem crates that expect it.
+//! Enable a [`BevyState<S>`] wrapper to interact with ecosystem crates that expect it.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
