@@ -28,7 +28,7 @@ bevy_reflect = ["dep:bevy_reflect", "bevy_ecs/bevy_reflect"]
 bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 # Enable state debugging tools (e.g. on-flush logging).
 debug = ["dep:bevy_diagnostic", "dep:bevy_log", "pyri_state_derive/debug"]
-# Enable reaction components such as `DespawnOnExit`.
+# Enable reaction components such as `DespawnOnExitState`.
 react = ["dep:bevy_render", "pyri_state_derive/react"]
 # Enable the `NextStateIndex` next state type.
 sequence = []

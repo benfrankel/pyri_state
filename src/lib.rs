@@ -119,7 +119,8 @@ pub mod prelude {
 
     #[cfg(feature = "react")]
     pub use crate::extra::react::{
-        DespawnOnDisable, DespawnOnExit, VisibleWhileEnabled, VisibleWhileIn,
+        DespawnOnDisableState, DespawnOnExitState, EnabledInEnabledState, EnabledInState,
+        VisibleInEnabledState, VisibleInState,
     };
 
     #[cfg(feature = "stack")]
@@ -178,7 +179,7 @@ pub mod prelude {
     ///     log_flush,
     ///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     ///     bevy_state,
-    ///     // Enable reaction components such as `DespawnOnExit<Self>` (requires Eq).
+    ///     // Enable reaction components such as `DespawnOnExitState<Self>` (requires Eq).
     ///     react,
     ///     // Clone the next state into the current state on flush (requires Clone).
     ///     apply_flush,

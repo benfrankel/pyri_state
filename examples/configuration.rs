@@ -44,7 +44,7 @@ struct RawState;
     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
     // (see `ecosystem_compatibility` example for more information)
     bevy_state,
-    // Enable reaction components such as `DespawnOnExit<Self>` (requires Eq).
+    // Enable reaction components such as `DespawnOnExitState<Self>` (requires Eq).
     react,
     // Clone the next state into the current state on flush (requires Clone).
     apply_flush,
