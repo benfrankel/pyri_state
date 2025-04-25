@@ -4,6 +4,8 @@
 //!
 //! This can be used to implement a back button, for example.
 
+use alloc::{vec, vec::Vec};
+
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{

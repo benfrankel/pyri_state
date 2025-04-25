@@ -7,7 +7,7 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::marker::PhantomData;
+    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
 
@@ -33,7 +33,7 @@ mod app {
     }
 }
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectComponent;

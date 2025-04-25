@@ -99,7 +99,7 @@ impl<S: State> NextStateMut for NextStatePair<S> {
 trait NextStatePairMut: State {
     fn swap(mut swap: ResMut<NextStatePair<Self>>) {
         let [left, right] = &mut swap.0;
-        std::mem::swap(left, right);
+        core::mem::swap(left, right);
     }
 }
 

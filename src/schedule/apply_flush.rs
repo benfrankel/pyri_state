@@ -5,7 +5,7 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::marker::PhantomData;
+    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
 
@@ -53,7 +53,7 @@ mod app {
     }
 }
 
-use std::{fmt::Debug, hash::Hash};
+use core::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
     entity::Entity,

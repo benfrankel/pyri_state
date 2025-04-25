@@ -3,7 +3,7 @@
 //! Use the [`state!`](crate::state!) macro to build [`StatePattern`] and
 //! [`StateTransPattern`] instances.
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use bevy_ecs::{
     schedule::{Condition, IntoScheduleConfigs, ScheduleConfigs},

@@ -54,7 +54,7 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::{fmt::Debug, hash::Hash, marker::PhantomData};
+    use core::{fmt::Debug, hash::Hash, marker::PhantomData};
 
     use bevy_app::{App, Plugin};
     use bevy_state::prelude as bevy;
@@ -83,7 +83,7 @@ mod app {
     }
 }
 
-use std::{fmt::Debug, hash::Hash};
+use core::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::{
     schedule::{IntoScheduleConfigs as _, Schedule},

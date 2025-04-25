@@ -1,6 +1,6 @@
 //! Directly update the next state instead of setting an entirely new value.
 
-use std::{fmt::Debug, time::Duration};
+use core::{fmt::Debug, time::Duration};
 
 use bevy::{
     input::common_conditions::input_just_pressed, prelude::*, time::common_conditions::on_timer,
@@ -46,7 +46,7 @@ struct ColorMode {
 }
 
 impl Debug for ColorMode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_str(match (self.red as u8, self.green as u8, self.blue as u8) {
             (0, 0, 0) => "Black",
             (0, 0, 1) => "Blue",

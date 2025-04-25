@@ -1,6 +1,6 @@
 //! Navigate a fixed sequence of states by index (e.g. for phases in a turn-based game).
 
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;

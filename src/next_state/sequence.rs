@@ -4,7 +4,8 @@
 //!
 //! This can be used to implement phases in a turn-based game, for example.
 
-use std::marker::PhantomData;
+use alloc::vec::Vec;
+use core::marker::PhantomData;
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;

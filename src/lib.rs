@@ -68,6 +68,10 @@
 //! # */
 //! ```
 
+#![no_std]
+
+extern crate alloc;
+
 // Allow macros to refer to this crate as `pyri_state` internally.
 extern crate self as pyri_state;
 

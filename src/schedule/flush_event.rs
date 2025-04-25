@@ -5,7 +5,7 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::marker::PhantomData;
+    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
 
@@ -22,7 +22,7 @@ mod app {
     /// to the [`StateFlush`] schedule.
     ///
     /// Calls [`schedule_flush_event<S>`].
-    pub struct FlushEventPlugin<S: State + Clone>(std::marker::PhantomData<S>);
+    pub struct FlushEventPlugin<S: State + Clone>(PhantomData<S>);
 
     impl<S: State + Clone> Plugin for FlushEventPlugin<S> {
         fn build(&self, app: &mut App) {

@@ -5,7 +5,7 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::{fmt::Debug, marker::PhantomData};
+    use core::{fmt::Debug, marker::PhantomData};
 
     use bevy_app::{App, Plugin};
 
@@ -51,7 +51,7 @@ mod app {
     }
 }
 
-use std::{any::type_name, fmt::Debug};
+use core::{any::type_name, fmt::Debug};
 
 use bevy_diagnostic::FrameCount;
 use bevy_ecs::{

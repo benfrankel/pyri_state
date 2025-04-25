@@ -1,6 +1,6 @@
 //! [`State`] trait and extension traits.
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use bevy_ecs::{
     component::{Component, Mutable},

@@ -11,7 +11,7 @@ pub mod detect_change;
 pub mod flush_event;
 pub mod resolve_state;
 
-use std::{fmt::Debug, hash::Hash};
+use core::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::schedule::ScheduleLabel;
 

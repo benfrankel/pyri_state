@@ -6,7 +6,7 @@
 //! - [`NextStateStack`](stack::NextStateStack)
 //! - [`NextStateIndex`](sequence::NextStateIndex)
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;

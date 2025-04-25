@@ -3,6 +3,7 @@
 # Version 0.4.0
 
 - **Updated to Bevy 0.16.0**
+- Added `no_std` support
 - Added `NextStateStackCommandsExt` extension trait
 - Removed `Single` variant from `DespawnOnExit` and `DespawnOnDisable` components
 

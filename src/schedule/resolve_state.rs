@@ -5,7 +5,8 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use std::marker::PhantomData;
+    use alloc::vec::Vec;
+    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
     use bevy_ecs::schedule::{InternedSystemSet, SystemSet};
@@ -71,7 +72,7 @@ mod app {
     }
 }
 
-use std::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
+use core::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::schedule::{
     Condition, InternedSystemSet, IntoScheduleConfigs as _, Schedule, SystemSet,
@@ -151,13 +152,13 @@ impl<S: State> PartialEq for ResolveStateSet<S> {
 impl<S: State> Eq for ResolveStateSet<S> {}
 
 impl<S: State> Hash for ResolveStateSet<S> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
         core::mem::discriminant(self).hash(state);
     }
 }
 
 impl<S: State> Debug for ResolveStateSet<S> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Resolve => write!(f, "Resolve"),
             Self::Compute => write!(f, "Compute"),
