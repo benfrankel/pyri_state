@@ -10,7 +10,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     let ty_name = &input.ident;
 
     // Construct paths.
-    let bevy_app_path = BevyManifest::default().get_path("bevy_app");
+    let bevy_app_path = BevyManifest::shared().get_path("bevy_app");
     let app_ty = concat(&bevy_app_path, "App");
     // TODO: This is not 100% portable I guess, but probably good enough.
     let crate_path = parse_str::<Path>("pyri_state").unwrap();
@@ -21,7 +21,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
 
     // Construct `ResolveStatePlugin`.
     let resolve_state = {
-        let bevy_ecs_path = BevyManifest::default().get_path("bevy_ecs");
+        let bevy_ecs_path = BevyManifest::shared().get_path("bevy_ecs");
         let bevy_ecs_schedule_path = concat(&bevy_ecs_path, "schedule");
         let system_set = concat(&bevy_ecs_schedule_path, "SystemSet");
 

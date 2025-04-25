@@ -38,26 +38,27 @@ split = []
 stack = []
 
 [dependencies]
-bevy_app = { version = "0.16.0-rc.1", default-features = false, optional = true }
-bevy_diagnostic = { version = "0.16.0-rc.1", default-features = false, optional = true }
-bevy_ecs = { version = "0.16.0-rc.1", default-features = false }
-bevy_log = { version = "0.16.0-rc.1", default-features = false, optional = true }
-bevy_reflect = { version = "0.16.0-rc.1", default-features = false, optional = true }
-bevy_render = { version = "0.16.0-rc.1", default-features = false, optional = true }
-bevy_state = { version = "0.16.0-rc.1", default-features = false, features = [
+bevy_app = { version = "0.16", default-features = false, optional = true }
+bevy_diagnostic = { version = "0.16", default-features = false, optional = true }
+bevy_ecs = { version = "0.16", default-features = false }
+bevy_log = { version = "0.16", default-features = false, optional = true }
+bevy_reflect = { version = "0.16", default-features = false, optional = true }
+bevy_render = { version = "0.16", default-features = false, optional = true }
+bevy_state = { version = "0.16", default-features = false, features = [
     "bevy_app",
 ], optional = true }
 pyri_state_derive = { version = "0.4", path = "derive" }
 
 [dev-dependencies]
-bevy = { version = "0.16.0-rc.1", default-features = false, features = [
+bevy = { version = "0.16", default-features = false, features = [
     "bevy_core_pipeline",
     "bevy_log",
     "bevy_winit",
     "x11",
     "multi_threaded",
 ] }
-iyes_progress = "0.14.0-rc.1"
+# TODO: Uncomment this once it's released.
+#iyes_progress = "0.14"
 
 [lints.rust]
 missing_docs = "deny"
