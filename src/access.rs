@@ -103,14 +103,23 @@ impl<S: State> CurrentMut<'_, S> {
 /// # Example
 ///
 /// ```
-/// # /*
-/// fn spawn_new_menu(menu: NextStateRef<Menu>) {
+/// # use pyri_state::prelude::*;
+/// #
+/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # enum Menu {
+/// #     Main,
+/// #     Settings,
+/// # }
+/// #
+/// # fn spawn_main_menu() {}
+/// # fn spawn_settings_menu() {}
+/// #
+/// fn spawn_new_menu(menu: NextRef<Menu>) {
 ///     match menu.unwrap() {
 ///         Menu::Main => spawn_main_menu(),
 ///         Menu::Settings => spawn_settings_menu(),
 ///     }
 /// }
-/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct NextRef<'w, 's, S: State> {
@@ -160,12 +169,19 @@ impl<S: State> NextRef<'_, '_, S> {
 /// # Example
 ///
 /// ```
-/// # /*
+/// # use pyri_state::prelude::*;
+/// #
+/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # struct ColorState {
+/// #     red: bool,
+/// #     green: bool,
+/// #     blue: bool,
+/// # }
+/// #
 /// fn toggle_blue(mut color: NextMut<ColorState>) {
 ///     let mut color = color.unwrap_mut();
 ///     color.blue = !color.blue;
 /// }
-/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct NextMut<'w, 's, S: StateMut> {
@@ -293,11 +309,18 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 /// # Example
 ///
 /// ```
-/// # /*
+/// # use pyri_state::prelude::*;
+/// #
+/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # struct ColorState {
+/// #     red: bool,
+/// #     green: bool,
+/// #     blue: bool,
+/// # }
+/// #
 /// fn same_red(color: FlushRef<ColorState>) -> bool {
 ///     color.will_trans(&ColorState::when(|x, y| x.red == y.red))
 /// }
-/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct FlushRef<'w, 's, S: State> {
@@ -369,12 +392,19 @@ impl<S: State> FlushRef<'_, '_, S> {
 /// # Example
 ///
 /// ```
-/// # /*
+/// # use pyri_state::prelude::*;
+/// #
+/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # struct ColorState {
+/// #     red: bool,
+/// #     green: bool,
+/// #     blue: bool,
+/// # }
+/// #
 /// fn copy_red_to_green(mut color: FlushMut<ColorState>) {
 ///     let (current, next) = color.unwrap_mut();
 ///     next.green = current.red;
 /// }
-/// # */
 /// ```
 #[derive(SystemParam)]
 pub struct FlushMut<'w, 's, S: StateMut> {

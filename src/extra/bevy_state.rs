@@ -7,7 +7,9 @@
 //! Opt in to [`BevyStatePlugin<S>`] for `GameState`:
 //!
 //! ```
-//! # /*
+//! # use bevy::prelude::*;
+//! # use pyri_state::prelude::*;
+//! #
 //! #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! #[state(bevy_state)]
 //! enum GameState {
@@ -16,37 +18,73 @@
 //!     Loading,
 //!     Playing,
 //! }
-//! # */
 //! ```
 //!
 //! Add `GameState` along with its [`BevyState`] wrapper:
 //!
 //! ```
-//! # /*
+//! # use bevy::prelude::*;
+//! # use pyri_state::prelude::*;
+//! #
+//! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! # #[state(bevy_state)]
+//! # enum GameState {
+//! #     #[default]
+//! #     Title,
+//! #     Loading,
+//! #     Playing,
+//! # }
+//! #
+//! # fn plugin(app: &mut App) {
 //! app.init_state::<GameState>();
-//! # */
+//! # }
 //! ```
 //!
 //! Change `GameState` to drive `BevyState`:
 //!
 //! ```
-//! # /*
+//! # use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+//! # use pyri_state::prelude::*;
+//! #
+//! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! # #[state(bevy_state)]
+//! # enum GameState {
+//! #     #[default]
+//! #     Title,
+//! #     Loading,
+//! #     Playing,
+//! # }
+//! #
+//! # fn plugin(app: &mut App) {
 //! app.add_systems(Update, GameState::Title.on_update(
 //!     GameState::Loading.enter().run_if(input_just_pressed(KeyCode::Enter)),
 //! ));
-//! # */
+//! # }
 //! ```
 //!
 //! Change `BevyState` to drive `GameState` (e.g. using
 //! [iyes_progress](https://github.com/IyesGames/iyes_progress)):
 //!
 //! ```
-//! # /*
+//! # {}/*use bevy::prelude::*;
+//! # use iyes_progress::prelude::*;
+//! # use pyri_state::prelude::*;
+//! #
+//! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! # #[state(bevy_state)]
+//! # enum GameState {
+//! #     #[default]
+//! #     Title,
+//! #     Loading,
+//! #     Playing,
+//! # }
+//! #
+//! # fn plugin(app: &mut App) {
 //! app.add_plugins(
 //!     ProgressPlugin::new(GameState::Loading.bevy())
 //!         .continue_to(GameState::Playing.bevy()),
 //! );
-//! # */
+//! # }*/
 //! ```
 
 #[cfg(feature = "bevy_app")]

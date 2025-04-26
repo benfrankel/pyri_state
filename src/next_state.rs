@@ -57,11 +57,11 @@ impl<S: State> Default for TriggerStateFlush<S> {
 /// You can set a different `NextState` type in the [derive macro](pyri_state_derive::State):
 ///
 /// ```
-/// # /*
+/// # use pyri_state::prelude::*;
+/// #
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// #[state(next(NextStateStack<Self>))]
-/// enum MenuState { ... }
-/// # */
+/// enum MenuState { /* ... */ }
 /// ```
 pub trait NextState: Resource {
     /// The stored [`State`] type.
@@ -92,13 +92,13 @@ pub trait NextStateMut: NextState {
     /// If the next state is stored within `Self`, this can be set to `()`.
     type ParamMut: SystemParam;
 
-    /// Get a reference to the next state, or `None` if disabled.
+    /// Get a reference to the next state if enabled.
     fn next_state_from_mut<'s>(
         &'s self,
         param: &'s SystemParamItem<Self::ParamMut>,
     ) -> Option<&'s Self::State>;
 
-    /// Get a mutable reference to the next state, or `None` if disabled.
+    /// Get a mutable reference to the next state if enabled.
     fn next_state_mut<'s>(
         &'s mut self,
         param: &'s mut SystemParamItem<Self::ParamMut>,

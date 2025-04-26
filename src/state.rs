@@ -19,16 +19,17 @@ use crate::{
 /// This trait can be [derived](pyri_state_derive::State) or implemented manually:
 ///
 /// ```
-/// # /*
+/// # use bevy::prelude::*;
+/// # use pyri_state::prelude::*;
+/// #
 /// #[derive(State, Clone, PartialEq, Eq)]
-/// enum GameState { ... }
+/// enum GameState { /* ... */ }
 ///
 /// #[derive(Resource)]
-/// enum MenuState { ... }
+/// enum MenuState { /* ... */ }
 /// impl State for MenuState {
 ///     type Next = NextStateBuffer<Self>;
 /// }
-/// # */
 /// ```
 ///
 /// The derive macro would also implement

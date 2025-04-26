@@ -28,36 +28,64 @@
 //! [derive macro](pyri_state_derive::State):
 //!
 //! ```
-//! # /*
+//! # use pyri_state::prelude::*;
+//! #
 //! #[derive(State, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
-//! # */
 //! ```
 //!
 //! Add [`StatePlugin`](setup::StatePlugin) and initialize your state type:
 //!
 //! ```
-//! # /*
+//! # use bevy::prelude::*;
+//! # use pyri_state::prelude::*;
+//! #
+//! # #[derive(State, Clone, PartialEq, Eq, Default)]
+//! # struct Level(pub usize);
+//! #
+//! # fn plugin(app: &mut App) {
 //! app.add_plugins(StatePlugin).init_state::<Level>();
-//! # */
+//! # }
 //! ```
 //!
 //! Add update systems with [`StatePattern::on_update`](pattern::StatePattern::on_update):
 //!
 //! ```
-//! # /*
+//! # use bevy::prelude::*;
+//! # use pyri_state::prelude::*;
+//! #
+//! # #[derive(State, Clone, PartialEq, Eq, Default)]
+//! # struct Level(pub usize);
+//! #
+//! # fn update_level_timer() {}
+//! # fn update_boss_health_bar() {}
+//! # fn spawn_enemy_waves() {}
+//! #
+//! # fn plugin(app: &mut App) {
 //! app.add_systems(Update, (
 //!     Level::ANY.on_update(update_level_timer),
 //!     Level(10).on_update(update_boss_health_bar),
 //!     state!(Level(4..=6)).on_update(spawn_enemy_waves),
 //! ));
-//! # */
+//! # }
 //! ```
 //!
 //! Add flush hooks with other [`StatePattern`](pattern::StatePattern) methods:
 //!
 //! ```
-//! # /*
+//! # use bevy::prelude::*;
+//! # use pyri_state::prelude::*;
+//! #
+//! # #[derive(State, Clone, PartialEq, Eq, Default)]
+//! # struct Level(pub usize);
+//! #
+//! # fn despawn_old_level() {}
+//! # fn spawn_new_level() {}
+//! # fn play_boss_music() {}
+//! # fn save_checkpoint() {}
+//! # fn spawn_tutorial_popup() {}
+//! #
+//! # fn plugin(app: &mut App) {
 //! app.add_systems(StateFlush, (
 //!     // Short-hand for `on_exit` followed by `on_enter`.
 //!     Level::ANY.on_edge(despawn_old_level, spawn_new_level),
@@ -65,7 +93,7 @@
 //!     state!(Level(4 | 7 | 10)).on_enter(save_checkpoint),
 //!     Level::with(|x| x.0 < 4).on_enter(spawn_tutorial_popup),
 //! ));
-//! # */
+//! # }
 //! ```
 
 #![no_std]
@@ -145,27 +173,36 @@ pub mod prelude {
     /// The derive macro requires `Clone`, `PartialEq`, and `Eq`:
     ///
     /// ```
-    /// # /*
+    /// # use pyri_state::prelude::*;
+    /// #
     /// #[derive(State, Clone, PartialEq, Eq)]
-    /// enum GameState { ... }
-    /// # */
+    /// enum GameState { /* ... */ }
     /// ```
     ///
     /// They can be omitted if you disable the default options:
     ///
     /// ```
-    /// # /*
+    /// # use pyri_state::prelude::*;
+    /// #
     /// #[derive(State)]
     /// #[state(no_defaults)]
     /// struct RawState;
-    /// # */
     /// ```
     ///
     /// The following options are provided:
     ///
     /// ```
-    /// # /*
-    /// #[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
+    /// # use bevy::prelude::*;
+    /// # use pyri_state::prelude::*;
+    /// #
+    /// # #[derive(State, Clone, PartialEq, Eq)]
+    /// # enum GameState { /* ... */ }
+    /// #
+    /// # #[derive(State)]
+    /// # #[state(no_defaults)]
+    /// # struct RawState;
+    /// #
+    /// #[derive(State, Component, Clone, PartialEq, Eq, Hash, Debug)]
     /// #[state(
     ///     // Disable default plugins: detect_change, flush_event, apply_flush.
     ///     no_defaults,
@@ -191,7 +228,6 @@ pub mod prelude {
     ///     before(RawState),
     /// )]
     /// struct ConfiguredState;
-    /// # */
     /// ```
     pub use pyri_state_derive::State;
 }

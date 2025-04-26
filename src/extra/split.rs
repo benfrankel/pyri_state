@@ -16,10 +16,10 @@
 /// Define your own split state type as a newtype:
 ///
 /// ```
-/// # /*
+/// # use pyri_state::prelude::*;
+/// #
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// pub struct MyState(pub SplitState);
-/// # */
 /// ```
 pub type SplitState = &'static str;
 
@@ -28,10 +28,13 @@ pub type SplitState = &'static str;
 /// # Example
 ///
 /// ```
-/// # /*
+/// # use pyri_state::prelude::*;
+/// #
+/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # pub struct MyState(pub SplitState);
+/// #
 /// add_to_split_state!(MyState, Foo, Bar);
 /// add_to_split_state!(MyState, Quux);
-/// # */
 /// ```
 #[macro_export]
 macro_rules! add_to_split_state {
