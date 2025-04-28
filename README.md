@@ -13,7 +13,7 @@ struct Level(usize);
 app.add_systems(StateFlush, state!(Level(4 | 7 | 10)).on_enter(save_progress));
 ```
 
-Read the [documentation](https://docs.rs/pyri_state/latest/pyri_state) or check out the [examples folder](/examples/) for more information.
+See the [examples](/examples/) and [documentation](https://docs.rs/pyri_state/latest/pyri_state) for more information.
 
 # Comparison to `bevy_state`
 
