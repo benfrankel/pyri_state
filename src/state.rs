@@ -23,17 +23,17 @@ use crate::{
 /// # use pyri_state::prelude::*;
 /// #
 /// #[derive(State, Clone, PartialEq, Eq)]
-/// enum GameState { /* ... */ }
+/// enum Screen { /* ... */ }
 ///
 /// #[derive(Resource)]
-/// enum MenuState { /* ... */ }
-/// impl State for MenuState {
+/// enum Menu { /* ... */ }
+/// impl State for Menu {
 ///     type Next = NextStateBuffer<Self>;
 /// }
 /// ```
 ///
 /// The derive macro would also implement
-/// [`RegisterState`](crate::setup::RegisterState) for `MenuState`.
+/// [`RegisterState`](crate::setup::RegisterState) for `Menu`.
 ///
 /// See the following extension traits with additional bounds on `Self` and [`Self::Next`](State::Next):
 ///

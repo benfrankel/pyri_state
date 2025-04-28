@@ -176,7 +176,7 @@ pub mod prelude {
     /// # use pyri_state::prelude::*;
     /// #
     /// #[derive(State, Clone, PartialEq, Eq)]
-    /// enum GameState { /* ... */ }
+    /// enum MyState { /* ... */ }
     /// ```
     ///
     /// They can be omitted if you disable the default options:
@@ -196,7 +196,7 @@ pub mod prelude {
     /// # use pyri_state::prelude::*;
     /// #
     /// # #[derive(State, Clone, PartialEq, Eq)]
-    /// # enum GameState { /* ... */ }
+    /// # enum MyState { /* ... */ }
     /// #
     /// # #[derive(State)]
     /// # #[state(no_defaults)]
@@ -223,7 +223,7 @@ pub mod prelude {
     ///     // Swap out the default `NextStateBuffer<Self>` for another `NextState` type.
     ///     next(NextStateStack<Self>),
     ///     // Run this state's on-flush hooks after the listed states.
-    ///     after(GameState),
+    ///     after(MyState),
     ///     // Run this state's on-flush hooks before the listed states.
     ///     before(RawState),
     /// )]

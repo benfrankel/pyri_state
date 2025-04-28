@@ -4,7 +4,7 @@
 //!
 //! # Example
 //!
-//! Opt in to [`BevyStatePlugin<S>`] for `GameState`:
+//! Opt in to the [`BevyStatePlugin`] for `Screen` by adding `#[state(bevy_state)]`:
 //!
 //! ```
 //! # use bevy::prelude::*;
@@ -12,15 +12,15 @@
 //! #
 //! #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! #[state(bevy_state)]
-//! enum GameState {
+//! enum Screen {
 //!     #[default]
 //!     Title,
 //!     Loading,
-//!     Playing,
+//!     Gameplay,
 //! }
 //! ```
 //!
-//! Add `GameState` along with its [`BevyState`] wrapper:
+//! Add the `Screen` state type to your app:
 //!
 //! ```
 //! # use bevy::prelude::*;
@@ -28,19 +28,19 @@
 //! #
 //! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
-//! # enum GameState {
+//! # enum Screen {
 //! #     #[default]
 //! #     Title,
 //! #     Loading,
-//! #     Playing,
+//! #     Gameplay,
 //! # }
 //! #
 //! # fn plugin(app: &mut App) {
-//! app.init_state::<GameState>();
+//! app.init_state::<Screen>();
 //! # }
 //! ```
 //!
-//! Change `GameState` to drive `BevyState`:
+//! Make changes to `Screen` to drive `BevyState<Screen>`:
 //!
 //! ```
 //! # use bevy::{input::common_conditions::input_just_pressed, prelude::*};
@@ -48,43 +48,43 @@
 //! #
 //! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
-//! # enum GameState {
+//! # enum Screen {
 //! #     #[default]
 //! #     Title,
 //! #     Loading,
-//! #     Playing,
+//! #     Gameplay,
 //! # }
 //! #
 //! # fn plugin(app: &mut App) {
-//! app.add_systems(Update, GameState::Title.on_update(
-//!     GameState::Loading.enter().run_if(input_just_pressed(KeyCode::Enter)),
+//! app.add_systems(Update, Screen::Title.on_update(
+//!     Screen::Loading.enter().run_if(input_just_pressed(KeyCode::Enter)),
 //! ));
 //! # }
 //! ```
 //!
-//! Change `BevyState` to drive `GameState` (e.g. using
+//! Make changes to `BevyState<Screen>` to drive `Screen` (e.g. with
 //! [iyes_progress](https://github.com/IyesGames/iyes_progress)):
 //!
 //! ```
-//! # {}/*use bevy::prelude::*;
+//! # use bevy::prelude::*;
 //! # use iyes_progress::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
 //! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
-//! # enum GameState {
+//! # enum Screen {
 //! #     #[default]
 //! #     Title,
 //! #     Loading,
-//! #     Playing,
+//! #     Gameplay,
 //! # }
 //! #
 //! # fn plugin(app: &mut App) {
 //! app.add_plugins(
-//!     ProgressPlugin::new(GameState::Loading.bevy())
-//!         .continue_to(GameState::Playing.bevy()),
+//!     ProgressPlugin::new()
+//!         .with_state_transition(Screen::Loading.bevy(), Screen::Gameplay.bevy()),
 //! );
-//! # }*/
+//! # }
 //! ```
 
 #[cfg(feature = "bevy_app")]

@@ -110,7 +110,7 @@ This is a seriously discouraging amount of boilerplate for something that should
 
 - **Custom storage:** In `pyri_state`, the next state can be stored in any custom data structure.
   For example, you can store the next state in a stack to implement a "back button" feature for a menu
-  state as easily as `MyMenuState::pop`.
+  state as easily as `Menu::pop`.
   This is currently impossible in `bevy_state`, which only supports `enum NextState`.
 - **Direct mutation:** In `pyri_state`, systems can mutate the next state value directly (e.g. `level.0 += 1`).
   In `bevy_state`, you have to clone the current state, mutate it, and set that as the next state.

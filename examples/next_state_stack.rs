@@ -13,12 +13,12 @@ fn main() {
         })
         // Add the `Menu` state with `Menu::Main` as the base of the stack.
         .insert_state(NextStateStack::with_base(Menu::Main))
-        .init_state::<GameState>()
+        .init_state::<Screen>()
         .add_systems(
             Update,
             (
                 // Open the in-game menu overlay on Escape press if there is no menu open.
-                GameState::PlayingGame.on_update(
+                Screen::Gameplay.on_update(
                     Menu::MainOverlay
                         .push()
                         .run_if(Menu::is_disabled.and(input_just_pressed(KeyCode::Escape))),
@@ -57,8 +57,8 @@ enum Menu {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]
-enum GameState {
+enum Screen {
     #[default]
     Title,
-    PlayingGame,
+    Gameplay,
 }

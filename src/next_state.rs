@@ -61,7 +61,7 @@ impl<S: State> Default for TriggerStateFlush<S> {
 /// #
 /// #[derive(State, Clone, PartialEq, Eq)]
 /// #[state(next(NextStateStack<Self>))]
-/// enum MenuState { /* ... */ }
+/// enum Menu { /* ... */ }
 /// ```
 pub trait NextState: Resource {
     /// The stored [`State`] type.

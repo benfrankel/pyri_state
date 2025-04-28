@@ -6,18 +6,18 @@ use pyri_state::prelude::*;
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .init_state::<GameState>()
+        .init_state::<Screen>()
         .add_state::<CheckerboardSquare>()
         .add_state::<SquareColor>()
         .add_systems(
             StateFlush,
             (
-                // Enable CheckerboardSquare only during GameState::Playing.
-                GameState::Playing.on_edge(
+                // Enable `CheckerboardSquare` only during `Screen::Gameplay`.
+                Screen::Gameplay.on_edge(
                     CheckerboardSquare::disable,
                     CheckerboardSquare::enable_default,
                 ),
-                // Compute SquareColor from CheckerboardSquare.
+                // Compute `SquareColor` from `CheckerboardSquare`.
                 CheckerboardSquare::ANY.on_enter(compute_square_color),
             ),
         )
@@ -25,21 +25,21 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Default)]
-enum GameState {
+enum Screen {
     #[default]
     Splash,
-    Playing,
+    Gameplay,
 }
 
-// Substate of GameState::Playing
+// Substate of `Screen::Gameplay`
 #[derive(State, Clone, PartialEq, Eq, Default)]
-#[state(after(GameState))]
+#[state(after(Screen))]
 struct CheckerboardSquare {
     row: u8,
     col: u8,
 }
 
-// Computed from CheckerboardSquare
+// Computed from `CheckerboardSquare`
 #[derive(State, Clone, PartialEq, Eq)]
 #[state(after(CheckerboardSquare))]
 enum SquareColor {

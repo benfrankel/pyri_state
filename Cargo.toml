@@ -57,8 +57,10 @@ bevy = { version = "0.16", default-features = false, features = [
     "x11",
     "multi_threaded",
 ] }
-# TODO: Uncomment this once it's released.
-#iyes_progress = "0.14"
+iyes_progress = "0.14"
+
+[patch.crates-io]
+iyes_progress = { git = "https://github.com/benfrankel/iyes_progress.git", branch = "bevy-0-16" }
 
 [lints.rust]
 missing_docs = "deny"

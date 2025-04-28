@@ -8,17 +8,21 @@ use iyes_progress::prelude::*;
 fn main() {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
-        .init_state::<GameState>()
+        .insert_resource(StateDebugSettings {
+            log_flush: true,
+            ..default()
+        })
+        .init_state::<Screen>()
         .add_plugins(
             ProgressPlugin::new()
-                // Changes to `BevyState<GameState>` will propagate to `GameState`.
-                .with_state_transition(GameState::Loading.bevy(), GameState::Playing.bevy()),
+                // Changes to `BevyState<Screen>` will propagate to `Screen`.
+                .with_state_transition(Screen::Loading.bevy(), Screen::Gameplay.bevy()),
         )
         .add_systems(
             Update,
-            GameState::Title.on_update(
-                // Changes to `GameState` will propagate to `BevyState<GameState>`.
-                GameState::Loading
+            Screen::Title.on_update(
+                // Changes to `Screen` will propagate to `BevyState<Screen>`.
+                Screen::Loading
                     .enter()
                     .run_if(input_just_pressed(KeyCode::Enter)),
             ),
@@ -27,12 +31,11 @@ fn main() {
 }
 
 #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
-// Enable the `bevy_state` plugin to set up `BevyState<GameState>`:
-#[state(bevy_state)]
-enum GameState {
+// Enable the `bevy_state` plugin to set up `BevyState<Screen>`:
+#[state(bevy_state, log_flush)]
+enum Screen {
     #[default]
-    Splash,
     Title,
     Loading,
-    Playing,
+    Gameplay,
 }
