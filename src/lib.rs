@@ -151,11 +151,6 @@ pub mod prelude {
         VisibleInEnabledState, VisibleInState,
     };
 
-    #[cfg(feature = "stack")]
-    pub use crate::next_state::stack::{
-        NextStateStack, NextStateStackMut as _, NextStateStackMutExtClone as _,
-    };
-
     #[cfg(feature = "sequence")]
     pub use crate::next_state::sequence::{
         NextStateIndex, NextStateIndexMut as _, NextStateSequence,
@@ -163,6 +158,11 @@ pub mod prelude {
 
     #[cfg(feature = "split")]
     pub use crate::{add_to_split_state, extra::split::SplitState};
+
+    #[cfg(feature = "stack")]
+    pub use crate::next_state::stack::{
+        NextStateStack, NextStateStackMut as _, NextStateStackMutExtClone as _,
+    };
 
     /// A derive macro for the [`State`],
     /// [`RegisterState`](crate::setup::RegisterState), and
