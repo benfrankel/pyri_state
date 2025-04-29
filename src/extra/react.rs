@@ -97,7 +97,7 @@ fn despawn_on_exit_state<S: State>(
 ) {
     for (entity, reaction) in &reaction_query {
         match reaction {
-            DespawnOnExitState::Recursive => commands.entity(entity).despawn(),
+            DespawnOnExitState::Recursive => commands.entity(entity).try_despawn(),
             DespawnOnExitState::Descendants => {
                 commands.entity(entity).despawn_related::<Children>();
             }
@@ -129,7 +129,7 @@ fn despawn_on_disable_state<S: State>(
 ) {
     for (entity, reaction) in &reaction_query {
         match reaction {
-            DespawnOnDisableState::Recursive => commands.entity(entity).despawn(),
+            DespawnOnDisableState::Recursive => commands.entity(entity).try_despawn(),
             DespawnOnDisableState::Descendants => {
                 commands.entity(entity).despawn_related::<Children>();
             }
