@@ -15,7 +15,7 @@ use core::{fmt::Debug, hash::Hash};
 
 use bevy_ecs::schedule::ScheduleLabel;
 
-/// The schedule that handles all [`State`](crate::state::State) flush logic, added after
+/// The schedule that handles all [`State`](crate::state::State) flush logic, added before
 /// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::setup::StatePlugin).
 ///
 /// State flush hooks run in [`ResolveStateSet::<S>::Flush`] and the flush is applied in

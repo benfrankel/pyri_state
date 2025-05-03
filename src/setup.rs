@@ -21,7 +21,7 @@ mod app {
 
     /// A plugin that performs the required setup for [`State`] types to function:
     ///
-    /// - Adds the [`StateFlush`] schedule to the [`MainScheduleOrder`] after [`PreUpdate`].
+    /// - Adds the [`StateFlush`] schedule to the [`MainScheduleOrder`] before [`PreUpdate`].
     /// - Adds the [`bevy_state` plugin](bevy_state::app::StatesPlugin) if the
     ///   `bevy_state` feature is enabled.
     pub struct StatePlugin;
@@ -36,7 +36,7 @@ mod app {
             app.init_schedule(StateFlush)
                 .world_mut()
                 .resource_mut::<MainScheduleOrder>()
-                .insert_after(PreUpdate, StateFlush);
+                .insert_before(PreUpdate, StateFlush);
         }
     }
 

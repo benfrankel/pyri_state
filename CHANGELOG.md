@@ -13,6 +13,7 @@
     - Added `EnabledInEnabledState` component
 - **Added `no_std` support**
 - Added `NextStateStackCommandsExt` extension trait
+- Moved `StateFlush` to before `PreUpdate` schedule
 
 # Version 0.3.0
 
