@@ -98,7 +98,7 @@ impl<S: State> CurrentMut<'_, S> {
 /// A [`SystemParam`] with read-only access to the next value of the [`State`] type `S`.
 ///
 /// NOTE: The next state is only set in stone during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`ResolveStateSet::<S>::Compute`](crate::schedule::ResolveStateSet::Compute).
+/// schedule after [`ResolveStateSystems::<S>::Compute`](crate::schedule::ResolveStateSystems::Compute).
 ///
 /// # Example
 ///
@@ -164,7 +164,7 @@ impl<S: State> NextRef<'_, '_, S> {
 /// A [`SystemParam`] with mutable access to the next value of the [`State`] type `S`.
 ///
 /// NOTE: The next state should not be mutated during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`ResolveStateSet::<S>::Compute`](crate::schedule::ResolveStateSet::Compute).
+/// schedule after [`ResolveStateSystems::<S>::Compute`](crate::schedule::ResolveStateSystems::Compute).
 ///
 /// # Example
 ///
@@ -304,7 +304,7 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 /// A [`SystemParam`] with read-only access to the current and next values of the [`State`] type `S`.
 ///
 /// NOTE: The next state is only set in stone during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`ResolveStateSet::<S>::Compute`](crate::schedule::ResolveStateSet::Compute).
+/// schedule after [`ResolveStateSystems::<S>::Compute`](crate::schedule::ResolveStateSystems::Compute).
 ///
 /// # Example
 ///
@@ -387,7 +387,7 @@ impl<S: State> FlushRef<'_, '_, S> {
 /// respectively.
 ///
 /// NOTE: The next state should not be mutated during the [`StateFlush`](crate::schedule::StateFlush)
-/// schedule after [`ResolveStateSet::<S>::Compute`](crate::schedule::ResolveStateSet::Compute).
+/// schedule after [`ResolveStateSystems::<S>::Compute`](crate::schedule::ResolveStateSystems::Compute).
 ///
 /// # Example
 ///

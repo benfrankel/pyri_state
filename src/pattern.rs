@@ -12,7 +12,7 @@ use bevy_ecs::{
 
 use crate::{
     access::{CurrentRef, FlushRef, NextRef},
-    schedule::ResolveStateSet,
+    schedule::ResolveStateSystems,
     state::State,
 };
 
@@ -53,8 +53,8 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_exit())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Exit)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Exit)
     }
 
     /// Build a run condition that checks if `S` will become disabled from a matching state if triggered.
@@ -69,8 +69,8 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_disable())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Exit)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Exit)
     }
 
     /// Build a run condition that checks if `S` will enter into a matching state if triggered.
@@ -85,8 +85,8 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_enter())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Enter)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Enter)
     }
 
     /// Build a run condition that checks if `S` will become enabled in a matching state if triggered.
@@ -101,8 +101,8 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(S::is_triggered.and(self.will_enable()))
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Enter)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Enter)
     }
 }
 
@@ -139,8 +139,8 @@ pub trait StatePatternExtEq<S: State + Eq>: StatePattern<S> {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_refresh())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Trans)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Trans)
     }
 }
 
@@ -252,8 +252,8 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_trans())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Exit)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Exit)
     }
 
     /// Configure systems to run when `S` undergoes a matching transition.
@@ -263,8 +263,8 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_trans())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Trans)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Trans)
     }
 
     /// Configure systems to run when `S` enters as part of a matching transition.
@@ -274,8 +274,8 @@ pub trait StateTransPattern<S: State>: 'static + Send + Sync + Sized {
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
             .run_if(self.will_trans())
-            .in_set(ResolveStateSet::<S>::AnyFlush)
-            .in_set(ResolveStateSet::<S>::Enter)
+            .in_set(ResolveStateSystems::<S>::AnyFlush)
+            .in_set(ResolveStateSystems::<S>::Enter)
     }
 }
 

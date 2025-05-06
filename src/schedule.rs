@@ -3,8 +3,8 @@
 //! The [`StateFlush`] schedule handles all [`State`](crate::state::State) flush logic
 //! and emits [`StateFlushEvent`](flush_event::StateFlushEvent).
 
-pub use apply_flush::ApplyFlushSet;
-pub use resolve_state::ResolveStateSet;
+pub use apply_flush::ApplyFlushSystems;
+pub use resolve_state::ResolveStateSystems;
 
 pub mod apply_flush;
 pub mod detect_change;
@@ -18,7 +18,7 @@ use bevy_ecs::schedule::ScheduleLabel;
 /// The schedule that handles all [`State`](crate::state::State) flush logic, added before
 /// [`PreUpdate`](bevy_app::PreUpdate) by [`StatePlugin`](crate::setup::StatePlugin).
 ///
-/// State flush hooks run in [`ResolveStateSet::<S>::Flush`] and the flush is applied in
-/// [`ApplyFlushSet`].
+/// State flush hooks run in [`ResolveStateSystems::<S>::Flush`] and the flush is applied in
+/// [`ApplyFlushSystems`].
 #[derive(ScheduleLabel, Clone, Hash, PartialEq, Eq, Debug)]
 pub struct StateFlush;

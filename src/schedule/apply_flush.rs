@@ -70,7 +70,7 @@ use crate::{
 /// A system set that applies all triggered [`State`] flushes at the end of
 /// the [`StateFlush`](crate::schedule::StateFlush) schedule.
 #[derive(SystemSet, Clone, Hash, PartialEq, Eq, Debug)]
-pub struct ApplyFlushSet;
+pub struct ApplyFlushSystems;
 
 fn apply_flush<S: State + Clone>(
     mut commands: Commands,
@@ -96,7 +96,7 @@ pub fn schedule_apply_flush<S: State + Clone>(schedule: &mut Schedule) {
     schedule.add_systems(
         (apply_flush::<S>, S::reset_trigger)
             .run_if(S::is_triggered)
-            .in_set(ApplyFlushSet),
+            .in_set(ApplyFlushSystems),
     );
 }
 
@@ -136,6 +136,6 @@ pub fn schedule_local_apply_flush<S: LocalState + Clone>(schedule: &mut Schedule
     schedule.add_systems(
         (local_apply_flush::<S>, local_reset_trigger::<S>)
             .chain()
-            .in_set(ApplyFlushSet),
+            .in_set(ApplyFlushSystems),
     );
 }
