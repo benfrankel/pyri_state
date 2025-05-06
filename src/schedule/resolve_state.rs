@@ -6,14 +6,10 @@ pub use app::*;
 #[cfg(feature = "bevy_app")]
 mod app {
     use alloc::vec::Vec;
-    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
-    use bevy_ecs::schedule::{InternedSystemSet, SystemSet};
 
-    use crate::state::State;
-
-    use super::{ResolveStateSystems, schedule_resolve_state};
+    use super::*;
 
     /// A plugin that configures the [`ResolveStateSystems<S>`] system sets for the [`State`]
     /// type `S` in the [`StateFlush`](crate::schedule::StateFlush) schedule.

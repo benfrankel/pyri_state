@@ -7,13 +7,11 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use core::marker::PhantomData;
-
     use bevy_app::{App, Plugin};
 
-    use crate::{schedule::StateFlush, state::State};
+    use crate::schedule::StateFlush;
 
-    use super::schedule_react;
+    use super::*;
 
     /// A plugin that adds state flush reaction systems for the [`State`] type `S`.
     ///

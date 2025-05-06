@@ -9,14 +9,9 @@ mod app {
 
     use bevy_app::{App, Plugin};
 
-    use crate::{
-        schedule::StateFlush,
-        state::{LocalState, State},
-    };
+    use crate::schedule::StateFlush;
 
-    use super::{
-        LocalStateFlushEvent, StateFlushEvent, schedule_flush_event, schedule_local_flush_event,
-    };
+    use super::*;
 
     /// A plugin that adds a [`StateFlushEvent<S>`] sending system for the [`State`] type `S`
     /// to the [`StateFlush`] schedule.

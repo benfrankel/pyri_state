@@ -9,12 +9,9 @@ mod app {
 
     use bevy_app::{App, Plugin};
 
-    use crate::{
-        schedule::StateFlush,
-        state::{LocalState, State},
-    };
+    use crate::schedule::StateFlush;
 
-    use super::{schedule_detect_change, schedule_local_detect_change};
+    use super::*;
 
     /// A plugin that adds a change detection system for the [`State`] type `S`
     /// to the [`StateFlush`] schedule.
@@ -60,10 +57,9 @@ use bevy_ecs::{
 
 use crate::{
     next_state::{NextState, TriggerStateFlush},
+    schedule::resolve_state::ResolveStateSystems,
     state::{LocalState, State, StateExtEq as _},
 };
-
-use super::resolve_state::ResolveStateSystems;
 
 /// Add change detection systems for the [`State`] type `S` to a schedule.
 ///

@@ -13,11 +13,10 @@ use bevy_ecs::{
 #[cfg(feature = "bevy_app")]
 mod app {
     use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
-    use bevy_ecs::world::FromWorld;
 
-    use crate::{next_state::NextState, schedule::StateFlush, state::State};
+    use crate::schedule::StateFlush;
 
-    use super::{insert_state, state_exists};
+    use super::*;
 
     /// A plugin that performs the required setup for [`State`] types to function:
     ///

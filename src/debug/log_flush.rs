@@ -5,16 +5,13 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use core::{fmt::Debug, marker::PhantomData};
+    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
 
-    use crate::{
-        schedule::StateFlush,
-        state::{LocalState, State},
-    };
+    use crate::schedule::StateFlush;
 
-    use super::{schedule_local_log_flush, schedule_log_flush};
+    use super::*;
 
     /// A plugin that adds on-flush logging systems for the [`State`] type `S`.
     ///

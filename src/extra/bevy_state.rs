@@ -92,14 +92,13 @@ pub use app::*;
 
 #[cfg(feature = "bevy_app")]
 mod app {
-    use core::{fmt::Debug, hash::Hash, marker::PhantomData};
+    use core::marker::PhantomData;
 
     use bevy_app::{App, Plugin};
-    use bevy_state::prelude as bevy;
 
-    use crate::{schedule::StateFlush, state::StateMut};
+    use crate::schedule::StateFlush;
 
-    use super::{BevyState, schedule_bevy_state};
+    use super::*;
 
     /// A plugin that adds [`BevyState<S>`] propagation systems for the
     /// [`State`](crate::state::State) type `S` to the [`StateFlush`] schedule.
