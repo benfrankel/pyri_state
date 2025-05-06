@@ -4,7 +4,7 @@ use bevy::input::common_conditions::input_just_pressed;
 use bevy::prelude::*;
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -42,12 +42,13 @@ fn main() {
                 Menu::ANY.on_update(Menu::pop.run_if(input_just_pressed(KeyCode::Escape))),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
 // Configure `Menu` to use `NextStateStack` instead of `NextStateBuffer` as its `NextState` type.
 #[state(log_flush, next(NextStateStack<Self>))]
+#[reflect(Resource)]
 enum Menu {
     Main,
     MainOverlay,
@@ -56,7 +57,8 @@ enum Menu {
     SettingsGraphics,
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
+#[reflect(Resource)]
 enum Screen {
     #[default]
     Title,

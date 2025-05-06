@@ -12,26 +12,28 @@ use pyri_state::{
     setup::RegisterState,
 };
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .add_state::<BasicState>()
         .add_state::<RawState>()
         .add_state::<CustomState>()
-        .run();
+        .run()
 }
 
-// The derive macro requires `Clone`, `PartialEq`, and `Eq` by default.`
-#[derive(State, Clone, PartialEq, Eq)]
+// The derive macro requires `Clone`, `PartialEq`, and `Eq` by default.
+#[derive(State, Reflect, Clone, PartialEq, Eq)]
+#[reflect(Resource)]
 struct BasicState;
 
 // They can be omitted if you disable the default options:
-#[derive(State)]
+#[derive(State, Reflect)]
 #[state(no_defaults)]
+#[reflect(Resource)]
 struct RawState;
 
 // The built-in state plugins can be configured:
-#[derive(State, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Hash, Debug)]
 #[state(
     // Disable default plugins: detect_change, flush_event, apply_flush.
     no_defaults,
@@ -56,10 +58,12 @@ struct RawState;
     // Run this state's on-flush hooks before the listed states.
     before(CustomState),
 )]
+#[reflect(Resource)]
 struct DerivedState;
 
 // Skip the derive entirely to fully customize your state type (see below).
-#[derive(Resource, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(Resource, Reflect, Clone, PartialEq, Eq, Hash, Debug)]
+#[reflect(Resource)]
 struct CustomState;
 
 impl State for CustomState {

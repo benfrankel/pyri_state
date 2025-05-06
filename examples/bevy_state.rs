@@ -5,7 +5,7 @@ use pyri_state::prelude::*;
 
 use iyes_progress::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -27,12 +27,13 @@ fn main() {
                     .run_if(input_just_pressed(KeyCode::Enter)),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Hash, Debug, Default)]
 // Enable the `bevy_state` plugin to set up `BevyState<Screen>`:
 #[state(bevy_state, log_flush)]
+#[reflect(Resource)]
 enum Screen {
     #[default]
     Title,

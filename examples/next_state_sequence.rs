@@ -5,7 +5,7 @@ use core::fmt::Debug;
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -33,12 +33,13 @@ fn main() {
                 Page::seek(3).run_if(input_just_pressed(KeyCode::Digit3)),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
 // Configure `Page` to use `NextStateIndex` instead of `NextStateBuffer` as its `NextState` type.
 #[state(log_flush, next(NextStateIndex<Self>))]
+#[reflect(Resource)]
 enum Page {
     A,
     B,

@@ -8,7 +8,7 @@ use pyri_state::{
     prelude::*,
 };
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -34,17 +34,19 @@ fn main() {
                 MyPairedState::swap.run_if(input_just_pressed(KeyCode::Space)),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
 // The default `NextState` type is `NextStateBuffer<Self>`, which is a newtyped `Option<Self>`.
 //#[state(next(NextStateBuffer<Self>))]
+#[reflect(Resource)]
 struct MyBufferedState;
 
-#[derive(State, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Debug, Default)]
 // You can easily swap in a `NextStateStack<Self>` instead, for example.
 #[state(log_flush, next(NextStateStack<Self>))]
+#[reflect(Resource)]
 enum MyStackedState {
     #[default]
     A,
@@ -52,7 +54,8 @@ enum MyStackedState {
 }
 
 // You can define your own fully custom `NextState` type:
-#[derive(Resource, Component)]
+#[derive(Resource, Component, Reflect)]
+#[reflect(Resource, Component)]
 struct NextStatePair<S: State>([Option<S>; 2]);
 
 impl<S: State> NextState for NextStatePair<S> {
@@ -106,9 +109,10 @@ trait NextStatePairMut: State {
 // Blanket impl the trait.
 impl<S: State<Next = NextStatePair<S>>> NextStatePairMut for S {}
 
-#[derive(State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
 // Now you can use `NextStatePair<Self>` as a custom first-class `NextState` type!
 #[state(log_flush, next(NextStatePair<Self>))]
+#[reflect(Resource)]
 enum MyPairedState {
     X,
     Y,

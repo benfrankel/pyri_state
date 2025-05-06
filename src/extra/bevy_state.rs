@@ -101,7 +101,7 @@ mod app {
     use super::*;
 
     /// A plugin that adds [`BevyState<S>`] propagation systems for the
-    /// [`State`](crate::state::State) type `S` to the [`StateFlush`] schedule.
+    /// [`State`] type `S` to the [`StateFlush`] schedule.
     ///
     /// Calls [`schedule_bevy_state<S>`].
     pub struct BevyStatePlugin<S: StateMut + Clone + PartialEq + Eq + Hash + Debug>(PhantomData<S>);

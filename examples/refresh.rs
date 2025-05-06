@@ -3,7 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -26,11 +26,12 @@ fn main() {
                 go_to_next_level.run_if(input_just_pressed(KeyCode::ArrowRight)),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Debug, Default)]
 #[state(log_flush)]
+#[reflect(Resource)]
 struct Level(isize);
 
 impl Level {

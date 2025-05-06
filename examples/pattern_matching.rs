@@ -3,7 +3,7 @@
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -50,11 +50,12 @@ fn main() {
                     .run_if(input_just_pressed(KeyCode::Digit0)),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
 #[state(log_flush)]
+#[reflect(Resource)]
 struct Level(usize);
 
 impl Default for Level {
@@ -63,7 +64,8 @@ impl Default for Level {
     }
 }
 
-#[derive(Resource)]
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
 struct LevelMeta {
     generated: Vec<bool>,
 }

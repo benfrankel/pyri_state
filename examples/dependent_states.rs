@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .init_state::<Screen>()
@@ -21,10 +21,11 @@ fn main() {
                 CheckerboardSquare::ANY.on_enter(compute_square_color),
             ),
         )
-        .run();
+        .run()
 }
 
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
+#[reflect(Resource)]
 enum Screen {
     #[default]
     Splash,
@@ -32,16 +33,18 @@ enum Screen {
 }
 
 // Substate of `Screen::Gameplay`
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
 #[state(after(Screen))]
+#[reflect(Resource)]
 struct CheckerboardSquare {
     row: u8,
     col: u8,
 }
 
 // Computed from `CheckerboardSquare`
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State, Reflect, Clone, PartialEq, Eq)]
 #[state(after(CheckerboardSquare))]
+#[reflect(Resource)]
 enum SquareColor {
     Black,
     White,

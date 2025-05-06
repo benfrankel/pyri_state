@@ -70,6 +70,7 @@ use crate::{
 ///
 /// Added [by default](pyri_state_derive::State) by [`FlushEventPlugin<S>`].
 #[derive(Event)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 pub struct StateFlushEvent<S: State> {
     /// The state before the flush, or `None` if disabled.
     pub old: Option<S>,
@@ -81,6 +82,7 @@ pub struct StateFlushEvent<S: State> {
 ///
 /// Added [by default](pyri_state_derive::State) by [`LocalFlushEventPlugin<S>`].
 #[derive(Event)]
+#[cfg_attr(feature = "bevy_reflect", derive(bevy_reflect::Reflect))]
 pub struct LocalStateFlushEvent<S: LocalState> {
     /// The entity for which the state flush occurred.
     pub entity: Entity,

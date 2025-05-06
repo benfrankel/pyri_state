@@ -7,7 +7,7 @@ use bevy::{
 };
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -32,13 +32,14 @@ fn main() {
                 toggle_blue.run_if(on_timer(Duration::from_secs(5))),
             )),
         )
-        .run();
+        .run()
 }
 
 // The player has different abilities depending on the color mode.
 // Yellow mode is its own thing, for example; not just red and green at the same time.
-#[derive(State, Clone, PartialEq, Eq, Default)]
+#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
 #[state(log_flush)]
+#[reflect(Resource)]
 struct ColorMode {
     red: bool,
     green: bool,

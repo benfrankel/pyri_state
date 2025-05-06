@@ -5,7 +5,7 @@ use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 use input::InputMode;
 use pyri_state::prelude::*;
 
-fn main() {
+fn main() -> AppExit {
     App::new()
         .add_plugins((DefaultPlugins, StatePlugin))
         .insert_resource(StateDebugSettings {
@@ -46,15 +46,16 @@ fn main() {
                 )),
             ),
         )
-        .run();
+        .run()
 }
 
 mod input {
     use super::*;
 
     // InputMode is defined as a split state in `mod input`.
-    #[derive(State, Clone, PartialEq, Eq, Debug)]
+    #[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
     #[state(log_flush)]
+    #[reflect(Resource)]
     pub struct InputMode(pub SplitState);
 }
 

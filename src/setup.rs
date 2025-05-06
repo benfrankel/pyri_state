@@ -5,14 +5,11 @@
 
 #[cfg(feature = "bevy_app")]
 pub use app::*;
-use bevy_ecs::{
-    system::{Commands, EntityCommands},
-    world::{EntityWorldMut, FromWorld, World},
-};
 
 #[cfg(feature = "bevy_app")]
 mod app {
     use bevy_app::{App, MainScheduleOrder, Plugin, PreUpdate};
+    use tiny_bail::prelude::*;
 
     use crate::schedule::StateFlush;
 
@@ -32,10 +29,11 @@ mod app {
             app.add_plugins(bevy_state::app::StatesPlugin);
 
             // Add the `StateFlush` schedule.
-            app.init_schedule(StateFlush)
+            r!(app
+                .init_schedule(StateFlush)
                 .world_mut()
-                .resource_mut::<MainScheduleOrder>()
-                .insert_before(PreUpdate, StateFlush);
+                .get_resource_mut::<MainScheduleOrder>())
+            .insert_before(PreUpdate, StateFlush);
         }
     }
 
@@ -96,6 +94,11 @@ mod app {
         fn register_state(app: &mut App);
     }
 }
+
+use bevy_ecs::{
+    system::{Commands, EntityCommands},
+    world::{EntityWorldMut, FromWorld, World},
+};
 
 use crate::{
     next_state::{NextState, TriggerStateFlush},
