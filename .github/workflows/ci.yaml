@@ -52,8 +52,32 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run Clippy lints
-        run: |
-          cargo clippy --workspace --all-features --all-targets -- --deny warnings
+        run: cargo clippy --workspace --all-features --all-targets -- --deny warnings
+
+  # Run Bevy lints.
+  bevy-lint:
+    name: Bevy lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LINTER_TOOLCHAIN: nightly-2025-04-03
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install bevy_lint
+        uses: TheBevyFlock/bevy_cli/bevy_lint@lint-v0.3.0
+
+      - name: Run Bevy lints
+        run: bevy_lint --workspace --all-targets --all-features
 
   # Check documentation.
   doc:
@@ -76,8 +100,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Check documentation
-        run: |
-          cargo doc --workspace --all-features --document-private-items --no-deps
+        run: cargo doc --workspace --all-features --document-private-items --no-deps
 
   # Run tests.
   test:

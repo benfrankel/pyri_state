@@ -64,6 +64,8 @@ iyes_progress = { git = "https://github.com/benfrankel/iyes_progress.git", branc
 
 [lints.rust]
 missing_docs = "deny"
+# Mark `bevy_lint` as a valid `cfg` for when `bevy_lint` runs.
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(bevy_lint)"] }
 
 [lints.clippy]
 too_many_arguments = "allow"
@@ -71,3 +73,8 @@ type_complexity = "allow"
 std_instead_of_core = "warn"
 std_instead_of_alloc = "warn"
 alloc_instead_of_core = "warn"
+
+# See more Bevy lints here: <https://thebevyflock.github.io/bevy_cli/bevy_lint/lints>.
+[package.metadata.bevy_lint]
+restriction = "warn"
+pedantic = "warn"

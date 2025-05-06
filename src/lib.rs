@@ -97,6 +97,8 @@
 //! ```
 
 #![no_std]
+// Support configuring Bevy lints within code.
+#![cfg_attr(bevy_lint, feature(register_tool), register_tool(bevy))]
 
 extern crate alloc;
 
