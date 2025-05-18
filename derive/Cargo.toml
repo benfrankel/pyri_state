@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state_derive"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 description = "Derive macros for `pyri_state`"
 repository = "https://github.com/benfrankel/pyri_state"
