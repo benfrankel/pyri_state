@@ -73,20 +73,25 @@ pub fn schedule_react<S: State + Eq>(schedule: &mut Schedule) {
 }
 
 /// A component that despawns an entity on any exit of the [`State`] type `S`.
-#[derive(Component, Default)]
+#[derive(Component)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
     reflect(Component)
 )]
 pub enum DespawnOnExitState<S: State> {
-    #[default]
     /// Despawn the entity and its descendants on any exit.
     Recursive,
     /// Despawn the entity's descendants on any exit.
     Descendants,
     #[doc(hidden)]
     _PhantomData(PhantomData<S>),
+}
+
+impl<S: State> Default for DespawnOnExitState<S> {
+    fn default() -> Self {
+        Self::Recursive
+    }
 }
 
 fn despawn_on_exit_state<S: State>(
@@ -105,20 +110,25 @@ fn despawn_on_exit_state<S: State>(
 }
 
 /// A component that despawns an entity on any disable of the [`State`] type `S`.
-#[derive(Component, Default)]
+#[derive(Component)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
     reflect(Component)
 )]
 pub enum DespawnOnDisableState<S: State> {
-    #[default]
     /// Despawn the entity and its descendants on any disable.
     Recursive,
     /// Despawn the entity's descendants on any disable.
     Descendants,
     #[doc(hidden)]
     _PhantomData(PhantomData<S>),
+}
+
+impl<S: State> Default for DespawnOnDisableState<S> {
+    fn default() -> Self {
+        Self::Recursive
+    }
 }
 
 fn despawn_on_disable_state<S: State>(
@@ -177,13 +187,19 @@ fn show_on_enter_state<S: State + Eq>(
 ///
 /// - On any enable, the visibility will be set to [`Visibility::Inherited`].
 /// - On any disable, the visibility will be set to [`Visibility::Hidden`].
-#[derive(Component, Default)]
+#[derive(Component)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
     reflect(Component)
 )]
 pub struct VisibleInEnabledState<S: State>(PhantomData<S>);
+
+impl<S: State> Default for VisibleInEnabledState<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 fn hide_on_disable_state<S: State + Eq>(
     mut reaction_query: Query<&mut Visibility, With<VisibleInEnabledState<S>>>,
@@ -248,13 +264,19 @@ fn enable_on_enter_state<S: State + Eq>(
 ///
 /// - On any enable, the [`Disabled`] component will be recursively removed.
 /// - On any disable, the [`Disabled`] component will be recursively inserted.
-#[derive(Component, Default)]
+#[derive(Component)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
     reflect(Component)
 )]
 pub struct EnabledInEnabledState<S: State>(PhantomData<S>);
+
+impl<S: State> Default for EnabledInEnabledState<S> {
+    fn default() -> Self {
+        Self(PhantomData)
+    }
+}
 
 fn disable_on_disable_state<S: State + Eq>(
     mut commands: Commands,
