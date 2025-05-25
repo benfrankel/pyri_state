@@ -249,7 +249,7 @@ fn disable_on_exit_state<S: State + Eq>(
 fn enable_on_enter_state<S: State + Eq>(
     mut commands: Commands,
     state: NextRef<S>,
-    reaction_query: Query<(Entity, &EnabledInState<S>)>,
+    reaction_query: Query<(Entity, &EnabledInState<S>), With<Disabled>>,
 ) {
     for (entity, reaction) in &reaction_query {
         if state.will_be_in(&reaction.0) {
@@ -291,7 +291,7 @@ fn disable_on_disable_state<S: State + Eq>(
 
 fn enable_on_enable_state<S: State + Eq>(
     mut commands: Commands,
-    reaction_query: Query<Entity, With<EnabledInEnabledState<S>>>,
+    reaction_query: Query<Entity, (With<EnabledInEnabledState<S>>, With<Disabled>)>,
 ) {
     for entity in &reaction_query {
         commands
