@@ -1,5 +1,10 @@
 # Next version
 
+# Version 0.4.1
+
+- Fixed `impl Default` for `DespawnOnExitState`, `DespawnOnDisableState`, `VisibleInEnabledState`, and `EnabledInEnabledState` components
+- Fixed entity enabling for `EnabledInState` and `EnabledInEnabledSate` components
+
 # Version 0.4.0
 
 - **Updated to Bevy 0.16.0**
