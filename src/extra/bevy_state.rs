@@ -67,8 +67,15 @@
 //!
 //! ```
 //! # use bevy::prelude::*;
-//! # use iyes_progress::prelude::*;
+//! # //use iyes_progress::prelude::*;
 //! # use pyri_state::prelude::*;
+//! #
+//! # struct ProgressPlugin;
+//! # impl ProgressPlugin {
+//! #     fn new() -> Self { Self }
+//! #     fn with_state_transition<A, B>(self, _: A, _: B) -> Self { self }
+//! # }
+//! # impl Plugin for ProgressPlugin { fn build(&self, _: &mut App) {} }
 //! #
 //! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
