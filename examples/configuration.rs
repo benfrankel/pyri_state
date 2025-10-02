@@ -7,7 +7,7 @@ use pyri_state::{
     prelude::*,
     schedule::{
         apply_flush::ApplyFlushPlugin, detect_change::DetectChangePlugin,
-        flush_event::FlushEventPlugin, resolve_state::ResolveStatePlugin,
+        flush_message::FlushMessagePlugin, resolve_state::ResolveStatePlugin,
     },
     setup::RegisterState,
 };
@@ -35,12 +35,12 @@ struct RawState;
 // The built-in state plugins can be configured:
 #[derive(State, Reflect, Clone, PartialEq, Eq, Hash, Debug)]
 #[state(
-    // Disable default plugins: detect_change, flush_event, apply_flush.
+    // Disable default plugins: detect_change, flush_message, apply_flush.
     no_defaults,
     // Trigger a flush on any state change (requires PartialEq, Eq).
     detect_change,
-    // Send an event on flush (requires Clone).
-    flush_event,
+    // Write a message on flush (requires Clone).
+    flush_message,
     // Log on flush (requires Debug).
     log_flush,
     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).
@@ -80,7 +80,7 @@ impl RegisterState for CustomState {
                 .after::<RawState>()
                 .after::<DerivedState>(),
             DetectChangePlugin::<Self>::default(),
-            FlushEventPlugin::<Self>::default(),
+            FlushMessagePlugin::<Self>::default(),
             LogFlushPlugin::<Self>::default(),
             BevyStatePlugin::<Self>::default(),
             ReactPlugin::<Self>::default(),

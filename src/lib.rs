@@ -130,7 +130,7 @@ pub mod prelude {
             StatePattern as _, StatePatternExtClone as _, StatePatternExtEq as _,
             StateTransPattern as _, StateTransPatternExtClone as _,
         },
-        schedule::{StateFlush, flush_event::StateFlushEvent},
+        schedule::{StateFlush, flush_message::StateFlushMessage},
         setup::{CommandsExtState as _, EntityCommandsExtState as _},
         state,
         state::{
@@ -206,14 +206,14 @@ pub mod prelude {
     /// #
     /// #[derive(State, Component, Clone, PartialEq, Eq, Hash, Debug)]
     /// #[state(
-    ///     // Disable default plugins: detect_change, flush_event, apply_flush.
+    ///     // Disable default plugins: detect_change, flush_message, apply_flush.
     ///     no_defaults,
     ///     // Support local state (requires Component).
     ///     local,
     ///     // Trigger a flush on any state change (requires PartialEq, Eq).
     ///     detect_change,
-    ///     // Send an event on flush (requires Clone).
-    ///     flush_event,
+    ///     // Write a message on flush (requires Clone).
+    ///     flush_message,
     ///     // Log on flush (requires Debug).
     ///     log_flush,
     ///     // Include a `BevyState<Self>` wrapper (requires StateMut, Clone, PartialEq, Eq, Hash, Debug).

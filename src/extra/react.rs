@@ -33,6 +33,7 @@ mod app {
 
 use core::marker::PhantomData;
 
+use bevy_camera::visibility::Visibility;
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectComponent;
 use bevy_ecs::{
@@ -44,7 +45,6 @@ use bevy_ecs::{
     schedule::Schedule,
     system::{Commands, Query},
 };
-use bevy_render::view::visibility::Visibility;
 
 use crate::{
     access::{CurrentRef, NextRef},

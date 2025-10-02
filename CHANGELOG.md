@@ -1,5 +1,13 @@
 # Next version
 
+# Version 0.5.0
+
+- **Updated to Bevy 0.17**
+- Renamed `flush_event` -> `flush_message` module
+- Renamed `flush_event` -> `flush_message` derive macro option
+- Renamed `FlushEventPlugin` -> `FlushMessagePlugin` plugin
+- Renamed `StateFlushEvent` -> `StateFlushMessage` message
+
 # Version 0.4.1
 
 - Fixed `impl Default` for `DespawnOnExitState`, `DespawnOnDisableState`, `VisibleInEnabledState`, and `EnabledInEnabledState` components
@@ -7,7 +15,7 @@
 
 # Version 0.4.0
 
-- **Updated to Bevy 0.16.0**
+- **Updated to Bevy 0.16**
 - **Added `no_std` support**
 - **Extended reaction components:**
     - Removed `Single` variant from `DespawnOnExit` and `DespawnOnDisable` components
@@ -24,7 +32,7 @@
 
 # Version 0.3.0
 
-- **Updated to Bevy 0.15.0**
+- **Updated to Bevy 0.15**
 - **Extended reaction components:**
     - Renamed `StateScope` -> `DespawnOnExit` component with `Single`, `Recursive`, and `Descendants` variants
     - Added `DespawnOnDisable` component
@@ -42,7 +50,7 @@
 
 # Version 0.2.0
 
-- **Updated to Bevy 0.14.0**
+- **Updated to Bevy 0.14**
 - **Wrote [documentation](https://docs.rs/pyri_state/latest/pyri_state/)**
 - **Wrote [interactive examples](/examples/)**
 - **Implemented state pattern-matching:**

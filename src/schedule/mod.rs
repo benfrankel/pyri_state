@@ -1,14 +1,14 @@
 //! State flush scheduling types and functions.
 //!
 //! The [`StateFlush`] schedule handles all [`State`](crate::state::State) flush logic
-//! and emits [`StateFlushEvent`](flush_event::StateFlushEvent).
+//! and emits [`StateFlushMessage`](flush_message::StateFlushMessage).
 
 pub use apply_flush::ApplyFlushSystems;
 pub use resolve_state::ResolveStateSystems;
 
 pub mod apply_flush;
 pub mod detect_change;
-pub mod flush_event;
+pub mod flush_message;
 pub mod resolve_state;
 
 use core::{fmt::Debug, hash::Hash};

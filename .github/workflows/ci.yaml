@@ -74,7 +74,10 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Install bevy_lint
-        uses: TheBevyFlock/bevy_cli/bevy_lint@lint-v0.3.0
+        uses: TheBevyFlock/bevy_cli/bevy_lint@lint-v0.4.0
+        with:
+          cache: true
+          save-cache-if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Run Bevy lints
         run: bevy_lint --workspace --all-targets --all-features

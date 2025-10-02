@@ -97,7 +97,7 @@ struct StateAttrs {
     before: Punctuated<Type, Token![,]>,
     no_defaults: bool,
     detect_change: bool,
-    flush_event: bool,
+    flush_message: bool,
     log_flush: bool,
     bevy_state: bool,
     react: bool,
@@ -141,7 +141,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
                         "no_defaults" => state_attrs.no_defaults = true,
                         "local" => state_attrs.local = true,
                         "detect_change" => state_attrs.detect_change = true,
-                        "flush_event" => state_attrs.flush_event = true,
+                        "flush_message" => state_attrs.flush_message = true,
                         "log_flush" => state_attrs.log_flush = true,
                         "bevy_state" => state_attrs.bevy_state = true,
                         "react" => state_attrs.react = true,
@@ -158,7 +158,7 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
     // Enable default options.
     if !state_attrs.no_defaults {
         state_attrs.detect_change = true;
-        state_attrs.flush_event = true;
+        state_attrs.flush_message = true;
         state_attrs.apply_flush = true;
     }
 

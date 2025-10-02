@@ -6,7 +6,7 @@
 use core::marker::PhantomData;
 
 use bevy_ecs::{
-    schedule::{Condition, IntoScheduleConfigs, ScheduleConfigs},
+    schedule::{IntoScheduleConfigs, ScheduleConfigs, SystemCondition},
     system::ScheduleSystem,
 };
 

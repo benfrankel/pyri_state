@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2024"
 description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -29,7 +29,7 @@ bevy_state = ["dep:bevy_state", "pyri_state_derive/bevy_state"]
 # Enable state debugging tools (e.g. on-flush logging).
 debug = ["dep:bevy_diagnostic", "dep:bevy_log", "pyri_state_derive/debug"]
 # Enable reaction components such as `DespawnOnExitState`.
-react = ["dep:bevy_render", "pyri_state_derive/react"]
+react = ["dep:bevy_camera", "pyri_state_derive/react"]
 # Enable the `NextStateIndex` next state type.
 sequence = []
 # Enable the `SplitState` code organization tool.
@@ -38,27 +38,27 @@ split = []
 stack = []
 
 [dependencies]
-bevy_app = { version = "0.16", default-features = false, optional = true }
-bevy_diagnostic = { version = "0.16", default-features = false, optional = true }
-bevy_ecs = { version = "0.16", default-features = false }
-bevy_log = { version = "0.16", default-features = false, optional = true }
-bevy_reflect = { version = "0.16", default-features = false, optional = true }
-bevy_render = { version = "0.16", default-features = false, optional = true }
-bevy_state = { version = "0.16", default-features = false, features = [
+bevy_app = { version = "0.17", default-features = false, optional = true }
+bevy_camera = { version = "0.17", default-features = false, optional = true }
+bevy_diagnostic = { version = "0.17", default-features = false, optional = true }
+bevy_ecs = { version = "0.17", default-features = false }
+bevy_log = { version = "0.17", default-features = false, optional = true }
+bevy_reflect = { version = "0.17", default-features = false, optional = true }
+bevy_state = { version = "0.17", default-features = false, features = [
     "bevy_app",
 ], optional = true }
-pyri_state_derive = { version = "=0.4.1", path = "derive" }
-tiny_bail = "0.4"
+pyri_state_derive = { version = "=0.5.0", path = "derive" }
+tiny_bail = "0.7"
 
 [dev-dependencies]
-bevy = { version = "0.16", default-features = false, features = [
+bevy = { version = "0.17", default-features = false, features = [
     "bevy_core_pipeline",
     "bevy_log",
     "bevy_winit",
     "x11",
     "multi_threaded",
 ] }
-iyes_progress = "0.14"
+#iyes_progress = "0.15"
 
 [lints.rust]
 missing_docs = "deny"

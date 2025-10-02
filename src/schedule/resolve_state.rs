@@ -71,7 +71,7 @@ mod app {
 use core::{convert::Infallible, fmt::Debug, hash::Hash, marker::PhantomData};
 
 use bevy_ecs::schedule::{
-    Condition, InternedSystemSet, IntoScheduleConfigs as _, Schedule, SystemSet,
+    InternedSystemSet, IntoScheduleConfigs as _, Schedule, SystemCondition, SystemSet,
 };
 
 use crate::{schedule::ApplyFlushSystems, state::State};

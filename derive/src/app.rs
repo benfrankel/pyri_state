@@ -86,12 +86,12 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
             true,
         )
     };
-    let flush_event = {
-        let crate_flush_event_path = concat(&crate_schedule_path, "flush_event");
+    let flush_message = {
+        let crate_flush_message_path = concat(&crate_schedule_path, "flush_message");
         plugin(
-            &crate_flush_event_path,
-            "FlushEvent",
-            attrs.flush_event,
+            &crate_flush_message_path,
+            "FlushMessage",
+            attrs.flush_message,
             true,
         )
     };
@@ -133,7 +133,7 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
                 app.add_plugins((
                     #resolve_state
                     #detect_change
-                    #flush_event
+                    #flush_message
                     #log_flush
                     #bevy_state
                     #react

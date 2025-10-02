@@ -53,7 +53,7 @@ use core::{any::type_name, fmt::Debug};
 use bevy_diagnostic::FrameCount;
 use bevy_ecs::{
     entity::Entity,
-    schedule::{Condition, IntoScheduleConfigs, Schedule},
+    schedule::{IntoScheduleConfigs, Schedule, SystemCondition},
     system::{Query, Res, StaticSystemParam},
 };
 use bevy_log::info;
