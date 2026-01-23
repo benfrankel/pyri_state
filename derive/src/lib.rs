@@ -45,7 +45,7 @@ fn derive_resource_helper(input: &DeriveInput) -> proc_macro2::TokenStream {
     let ty_name = &input.ident;
 
     // Construct paths.
-    let bevy_ecs_path = BevyManifest::shared().get_path("bevy_ecs");
+    let bevy_ecs_path = BevyManifest::shared(|manifest| manifest.get_path("bevy_ecs"));
     let bevy_ecs_resource_path = concat(&bevy_ecs_path, "resource");
     let resource_trait = concat(&bevy_ecs_resource_path, "Resource");
 

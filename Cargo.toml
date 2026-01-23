@@ -1,6 +1,6 @@
 [package]
 name = "pyri_state"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2024"
 description = "A flexible `bevy_state` alternative"
 repository = "https://github.com/benfrankel/pyri_state"
@@ -38,27 +38,27 @@ split = []
 stack = []
 
 [dependencies]
-bevy_app = { version = "0.17", default-features = false, optional = true }
-bevy_camera = { version = "0.17", default-features = false, optional = true }
-bevy_diagnostic = { version = "0.17", default-features = false, optional = true }
-bevy_ecs = { version = "0.17", default-features = false }
-bevy_log = { version = "0.17", default-features = false, optional = true }
-bevy_reflect = { version = "0.17", default-features = false, optional = true }
-bevy_state = { version = "0.17", default-features = false, features = [
+bevy_app = { version = "0.18", default-features = false, optional = true }
+bevy_camera = { version = "0.18", default-features = false, optional = true }
+bevy_diagnostic = { version = "0.18", default-features = false, optional = true }
+bevy_ecs = { version = "0.18", default-features = false }
+bevy_log = { version = "0.18", default-features = false, optional = true }
+bevy_reflect = { version = "0.18", default-features = false, optional = true }
+bevy_state = { version = "0.18", default-features = false, features = [
     "bevy_app",
 ], optional = true }
-pyri_state_derive = { version = "=0.5.0", path = "derive" }
+pyri_state_derive = { version = "=0.6.0", path = "derive" }
 tiny_bail = "0.7"
 
 [dev-dependencies]
-bevy = { version = "0.17", default-features = false, features = [
+bevy = { version = "0.18", default-features = false, features = [
     "bevy_core_pipeline",
     "bevy_log",
     "bevy_winit",
     "x11",
     "multi_threaded",
 ] }
-#iyes_progress = "0.15"
+iyes_progress = "0.16"
 
 [lints.rust]
 missing_docs = "deny"

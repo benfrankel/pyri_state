@@ -1,9 +1,8 @@
 //! Enable a [`BevyState<S>`] wrapper to interact with ecosystem crates that expect it.
 
 use bevy::{input::common_conditions::input_just_pressed, prelude::*};
+use iyes_progress::prelude::*;
 use pyri_state::prelude::*;
-
-//use iyes_progress::prelude::*;
 
 fn main() -> AppExit {
     App::new()
@@ -13,13 +12,11 @@ fn main() -> AppExit {
             ..default()
         })
         .init_state::<Screen>()
-        /*
         .add_plugins(
             ProgressPlugin::new()
                 // Changes to `BevyState<Screen>` will propagate to `Screen`.
                 .with_state_transition(Screen::Loading.bevy(), Screen::Gameplay.bevy()),
         )
-        */
         .add_systems(
             Update,
             Screen::Title.on_update(
