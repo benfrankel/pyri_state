@@ -73,7 +73,7 @@ pub fn schedule_react<S: State + Eq>(schedule: &mut Schedule) {
 }
 
 /// A component that despawns an entity on any exit of the [`State`] type `S`.
-#[derive(Component)]
+#[derive(Component, Default)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
@@ -81,17 +81,12 @@ pub fn schedule_react<S: State + Eq>(schedule: &mut Schedule) {
 )]
 pub enum DespawnOnExitState<S: State> {
     /// Despawn the entity and its descendants on any exit.
+    #[default]
     Recursive,
     /// Despawn the entity's descendants on any exit.
     Descendants,
     #[doc(hidden)]
     _PhantomData(PhantomData<S>),
-}
-
-impl<S: State> Default for DespawnOnExitState<S> {
-    fn default() -> Self {
-        Self::Recursive
-    }
 }
 
 fn despawn_on_exit_state<S: State>(
@@ -110,7 +105,7 @@ fn despawn_on_exit_state<S: State>(
 }
 
 /// A component that despawns an entity on any disable of the [`State`] type `S`.
-#[derive(Component)]
+#[derive(Component, Default)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
@@ -118,17 +113,12 @@ fn despawn_on_exit_state<S: State>(
 )]
 pub enum DespawnOnDisableState<S: State> {
     /// Despawn the entity and its descendants on any disable.
+    #[default]
     Recursive,
     /// Despawn the entity's descendants on any disable.
     Descendants,
     #[doc(hidden)]
     _PhantomData(PhantomData<S>),
-}
-
-impl<S: State> Default for DespawnOnDisableState<S> {
-    fn default() -> Self {
-        Self::Recursive
-    }
 }
 
 fn despawn_on_disable_state<S: State>(
