@@ -160,7 +160,7 @@ impl<S: State + Eq> StatePattern<S> for S {
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct Level(usize);
 /// #
 /// # fn reset_timer() {}
@@ -194,7 +194,7 @@ impl<S: State> StatePattern<S> for AnyStatePattern<S> {
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct Level(usize);
 /// #
 /// # fn save_checkpoint() {}
@@ -312,7 +312,7 @@ impl<S: State, P1: StatePattern<S>, P2: StatePattern<S>> StateTransPattern<S> fo
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct Level(usize);
 /// #
 /// # fn reset_timer() {}
@@ -344,7 +344,7 @@ impl<S: State> StateTransPattern<S> for AnyStateTransPattern<S> {
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct Level(usize);
 /// #
 /// # fn spawn_something_cool() {}
@@ -389,7 +389,7 @@ where
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct Level(usize);
 /// #
 /// # fn save_checkpoint() {}
@@ -405,7 +405,7 @@ where
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct Level(usize);
 /// #
 /// # fn do_something_cool() {}

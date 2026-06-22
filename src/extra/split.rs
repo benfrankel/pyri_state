@@ -18,7 +18,7 @@
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// #[derive(State, Clone, PartialEq, Eq)]
+/// #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// pub struct MyState(pub SplitState);
 /// ```
 pub type SplitState = &'static str;
@@ -30,7 +30,7 @@ pub type SplitState = &'static str;
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # pub struct MyState(pub SplitState);
 /// #
 /// add_to_split_state!(MyState, Foo, Bar);

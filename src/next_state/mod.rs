@@ -24,7 +24,7 @@ pub mod sequence;
 #[cfg(feature = "stack")]
 pub mod stack;
 
-/// A [`Resource`] / [`Component`] that determines whether the [`State`] type `S` will flush in the
+/// A [`Resource`] that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
 #[derive(Resource, Debug)]
 #[cfg_attr(

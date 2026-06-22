@@ -105,7 +105,7 @@ impl<S: State> CurrentMut<'_, S> {
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # enum Menu {
 /// #     Main,
 /// #     Settings,
@@ -171,7 +171,7 @@ impl<S: State> NextRef<'_, '_, S> {
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct ColorState {
 /// #     red: bool,
 /// #     green: bool,
@@ -311,7 +311,7 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct ColorState {
 /// #     red: bool,
 /// #     green: bool,
@@ -394,7 +394,7 @@ impl<S: State> FlushRef<'_, '_, S> {
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// # #[derive(State, Clone, PartialEq, Eq)]
+/// # #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// # struct ColorState {
 /// #     red: bool,
 /// #     green: bool,

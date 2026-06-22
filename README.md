@@ -7,7 +7,7 @@
 `pyri_state` is a `bevy_state` alternative offering flexible change detection & scheduling.
 
 ```rust
-#[derive(State, Clone, PartialEq, Eq)]
+#[derive(State, Resource, Clone, PartialEq, Eq)]
 struct Level(usize);
 
 app.add_systems(StateFlush, state!(Level(4 | 7 | 10)).on_enter(save_progress));

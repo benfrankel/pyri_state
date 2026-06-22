@@ -22,7 +22,7 @@ use crate::{
 /// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
-/// #[derive(State, Clone, PartialEq, Eq)]
+/// #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// enum Screen { /* ... */ }
 ///
 /// #[derive(Resource)]
