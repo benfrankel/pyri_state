@@ -121,6 +121,7 @@ This is a seriously discouraging amount of boilerplate for something that should
 
 | `bevy` version | `pyri_state` version |
 | -------------- | -------------------- |
+| 0.19           | 0.7                  |
 | 0.18           | 0.6                  |
 | 0.17           | 0.5                  |
 | 0.16           | 0.4                  |
