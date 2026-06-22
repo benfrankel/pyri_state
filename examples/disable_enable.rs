@@ -23,7 +23,7 @@ fn main() -> AppExit {
         .run()
 }
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Debug)]
 #[state(log_flush)]
 #[reflect(Resource)]
 struct Paused;

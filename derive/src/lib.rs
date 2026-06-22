@@ -4,7 +4,6 @@
 mod app;
 mod util;
 
-use bevy_macro_utils::BevyManifest;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
@@ -29,28 +28,9 @@ pub fn derive_state(input: TokenStream) -> TokenStream {
     #[cfg(feature = "bevy_app")]
     let impl_register_state = app::derive_register_state_helper(&input, &attrs);
 
-    // Construct `Resource` impl.
-    let impl_resource = derive_resource_helper(&input);
-
     quote! {
         #impl_state
         #impl_register_state
-        #impl_resource
-    }
-    .into()
-}
-
-fn derive_resource_helper(input: &DeriveInput) -> proc_macro2::TokenStream {
-    let (impl_generics, ty_generics, where_clause) = input.generics.split_for_impl();
-    let ty_name = &input.ident;
-
-    // Construct paths.
-    let bevy_ecs_path = BevyManifest::shared(|manifest| manifest.get_path("bevy_ecs"));
-    let bevy_ecs_resource_path = concat(&bevy_ecs_path, "resource");
-    let resource_trait = concat(&bevy_ecs_resource_path, "Resource");
-
-    quote! {
-        impl #impl_generics #resource_trait for #ty_name #ty_generics #where_clause {}
     }
     .into()
 }
@@ -92,7 +72,6 @@ fn derive_state_helper(input: &DeriveInput, attrs: &StateAttrs) -> proc_macro2::
 #[derive(Default)]
 struct StateAttrs {
     next: Option<Type>,
-    local: bool,
     after: Punctuated<Type, Token![,]>,
     before: Punctuated<Type, Token![,]>,
     no_defaults: bool,
@@ -139,7 +118,6 @@ fn parse_state_attrs(input: &DeriveInput) -> Result<StateAttrs> {
 
                     match ident.to_string().as_str() {
                         "no_defaults" => state_attrs.no_defaults = true,
-                        "local" => state_attrs.local = true,
                         "detect_change" => state_attrs.detect_change = true,
                         "flush_message" => state_attrs.flush_message = true,
                         "log_flush" => state_attrs.log_flush = true,

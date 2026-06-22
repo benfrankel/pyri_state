@@ -96,14 +96,13 @@ mod app {
 }
 
 use bevy_ecs::{
-    system::{Commands, EntityCommands},
-    world::{EntityWorldMut, FromWorld, World},
+    system::Commands,
+    world::{FromWorld, World},
 };
 
 use crate::{
     next_state::{NextState, TriggerStateFlush},
     prelude::State,
-    state::LocalState,
 };
 
 fn state_exists<S: State>(world: &World) -> bool {
@@ -149,57 +148,5 @@ impl CommandsExtState for Commands<'_, '_> {
 
     fn insert_state<T: NextState>(&mut self, next: T) {
         self.queue(|world: &mut World| insert_state(world, Some(next)));
-    }
-}
-
-fn local_state_exists<S: LocalState>(entity: &EntityWorldMut) -> bool {
-    entity.contains::<TriggerStateFlush<S>>()
-}
-
-fn insert_local_state<Next: NextState<State: LocalState<Next = Next>>>(
-    entity: &mut EntityWorldMut,
-    next: Option<Next>,
-) {
-    entity.insert((
-        next.unwrap_or_else(Next::empty),
-        TriggerStateFlush::<Next::State>::default(),
-    ));
-}
-
-/// An extension trait for [`EntityCommands`] that provides methods for adding
-/// [`LocalState`] types.
-pub trait EntityCommandsExtState {
-    /// Queue a command to initialize a `LocalState` type with an empty `NextState`.
-    ///
-    /// Calls [`S::Next::empty`](NextState::empty).
-    fn add_state<S: LocalState>(&mut self);
-
-    /// Queue a command to initialize a `LocalState` type with a default `NextState`.
-    fn init_state<S: LocalState<Next: FromWorld>>(&mut self);
-
-    /// Queue a command to initialize a `LocalState` type with a specific `NextState`.
-    fn insert_state<T: NextState<State: LocalState<Next = T>>>(&mut self, next: T);
-}
-
-impl EntityCommandsExtState for EntityCommands<'_> {
-    fn add_state<S: LocalState>(&mut self) {
-        self.queue(|mut entity: EntityWorldMut| {
-            if !local_state_exists::<S>(&entity) {
-                insert_local_state(&mut entity, None::<S::Next>);
-            }
-        });
-    }
-
-    fn init_state<S: LocalState<Next: FromWorld>>(&mut self) {
-        self.queue(|mut entity: EntityWorldMut| {
-            if !local_state_exists::<S>(&entity) {
-                let next = entity.world_scope(S::Next::from_world);
-                insert_local_state(&mut entity, Some(next));
-            }
-        });
-    }
-
-    fn insert_state<T: NextState<State: LocalState<Next = T>>>(&mut self, next: T) {
-        self.queue(|mut entity: EntityWorldMut| insert_local_state(&mut entity, Some(next)));
     }
 }

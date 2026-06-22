@@ -100,7 +100,7 @@ pub trait StatePattern<S: State>: 'static + Send + Sync + Sized {
         systems: impl IntoScheduleConfigs<ScheduleSystem, M>,
     ) -> ScheduleConfigs<ScheduleSystem> {
         systems
-            .run_if(S::is_triggered.and(self.will_enable()))
+            .run_if(S::is_triggered.and_then(self.will_enable()))
             .in_set(ResolveStateSystems::<S>::AnyFlush)
             .in_set(ResolveStateSystems::<S>::Enter)
     }

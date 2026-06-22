@@ -36,7 +36,7 @@ fn main() -> AppExit {
         .run()
 }
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Debug)]
 // Configure `Page` to use `NextStateIndex` instead of `NextStateBuffer` as its `NextState` type.
 #[state(log_flush, next(NextStateIndex<Self>))]
 #[reflect(Resource)]

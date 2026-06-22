@@ -3,7 +3,6 @@
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    component::Component,
     resource::Resource,
     system::SystemParamItem,
     world::{FromWorld, World},
@@ -19,7 +18,7 @@ use crate::{
 ///
 /// This is the default [`State::Next`] type set by the
 /// [derive macro](pyri_state_derive::State).
-#[derive(Resource, Component, Debug)]
+#[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),

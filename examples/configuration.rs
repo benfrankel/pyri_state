@@ -22,18 +22,18 @@ fn main() -> AppExit {
 }
 
 // The derive macro requires `Clone`, `PartialEq`, and `Eq` by default.
-#[derive(State, Reflect, Clone, PartialEq, Eq)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq)]
 #[reflect(Resource)]
 struct BasicState;
 
 // They can be omitted if you disable the default options:
-#[derive(State, Reflect)]
+#[derive(State, Resource, Reflect)]
 #[state(no_defaults)]
 #[reflect(Resource)]
 struct RawState;
 
 // The built-in state plugins can be configured:
-#[derive(State, Reflect, Clone, PartialEq, Eq, Hash, Debug)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Hash, Debug)]
 #[state(
     // Disable default plugins: detect_change, flush_message, apply_flush.
     no_defaults,

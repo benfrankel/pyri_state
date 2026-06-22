@@ -9,7 +9,6 @@ use alloc::{vec, vec::Vec};
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    component::Component,
     resource::Resource,
     system::{Commands, ResMut, SystemParamItem},
     world::{FromWorld, World},
@@ -24,7 +23,7 @@ use crate::{
 /// A [`NextState`] type that stores the [`State`] type `S` in a stack with the next state on top.
 ///
 /// Using this as [`State::Next`] unlocks the [`NextStateStackMut`] extension trait for `S`.
-#[derive(Resource, Component, Debug)]
+#[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),

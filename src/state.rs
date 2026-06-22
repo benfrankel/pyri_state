@@ -3,7 +3,7 @@
 use core::marker::PhantomData;
 
 use bevy_ecs::{
-    component::{Component, Mutable},
+    component::Mutable,
     resource::Resource,
     system::{Res, ResMut},
 };
@@ -41,7 +41,7 @@ use crate::{
 /// - [`StateMut`]
 /// - [`StateMutExtClone`]
 /// - [`StateMutExtDefault`]
-pub trait State: Resource + Sized {
+pub trait State: Resource<Mutability = Mutable> + Sized {
     /// The [`NextState`] type that determines the next state for this state type.
     type Next: NextState<State = Self>;
 
@@ -190,8 +190,3 @@ pub trait StateMutExtDefault: StateMut + Default {
 }
 
 impl<S: StateMut + Default> StateMutExtDefault for S {}
-
-/// A marker trait for [`State`] types that can be stored as components on entities.
-pub trait LocalState: State<Next: Component> + Component<Mutability = Mutable> {}
-
-impl<S: State<Next: Component> + Component<Mutability = Mutable>> LocalState for S {}

@@ -10,7 +10,6 @@ use core::marker::PhantomData;
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    component::Component,
     resource::Resource,
     system::{Res, ResMut, SystemParamItem, lifetimeless::SRes},
 };
@@ -42,7 +41,7 @@ impl<S: State> NextStateSequence<S> {
 /// an external [`NextStateSequence<S>`] resource.
 ///
 /// Using this as [`State::Next`] unlocks the [`NextStateIndexMut`] extension trait for `S`.
-#[derive(Resource, Component, Debug)]
+#[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),

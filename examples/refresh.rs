@@ -29,7 +29,7 @@ fn main() -> AppExit {
         .run()
 }
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Debug, Default)]
 #[state(log_flush)]
 #[reflect(Resource)]
 struct Level(isize);

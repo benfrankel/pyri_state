@@ -57,24 +57,13 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     };
 
     // Construct simple plugins.
-    let plugin = |path: &Path, ty_prefix: &str, enable: bool, local: bool| {
+    let plugin = |path: &Path, ty_prefix: &str, enable: bool| {
         if !enable {
             return quote! {};
         }
 
         let state_plugin_ty = concat(&path, &format!("{ty_prefix}Plugin"));
-        let state_plugin = quote! { #state_plugin_ty::<Self>::default(), };
-        if !local || !attrs.local {
-            return state_plugin;
-        }
-
-        let local_state_plugin_ty = concat(&path, &format!("Local{ty_prefix}Plugin"));
-        let local_state_plugin = quote! { #local_state_plugin_ty::<Self>::default(), };
-
-        quote! {
-            #state_plugin
-            #local_state_plugin
-        }
+        quote! { #state_plugin_ty::<Self>::default(), }
     };
 
     let detect_change = {
@@ -83,7 +72,6 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
             &crate_detect_change_path,
             "DetectChange",
             attrs.detect_change,
-            true,
         )
     };
     let flush_message = {
@@ -92,7 +80,6 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
             &crate_flush_message_path,
             "FlushMessage",
             attrs.flush_message,
-            true,
         )
     };
     #[cfg(not(feature = "debug"))]
@@ -101,30 +88,25 @@ pub(crate) fn derive_register_state_helper(input: &DeriveInput, attrs: &StateAtt
     let log_flush = {
         let crate_debug_path = concat(&crate_path, "debug");
         let crate_log_flush_path = concat(&crate_debug_path, "log_flush");
-        plugin(&crate_log_flush_path, "LogFlush", attrs.log_flush, true)
+        plugin(&crate_log_flush_path, "LogFlush", attrs.log_flush)
     };
     #[cfg(not(feature = "bevy_state"))]
     let bevy_state = quote! {};
     #[cfg(feature = "bevy_state")]
     let bevy_state = {
         let crate_bevy_state_path = concat(&crate_extra_path, "bevy_state");
-        plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state, false)
+        plugin(&crate_bevy_state_path, "BevyState", attrs.bevy_state)
     };
     #[cfg(not(feature = "react"))]
     let react = quote! {};
     #[cfg(feature = "react")]
     let react = {
         let crate_react_path = concat(&crate_extra_path, "react");
-        plugin(&crate_react_path, "React", attrs.react, false)
+        plugin(&crate_react_path, "React", attrs.react)
     };
     let apply_flush = {
         let crate_apply_flush_path = concat(&crate_schedule_path, "apply_flush");
-        plugin(
-            &crate_apply_flush_path,
-            "ApplyFlush",
-            attrs.apply_flush,
-            true,
-        )
+        plugin(&crate_apply_flush_path, "ApplyFlush", attrs.apply_flush)
     };
 
     quote! {

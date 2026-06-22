@@ -11,7 +11,7 @@ use core::marker::PhantomData;
 #[cfg(feature = "bevy_reflect")]
 use bevy_ecs::reflect::ReflectResource;
 use bevy_ecs::{
-    component::Component,
+    component::Mutable,
     resource::Resource,
     system::{ReadOnlySystemParam, SystemParam, SystemParamItem},
 };
@@ -26,7 +26,7 @@ pub mod stack;
 
 /// A [`Resource`] / [`Component`] that determines whether the [`State`] type `S` will flush in the
 /// [`StateFlush`](crate::schedule::StateFlush) schedule.
-#[derive(Resource, Component, Debug)]
+#[derive(Resource, Debug)]
 #[cfg_attr(
     feature = "bevy_reflect",
     derive(bevy_reflect::Reflect),
@@ -59,11 +59,11 @@ impl<S: State> Default for TriggerStateFlush<S> {
 /// ```
 /// # use pyri_state::prelude::*;
 /// #
-/// #[derive(State, Clone, PartialEq, Eq)]
+/// #[derive(State, Resource, Clone, PartialEq, Eq)]
 /// #[state(next(NextStateStack<Self>))]
 /// enum Menu { /* ... */ }
 /// ```
-pub trait NextState: Resource {
+pub trait NextState: Resource<Mutability = Mutable> {
     /// The stored [`State`] type.
     type State: State;
 

@@ -116,8 +116,6 @@ This is a seriously discouraging amount of boilerplate for something that should
   In `bevy_state`, you have to clone the current state, mutate it, and set that as the next state.
   As a consequence, if multiple systems mutate the same state on the same frame, they'll completely overwrite each other,
   leading to rare, confusing bugs that direct mutation would often circumvent entirely.
-- **Local states:** In `pyri_state`, states can be components.
-  This is currently impossible in `bevy_state`, which only supports global states.
 
 # Bevy version compatibility
 

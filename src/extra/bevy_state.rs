@@ -10,7 +10,7 @@
 //! # use bevy::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
-//! #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! #[derive(State, Resource, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! #[state(bevy_state)]
 //! enum Screen {
 //!     #[default]
@@ -26,7 +26,7 @@
 //! # use bevy::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
-//! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! # #[derive(State, Resource, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
 //! # enum Screen {
 //! #     #[default]
@@ -46,7 +46,7 @@
 //! # use bevy::{input::common_conditions::input_just_pressed, prelude::*};
 //! # use pyri_state::prelude::*;
 //! #
-//! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! # #[derive(State, Resource, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
 //! # enum Screen {
 //! #     #[default]
@@ -77,7 +77,7 @@
 //! # }
 //! # impl Plugin for ProgressPlugin { fn build(&self, _: &mut App) {} }
 //! #
-//! # #[derive(State, Clone, PartialEq, Eq, Hash, Debug, Default)]
+//! # #[derive(State, Resource, Clone, PartialEq, Eq, Hash, Debug, Default)]
 //! # #[state(bevy_state)]
 //! # enum Screen {
 //! #     #[default]

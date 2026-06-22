@@ -30,7 +30,7 @@
 //! ```
 //! # use pyri_state::prelude::*;
 //! #
-//! #[derive(State, Clone, PartialEq, Eq, Default)]
+//! #[derive(State, Resource, Clone, PartialEq, Eq, Default)]
 //! struct Level(pub usize);
 //! ```
 //!
@@ -40,7 +40,7 @@
 //! # use bevy::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
-//! # #[derive(State, Clone, PartialEq, Eq, Default)]
+//! # #[derive(State, Resource, Clone, PartialEq, Eq, Default)]
 //! # struct Level(pub usize);
 //! #
 //! # fn plugin(app: &mut App) {
@@ -54,7 +54,7 @@
 //! # use bevy::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
-//! # #[derive(State, Clone, PartialEq, Eq, Default)]
+//! # #[derive(State, Resource, Clone, PartialEq, Eq, Default)]
 //! # struct Level(pub usize);
 //! #
 //! # fn update_level_timer() {}
@@ -76,7 +76,7 @@
 //! # use bevy::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
-//! # #[derive(State, Clone, PartialEq, Eq, Default)]
+//! # #[derive(State, Resource, Clone, PartialEq, Eq, Default)]
 //! # struct Level(pub usize);
 //! #
 //! # fn despawn_old_level() {}
@@ -131,7 +131,7 @@ pub mod prelude {
             StateTransPattern as _, StateTransPatternExtClone as _,
         },
         schedule::{StateFlush, flush_message::StateFlushMessage},
-        setup::{CommandsExtState as _, EntityCommandsExtState as _},
+        setup::CommandsExtState as _,
         state,
         state::{
             State, StateExtEq as _, StateMut as _, StateMutExtClone as _, StateMutExtDefault as _,
@@ -172,12 +172,12 @@ pub mod prelude {
     ///
     /// # Examples
     ///
-    /// The derive macro requires `Clone`, `PartialEq`, and `Eq`:
+    /// The derive macro requires `Resource`, `Clone`, `PartialEq`, and `Eq`:
     ///
     /// ```
     /// # use pyri_state::prelude::*;
     /// #
-    /// #[derive(State, Clone, PartialEq, Eq)]
+    /// #[derive(State, Resource, Clone, PartialEq, Eq)]
     /// enum MyState { /* ... */ }
     /// ```
     ///
@@ -186,7 +186,7 @@ pub mod prelude {
     /// ```
     /// # use pyri_state::prelude::*;
     /// #
-    /// #[derive(State)]
+    /// #[derive(State, Resource)]
     /// #[state(no_defaults)]
     /// struct RawState;
     /// ```
@@ -197,19 +197,17 @@ pub mod prelude {
     /// # use bevy::prelude::*;
     /// # use pyri_state::prelude::*;
     /// #
-    /// # #[derive(State, Clone, PartialEq, Eq)]
+    /// # #[derive(State, Resource, Clone, PartialEq, Eq)]
     /// # enum MyState { /* ... */ }
     /// #
-    /// # #[derive(State)]
+    /// # #[derive(State, Resource)]
     /// # #[state(no_defaults)]
     /// # struct RawState;
     /// #
-    /// #[derive(State, Component, Clone, PartialEq, Eq, Hash, Debug)]
+    /// #[derive(State, Resource, Clone, PartialEq, Eq, Hash, Debug)]
     /// #[state(
     ///     // Disable default plugins: detect_change, flush_message, apply_flush.
     ///     no_defaults,
-    ///     // Support local state (requires Component).
-    ///     local,
     ///     // Trigger a flush on any state change (requires PartialEq, Eq).
     ///     detect_change,
     ///     // Write a message on flush (requires Clone).

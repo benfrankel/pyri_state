@@ -24,7 +24,7 @@ fn main() -> AppExit {
         .run()
 }
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Default)]
 #[reflect(Resource)]
 enum Screen {
     #[default]
@@ -33,7 +33,7 @@ enum Screen {
 }
 
 // Substate of `Screen::Gameplay`
-#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Default)]
 #[state(after(Screen))]
 #[reflect(Resource)]
 struct CheckerboardSquare {
@@ -42,7 +42,7 @@ struct CheckerboardSquare {
 }
 
 // Computed from `CheckerboardSquare`
-#[derive(State, Reflect, Clone, PartialEq, Eq)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq)]
 #[state(after(CheckerboardSquare))]
 #[reflect(Resource)]
 enum SquareColor {

@@ -37,13 +37,13 @@ fn main() -> AppExit {
         .run()
 }
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Default)]
 // The default `NextState` type is `NextStateBuffer<Self>`, which is a newtyped `Option<Self>`.
 //#[state(next(NextStateBuffer<Self>))]
 #[reflect(Resource)]
 struct MyBufferedState;
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Debug, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Debug, Default)]
 // You can easily swap in a `NextStateStack<Self>` instead, for example.
 #[state(log_flush, next(NextStateStack<Self>))]
 #[reflect(Resource)]
@@ -54,8 +54,8 @@ enum MyStackedState {
 }
 
 // You can define your own fully custom `NextState` type:
-#[derive(Resource, Component, Reflect)]
-#[reflect(Resource, Component)]
+#[derive(Resource, Reflect)]
+#[reflect(Resource)]
 struct NextStatePair<S: State>([Option<S>; 2]);
 
 impl<S: State> NextState for NextStatePair<S> {
@@ -109,7 +109,7 @@ trait NextStatePairMut: State {
 // Blanket impl the trait.
 impl<S: State<Next = NextStatePair<S>>> NextStatePairMut for S {}
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Debug)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Debug)]
 // Now you can use `NextStatePair<Self>` as a custom first-class `NextState` type!
 #[state(log_flush, next(NextStatePair<Self>))]
 #[reflect(Resource)]

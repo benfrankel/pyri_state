@@ -26,6 +26,4 @@ pub struct StateDebugSettings {
     pub log_trans: bool,
     /// Enable on-enter logs.
     pub log_enter: bool,
-    /// Enable logging for local states.
-    pub log_local: bool,
 }

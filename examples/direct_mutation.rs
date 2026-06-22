@@ -37,7 +37,7 @@ fn main() -> AppExit {
 
 // The player has different abilities depending on the color mode.
 // Yellow mode is its own thing, for example; not just red and green at the same time.
-#[derive(State, Reflect, Clone, PartialEq, Eq, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Default)]
 #[state(log_flush)]
 #[reflect(Resource)]
 struct ColorMode {

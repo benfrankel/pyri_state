@@ -1,5 +1,11 @@
 # Next version
 
+# Version 0.7.0
+
+- **Updated to Bevy 0.19**
+    - Removed local states as components
+    - The `State` derive macro now requires `Resource`
+
 # Version 0.6.0
 
 - **Updated to Bevy 0.18**

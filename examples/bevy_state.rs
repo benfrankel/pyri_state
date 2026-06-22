@@ -29,7 +29,7 @@ fn main() -> AppExit {
         .run()
 }
 
-#[derive(State, Reflect, Clone, PartialEq, Eq, Hash, Debug, Default)]
+#[derive(State, Resource, Reflect, Clone, PartialEq, Eq, Hash, Debug, Default)]
 // Enable the `bevy_state` plugin to set up `BevyState<Screen>`:
 #[state(bevy_state, log_flush)]
 #[reflect(Resource)]
