@@ -28,6 +28,7 @@
 //! [derive macro](pyri_state_derive::State):
 //!
 //! ```
+//! # use bevy::prelude::*;
 //! # use pyri_state::prelude::*;
 //! #
 //! #[derive(State, Resource, Clone, PartialEq, Eq, Default)]
@@ -175,6 +176,7 @@ pub mod prelude {
     /// The derive macro requires `Resource`, `Clone`, `PartialEq`, and `Eq`:
     ///
     /// ```
+    /// # use bevy::prelude::*;
     /// # use pyri_state::prelude::*;
     /// #
     /// #[derive(State, Resource, Clone, PartialEq, Eq)]
@@ -184,6 +186,7 @@ pub mod prelude {
     /// They can be omitted if you disable the default options:
     ///
     /// ```
+    /// # use bevy::prelude::*;
     /// # use pyri_state::prelude::*;
     /// #
     /// #[derive(State, Resource)]

@@ -57,6 +57,7 @@ impl<S: State> Default for TriggerStateFlush<S> {
 /// You can set a different `NextState` type in the [derive macro](pyri_state_derive::State):
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// #[derive(State, Resource, Clone, PartialEq, Eq)]

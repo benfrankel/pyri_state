@@ -103,6 +103,7 @@ impl<S: State> CurrentMut<'_, S> {
 /// # Example
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// # #[derive(State, Resource, Clone, PartialEq, Eq)]
@@ -169,6 +170,7 @@ impl<S: State> NextRef<'_, '_, S> {
 /// # Example
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// # #[derive(State, Resource, Clone, PartialEq, Eq)]
@@ -309,6 +311,7 @@ impl<S: StateMut> NextMut<'_, '_, S> {
 /// # Example
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// # #[derive(State, Resource, Clone, PartialEq, Eq)]
@@ -392,6 +395,7 @@ impl<S: State> FlushRef<'_, '_, S> {
 /// # Example
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// # #[derive(State, Resource, Clone, PartialEq, Eq)]

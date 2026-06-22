@@ -16,6 +16,7 @@
 /// Define your own split state type as a newtype:
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// #[derive(State, Resource, Clone, PartialEq, Eq)]
@@ -28,6 +29,7 @@ pub type SplitState = &'static str;
 /// # Example
 ///
 /// ```
+/// # use bevy::prelude::*;
 /// # use pyri_state::prelude::*;
 /// #
 /// # #[derive(State, Resource, Clone, PartialEq, Eq)]
